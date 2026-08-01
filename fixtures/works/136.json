@@ -1,0 +1,22 @@
+{
+  "id": 136,
+  "type": "work",
+  "slug": "the-philadelphia-experiment-1984",
+  "title": "The Philadelphia Experiment (1984)",
+  "dek": "Two sailors step out of a 1943 destroyer escort and into 1984. Raffill's film is where most people who know the story first met it.",
+  "medium": "film",
+  "mode": "fiction",
+  "year": 1984,
+  "creator": "Stewart Raffill",
+  "runtime": "102 min",
+  "external": {
+    "imdb": "tt0087910"
+  },
+  "gravity": [
+    {
+      "subject": "philadelphia-experiment",
+      "value": 5
+    }
+  ],
+  "updated_at": "2026-07-30T19:18:25"
+}

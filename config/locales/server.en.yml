@@ -1,0 +1,157 @@
+en:
+  site_settings:
+    curiobase_enabled: "Render Curiobase cards into topics and collect gravity ratings."
+    curiobase_min_trust_level: "Minimum trust level required to rate."
+    curiobase_subject_tag_group: "The tag group holding the Subject vocabulary. A tag outside it is an ordinary tag."
+    curiobase_annotation_enabled: "Add a community wiki as post 2 of every record topic. Turning this on writes a post to each one."
+    curiobase_member_voting_enabled: "Let members rate how central a subject is to a work. This is where gravity comes from — with it off there is no score at all."
+    curiobase_supporter_group: "Members of this group get +1 vote weight, capped at 5."
+    curiobase_buy_links_enabled: "Show a 'Find a copy' line on Work cards. Free sources (Internet Archive, libraries, Steam, streaming lookup) appear on their own; each shop also needs its affiliate id below, or it stays hidden."
+    curiobase_gog_tracking_prefix: "GOG affiliate tracking prefix — a whole URL, not an id. Paste it from your Adtraction dashboard up to and including the parameter the destination goes in; the GOG search URL is appended, URL-encoded. Blank hides the GOG button."
+    curiobase_amazon_tag: "Amazon Associates tag, e.g. tti-20. Blank hides the Amazon button."
+    curiobase_ebay_campaign: "eBay Partner Network campaign id. Blank hides the eBay button. Links are searches, never listings — listings expire."
+
+  curiobase:
+    gravity_heading: "How strongly does this pull on the idea?"
+    # ⚠ AN INVITATION, because gravity is the membership's number and an unrated
+    #   pairing is a vacancy rather than a gap. This read "not yet assessed" for
+    #   a while, from a period when the operator's judgement was the score and a
+    #   reader had nothing to add.
+    unrated: "be the first to rate this"
+    associations_heading: "What engages this"
+    filter_all: "All"
+    # Filter chips count things, so they are plural: "Books 12".
+    kinds:
+      film: "Film"
+      series: "TV"
+      book: "Books"
+      game: "Games"
+      video: "Video"
+      document: "Documents"
+      discussion: "Discussions"
+    # Row badges label one thing, so they are singular. Without this the list
+    # read "Discussions · Steins;Gate and the divergence meter".
+    kind:
+      film: "Film"
+      series: "TV"
+      book: "Book"
+      game: "Game"
+      video: "Video"
+      document: "Document"
+      discussion: "Discussion"
+    replies:
+      one: "1 reply"
+      other: "%{count} replies"
+    # ⚠ No article. "The full %{title} story" produced "The full The 2036 Claim
+    #   story" and "The full The Krill Papers story" — a third of Subject titles
+    #   begin with an article and the template cannot know.
+    read_more: "Read more about %{title}"
+    full_text: "The recovered text"
+    # ⚠ REQUIRED, not a nicety. The FTC requires affiliate relationships to be
+    #   disclosed "clearly and conspicuously" and close to the link — and on a
+    #   catalogue whose whole value is being trusted about contested things, an
+    #   undisclosed paid link is worth less than the commission.
+    buy_heading: "Find a copy"
+    buy_disclosure: "Paid links — the institute may earn a commission."
+    on_a_map: "On a map"
+    facets:
+      period: "Period"
+      evidence: "Evidence"
+      also_known_as: "Also known as"
+    # The tag page's one job is to send you to the record. Say so plainly.
+    open_record: "Open the %{title} record →"
+    # ⚠ No article before %{title} — a third of Subject titles begin with one.
+    see_everything:
+      one: "All 1 topic tagged %{title} →"
+      other: "All %{count} topics tagged %{title} →"
+
+    # ⚠ "Recommend", never "likes". The word has to name the question the number
+    #   answers — is this worth your time — and it has to be unmistakably a count
+    #   of people sitting beside a number out of five.
+    recommend:
+      one: "1 member recommends this"
+      other: "%{count} members recommend this"
+    # The default label on a ref authored as a bare slug.
+    related: "Related"
+
+    # ⚠ Every one of these names the offending value and the allowed set. An
+    #   error that says "invalid record" sends the author back to a document;
+    #   one that says "evidence 'firsthand_account' is not one of …" fixes it in
+    #   ten seconds. This is what replaces the CMS dropdown.
+    invalid:
+      unknown_key: "Curiobase record: '%{key}' is not a field. Check the spelling."
+      missing: "Curiobase record: '%{key}' is required."
+      value: "Curiobase record: %{key} '%{value}' is not one of: %{allowed}"
+      dek: "Curiobase record: the dek is %{count} characters and the limit is %{max}. It is the search snippet."
+      slug: "Curiobase record: '%{slug}' is not a slug — lowercase letters, numbers and hyphens."
+      year: "Curiobase record: '%{year}' is not a year."
+      ref: "Curiobase record: there is no subject called '%{slug}' — the ref would link to nothing."
+
+    annotation:
+      link: "Community notes ↓"
+      # ⚠ HEADINGS, NOT AN INVITATION. "Add your thoughts" produces nothing;
+      #   three questions produce answers. Keep them concrete and answerable by
+      #   someone who has actually read or watched the thing — that is the whole
+      #   point, and it is the knowledge the institute does not have.
+      #
+      # ⚠ Says plainly that edits are public and permanent. Wiki posts carry
+      #   visible revision history regardless of edit_history_visible_to_public,
+      #   and people should know that before they type, not after.
+      seed:
+        work: |
+          *This post is a wiki — anyone above the trust threshold can edit it. Every edit is public and kept.*
+
+          The card above says how central this work is to the subjects it engages. It does not say whether the thing is any good, or what it gets wrong. That part is yours.
+
+          ### Is it worth the time?
+
+          ### What does it get wrong?
+
+          ### Where should someone start?
+        subject: |
+          *This post is a wiki — anyone above the trust threshold can edit it. Every edit is public and kept.*
+
+          The card above is the file as the institute has it. This post is where the thread's own knowledge goes — the parts that moved on, got settled, or were never as clear as the summary makes them sound.
+
+          ### Where the question stands now
+
+          ### What is settled, and what isn't
+
+          ### Worth reading in this thread
+    # ⚠ Sits against the DISTRIBUTION BAR, not against the number. The bar is
+    #   an unweighted count of people and the count describes it exactly; the
+    #   number beside it is weighted by standing and is not a plain average of
+    #   those same voters.
+    members_rated:
+      one: "1 vote"
+      other: "%{count} votes"
+    errors:
+      bad_value: "A gravity rating is a whole number from 1 to 5."
+      trust_level: "Rating opens up once you have read a little more of the site."
+      rate_limited: "That is a lot of ratings in one hour. Try again shortly."
+      upstream: "The ratings service did not accept that. Nothing was saved."
+    # All three sets measure the same thing — centrality — so a 5 is a 5 in any
+    # of them and mixed lists still rank correctly. Only the wording changes.
+    anchors:
+      # A film, a novel, a game. The idea is a thing the story is made of.
+      fiction:
+        mentions: "mentions it"
+        dressing: "set dressing"
+        serious: "takes it seriously"
+        builds: "builds on it"
+        essential: "cannot exist without it"
+      # A report, a documentary, a recovered file. The idea is a thing the work
+      # examines. "Builds on it" would be nonsense here.
+      nonfiction:
+        mentions: "mentions it"
+        touches: "touches on it"
+        covers: "covers it"
+        focuses: "focuses on it"
+        entirely: "is entirely about it"
+      # A Subject's association list, where modes are mixed.
+      neutral:
+        mentions: "mentions it"
+        passing: "in passing"
+        engages: "engages it"
+        central: "central to it"
+        defining: "defined by it"

@@ -1,0 +1,53 @@
+en:
+  # ⚠ NAMES THE ADMIN PAGE AND THE SETTINGS SECTION. `Plugin::Instance#
+  #   humanized_name` prefers the setting category's label over the plugin
+  #   directory name, which is what stopped the page reading "Tti curiobase".
+  #   Ships with the `curiobase:` top-level key in config/settings.yml — either
+  #   one alone leaves a translation-missing string in the heading.
+  admin_js:
+    admin:
+      site_settings:
+        categories:
+          curiobase: "Curiobase"
+  js:
+    curiobase:
+      gravity_heading: "How strongly does this pull on the idea?"
+      unrated: "be the first to rate this"
+      # ⚠ Says what the click will DO, not what the mark means. On your own vote
+      #   that is the opposite of every other mark in the row.
+      retract: "Click again to take your vote back"
+      sign_in_to_rate: "Sign in to rate"
+      trust_level_to_rate: "Rating opens up as you read more"
+      # ⚠ Labels the DISTRIBUTION BAR, not the number. The bar is an unweighted
+      #   count of people and the count describes it exactly; the number beside
+      #   it is weighted by standing and is not a plain average of those voters.
+      members_rated:
+        one: "1 vote"
+        other: "%{count} votes"
+      # The anchors are the whole point of the scale. A star with no stated
+      # meaning is a popularity contest; "4 — builds on it" is a claim someone
+      # can actually disagree with.
+      #
+      # ⚠ Must stay in step with config/locales/server.en.yml. The server bakes
+      #   the anchors line into cooked and the client labels the buttons from
+      #   here; if the two drift, the tooltip contradicts the legend directly
+      #   above it. Same keys, same words, both files.
+      anchors:
+        fiction:
+          mentions: "mentions it"
+          dressing: "set dressing"
+          serious: "takes it seriously"
+          builds: "builds on it"
+          essential: "cannot exist without it"
+        nonfiction:
+          mentions: "mentions it"
+          touches: "touches on it"
+          covers: "covers it"
+          focuses: "focuses on it"
+          entirely: "is entirely about it"
+        neutral:
+          mentions: "mentions it"
+          passing: "in passing"
+          engages: "engages it"
+          central: "central to it"
+          defining: "defined by it"

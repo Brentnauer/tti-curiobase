@@ -1,0 +1,19 @@
+{
+  "id": 142,
+  "type": "work",
+  "slug": "le-morte-darthur",
+  "title": "Le Morte d'Arthur (1485)",
+  "dek": "Malory's compilation, printed by Caxton, and the source almost every later English telling of the sword works from.",
+  "medium": "book",
+  "mode": "fiction",
+  "year": 1485,
+  "creator": "Thomas Malory",
+  "external": {},
+  "gravity": [
+    {
+      "subject": "excalibur",
+      "value": 4
+    }
+  ],
+  "updated_at": "2026-07-30T19:18:27"
+}

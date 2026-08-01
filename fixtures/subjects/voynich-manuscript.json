@@ -1,0 +1,24 @@
+{
+  "id": "7308",
+  "type": "subject",
+  "slug": "voynich-manuscript",
+  "title": "The Voynich Manuscript",
+  "dek": "A 15th-century codex in an unknown script with botanical illustrations of no known plants, held at Yale and unread despite a century of professional and amateur attempts.",
+  "kind": "document",
+  "domain": "esoterica",
+  "status": "open",
+  "period": [
+    "ancient"
+  ],
+  "evidence": [
+    "primary-source"
+  ],
+  "also_known_as": "Beinecke MS 408",
+  "facts": {},
+  "prose": [],
+  "refs": [],
+  "links": [],
+  "full_text": "Folio 1r, opening lines, in the Extensible Voynich Alphabet — the\ntransliteration scheme researchers use to quote a text nobody can read.\nThe glyphs are transcribed; the words are not translated, because no\ntranslation has ever been demonstrated.\n\nfachys ykal ar ataiin shol shory cth res y kor sholdy\nsory ckhar or y kair chtaiin shar are cthar cthar dan\nsyaiir sheky or ykaiin shod cthoary cthes daraiin sa\nooiin oteey oteos roloty cthar daiin okaiin or okan\ndair y chear cthaiin cphar cfhaiin\nydaraishy\n",
+  "landing_url": "https://collections.library.yale.edu/catalog/2002046",
+  "updated_at": "2026-07-30T19:25:17"
+}

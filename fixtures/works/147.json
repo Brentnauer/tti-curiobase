@@ -1,0 +1,21 @@
+{
+  "id": 147,
+  "type": "work",
+  "slug": "voynich-manuscript-yale-facsimile",
+  "title": "The Voynich Manuscript (2016)",
+  "dek": "Yale's full-colour facsimile with essays from the Beinecke's curators — the first time the whole codex was published as a book.",
+  "medium": "book",
+  "mode": "nonfiction",
+  "year": 2016,
+  "creator": "Raymond Clemens, editor",
+  "external": {
+    "isbn": "9780300217230"
+  },
+  "gravity": [
+    {
+      "subject": "voynich-manuscript",
+      "value": 5
+    }
+  ],
+  "updated_at": "2026-07-30T19:18:29"
+}

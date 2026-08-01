@@ -1,0 +1,23 @@
+{
+  "id": 130,
+  "type": "work",
+  "slug": "titor-a-time-travelers-tale",
+  "title": "A Time Traveler's Tale (2003)",
+  "dek": "The forum posts compiled and published by the John Titor Foundation in 2003, with photographs of the claimed device and pages from its operations manual.",
+  "medium": "book",
+  "mode": "nonfiction",
+  "year": 2003,
+  "creator": "The John Titor Foundation",
+  "runtime": "174 pp",
+  "external": {
+    "isbn": "9781591964360",
+    "archive_org": "titor-book"
+  },
+  "gravity": [
+    {
+      "subject": "john-titor",
+      "value": 5
+    }
+  ],
+  "updated_at": "2026-07-30T18:54:33"
+}

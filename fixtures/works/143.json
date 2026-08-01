@@ -1,0 +1,22 @@
+{
+  "id": 143,
+  "type": "work",
+  "slug": "the-sword-in-the-stone-1963",
+  "title": "The Sword in the Stone (1963)",
+  "dek": "Disney's adaptation of T. H. White, in which the drawing of the sword is the last scene rather than the premise.",
+  "medium": "film",
+  "mode": "fiction",
+  "year": 1963,
+  "creator": "Wolfgang Reitherman",
+  "runtime": "79 min",
+  "external": {
+    "imdb": "tt0057546"
+  },
+  "gravity": [
+    {
+      "subject": "excalibur",
+      "value": 2
+    }
+  ],
+  "updated_at": "2026-07-30T19:18:28"
+}

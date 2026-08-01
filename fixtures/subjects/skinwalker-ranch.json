@@ -1,0 +1,30 @@
+{
+  "id": "7285",
+  "type": "subject",
+  "slug": "skinwalker-ranch",
+  "title": "Skinwalker Ranch",
+  "dek": "A 512-acre property in Utah's Uintah Basin bought in 1996 specifically to study the phenomena reported there, and studied under private and then federal contract for more than two decades.",
+  "kind": "place",
+  "domain": "phenomena",
+  "status": "open",
+  "period": [
+    "1990s",
+    "2000s",
+    "2010s",
+    "2020s"
+  ],
+  "evidence": [
+    "firsthand-account",
+    "documentary-record"
+  ],
+  "also_known_as": "Sherman Ranch, the Ranch",
+  "facts": {
+    "active": "1994 – present",
+    "country": "United States"
+  },
+  "prose": [],
+  "refs": [],
+  "links": [],
+  "coords": "40.2586, -109.8890",
+  "updated_at": "2026-07-30T19:18:23"
+}

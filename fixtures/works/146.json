@@ -1,0 +1,19 @@
+{
+  "id": 146,
+  "type": "work",
+  "slug": "deus-ex-2000",
+  "title": "Deus Ex (2000)",
+  "dek": "Majestic 12 is the antagonist, named and organised much as the documents describe it — the largest fictional treatment the committee has had.",
+  "medium": "game",
+  "mode": "fiction",
+  "year": 2000,
+  "creator": "Ion Storm",
+  "external": {},
+  "gravity": [
+    {
+      "subject": "majestic-12",
+      "value": 4
+    }
+  ],
+  "updated_at": "2026-07-30T19:18:29"
+}

@@ -1,0 +1,22 @@
+{
+  "id": 141,
+  "type": "work",
+  "slug": "excalibur-1981",
+  "title": "Excalibur (1981)",
+  "dek": "Boorman films the whole Arthurian cycle around the sword, from the stone to the barge, with the blade as the thing that confers and withdraws the right to rule.",
+  "medium": "film",
+  "mode": "fiction",
+  "year": 1981,
+  "creator": "John Boorman",
+  "runtime": "140 min",
+  "external": {
+    "imdb": "tt0082348"
+  },
+  "gravity": [
+    {
+      "subject": "excalibur",
+      "value": 5
+    }
+  ],
+  "updated_at": "2026-07-30T19:18:27"
+}

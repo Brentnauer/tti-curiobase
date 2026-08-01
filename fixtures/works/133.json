@@ -1,0 +1,21 @@
+{
+  "id": 133,
+  "type": "work",
+  "slug": "hangar-10",
+  "title": "Hangar 10 (2014)",
+  "dek": "Three metal detectorists filming a hunt for Saxon gold in Rendlesham Forest lose their bearings on the night of 27 December. Released in the US as The Rendlesham UFO Incident.",
+  "medium": "film",
+  "mode": "fiction",
+  "year": 2014,
+  "creator": "Daniel Simpson",
+  "external": {
+    "imdb": "tt3245656"
+  },
+  "gravity": [
+    {
+      "subject": "rendlesham-forest",
+      "value": 5
+    }
+  ],
+  "updated_at": "2026-07-30T18:54:34"
+}

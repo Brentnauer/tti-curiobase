@@ -1,0 +1,21 @@
+{
+  "id": 139,
+  "type": "work",
+  "slug": "hunt-for-the-skinwalker-film",
+  "title": "Hunt for the Skinwalker (2018)",
+  "dek": "Corbell's documentary, built on access to the same investigators and the footage they kept.",
+  "medium": "film",
+  "mode": "nonfiction",
+  "year": 2018,
+  "creator": "Jeremy Kenyon Lockyer Corbell",
+  "external": {
+    "imdb": "tt8399718"
+  },
+  "gravity": [
+    {
+      "subject": "skinwalker-ranch",
+      "value": 5
+    }
+  ],
+  "updated_at": "2026-07-30T19:18:26"
+}

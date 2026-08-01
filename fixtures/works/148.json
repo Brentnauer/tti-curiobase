@@ -1,0 +1,20 @@
+{
+  "id": 148,
+  "type": "work",
+  "slug": "historys-greatest-mysteries-voynich",
+  "title": "History's Greatest Mysteries: The Voynich Manuscript (2022)",
+  "dek": "A television treatment that walks through the cipher attempts, the carbon dating, and the people who have spent careers on it.",
+  "medium": "video",
+  "mode": "nonfiction",
+  "year": 2022,
+  "external": {
+    "imdb": "tt19711954"
+  },
+  "gravity": [
+    {
+      "subject": "voynich-manuscript",
+      "value": 5
+    }
+  ],
+  "updated_at": "2026-07-30T19:18:30"
+}

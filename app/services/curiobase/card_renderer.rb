@@ -1,0 +1,573 @@
+# frozen_string_literal: true
+
+module Curiobase
+  # Bakes a Curiobase card into posts.cooked.
+  #
+  # ══════════════════════════════════════════════════════════════════════════
+  # THIS IS THE WHOLE ARCHITECTURE. Everything else is plumbing around it.
+  # ══════════════════════════════════════════════════════════════════════════
+  #
+  # CookedPostProcessor hands over the Nokogiri document after sanitisation and
+  # before posts.cooked is written. Whatever we put here is:
+  #
+  #   * in the database
+  #   * in the crawler view — the topic template emits post.cooked.html_safe
+  #   * visible with JavaScript disabled
+  #   * NOT re-sanitised, so microdata and <dl> pass through intact
+  #
+  # Idempotent by construction: CookedPostProcessor re-cooks from raw every
+  # time, so injection cannot accumulate across rebakes.
+  #
+  # ⚠ THE ORDER RULE. Discourse builds meta description from the START of
+  #   cooked. Lead with a fact table and the snippet becomes "Medium Film Year
+  #   2004 Creator Shane Carruth". Lead with a recovered document and one
+  #   exhibit's snippet was, verbatim, "**** * CONFIDENTIAL * ****".
+  #
+  #   THE DEK GOES FIRST. It is a sentence. This has regressed twice.
+  class CardRenderer
+    include Markup
+
+    MARKER = "curiobase-card"
+    POSTER_FIELD = "curiobase_poster"
+
+    # [wrap=work id=123] cooks to
+    #   <div class="d-wrap" data-wrap="work" data-id="123">
+    # Reading the cooked element rather than the raw text means the BBCode
+    # parser has already done the parsing.
+    SELECTOR = '.d-wrap[data-wrap="work"], .d-wrap[data-wrap="subject"]'
+
+    def initialize(doc, post)
+      @doc = doc
+      @post = post
+      @topic = post&.topic
+    end
+
+    def render!
+      return unless @post&.is_first_post?
+      return if @doc.at_css(".#{MARKER}")
+
+      # ⚠ A record authored in its own post takes precedence over a legacy
+      #   wrap. Everything downstream of here is identical — the parser hands
+      #   back the same shape the fixtures do, on purpose, so no renderer can
+      #   tell where a record came from.
+      return if render_post_authored!
+
+      wrap = @doc.at_css(SELECTOR)
+      return unless wrap
+
+      kind = wrap["data-wrap"]
+      id = wrap["data-id"].presence
+      return unless id
+
+      record = kind == "work" ? Source.work(id) : Source.subject(id)
+      unless record
+        # WordPress unreachable, or the id is wrong. Leave the post alone rather
+        # than replacing it with an error — a stale card beats a broken page.
+        Rails.logger.warn("[curiobase] no #{kind} #{id} for post #{@post.id}")
+        return
+      end
+
+      remember_kind(kind, record)
+
+      # A Subject card is built by SubjectCard, because the tag page needs the
+      # same HTML and two implementations would drift. Nokogiri#replace takes a
+      # string, and nothing here is re-sanitised, so the markup survives intact.
+      if kind == "subject"
+        card = Nokogiri::HTML5.fragment(SubjectCard.new(record).to_html)
+        # SubjectCard serves three surfaces and only this one sits on a topic,
+        # so the notes link is added here rather than inside it.
+        card.children.first&.add_child(annotation_link) if annotation_link
+        wrap.replace(card.to_html)
+        return
+      end
+
+      card = node("div", class: "#{MARKER} #{MARKER}--#{kind}", "data-id": id)
+      build_work(card, record)
+      wrap.replace(card)
+    end
+
+    # The post IS the record. Returns true when it handled the post.
+    def render_post_authored!
+      block = @doc.at_css("pre code.lang-curiobase, pre code[class*='curiobase']")
+      return false unless block
+
+      result = PostRecord.parse(@post.raw)
+      # ⚠ Invalid records cannot normally reach here — the validator rejects
+      #   them on save. This is the path for a record that was valid when it was
+      #   written and became invalid when the vocabulary changed underneath it.
+      #   Leave the block visible rather than swallowing it: the author needs to
+      #   see that something is wrong, and a code block is legible.
+      return false unless result&.valid?
+
+      # ⚠ `topic:` is what gives the record its title — see PostRecord.to_record.
+      #   Without it every card on a record's own topic page had a blank title,
+      #   and the visible symptom was a link reading "Read more about" with
+      #   nothing after it.
+      record = PostRecord.to_record(result, topic: @topic)
+      return false if record.blank?
+
+      kind = record["type"]
+      remember_kind(kind, record)
+
+      # The fenced block is scaffolding, not content. Take it out before the
+      # card goes in, or the reader sees the source underneath the render.
+      container = block.ancestors("pre").first || block
+
+      if kind == "subject"
+        # ⚠ The plate is handed to SubjectCard rather than appended afterwards.
+        #   Appending put a 104px thumbnail at the BOTTOM of the card, under the
+        #   association list — which is why a Subject's image never looked like
+        #   it belonged to anything. SubjectCard places it after the dek, where
+        #   it reads as a plate in a file.
+        card = Nokogiri::HTML5.fragment(SubjectCard.new(record, plate: media(:plate)).to_html)
+        node = card.children.first
+        node&.add_child(annotation_link) if annotation_link
+        container.replace(card.to_html)
+      else
+        @work_record = record
+        card = node("div", class: "#{MARKER} #{MARKER}--work", "data-id": record["slug"])
+        build_work(card, record)
+        container.replace(card)
+      end
+
+      true
+    end
+
+    # The image the author dragged in, already processed by Discourse.
+    #
+    # ⚠ Memoised per variant AND take!-once. `take!` REMOVES the image from the
+    #   body, so calling it twice returns nil the second time and the card
+    #   silently loses its picture.
+    def media(variant)
+      @media ||= {}
+      return @media[variant] if @media.key?(variant)
+
+      m = PostMedia.new(@doc, @post, variant: variant)
+      node = m.take!
+      # Cached for BOTH kinds: a Work's poster feeds the association list, a
+      # Subject's plate feeds the tag-page banner. The field means "this
+      # record's image", whichever shape it is.
+      remember_poster(m.src) if node
+      @media[variant] = node
+    end
+
+    def hero = media(:poster)
+
+    # Cache what this topic IS, so ?curiobase=film can filter the tag page in
+    # SQL instead of asking WordPress about every topic in a list.
+    #
+    # Written here because this is the one place that has already resolved the
+    # record. Guarded so a rebake that changes nothing writes nothing.
+    def remember_kind(kind, record)
+      return unless @topic
+
+      # Which record this topic IS, so every link to a Subject can land on its
+      # file instead of its tag page. See RecordTopic.
+      # ⚠ BOTH KINDS, not just subjects. Source resolves a slug back to its post
+      #   through this index, so a Work that is not in it is a Work that keeps
+      #   being fetched from WordPress even after it has been converted.
+      RecordTopic.remember(@topic, record["slug"])
+      describe_tag(record) if kind == "subject"
+
+      value = kind == "subject" ? "subject" : record["medium"].to_s
+      return if value.blank?
+      return if @topic.custom_fields[TopicKind::FIELD] == value
+      @topic.custom_fields[TopicKind::FIELD] = value
+      @topic.save_custom_fields
+    end
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # THE DEK BECOMES THE TAG'S DESCRIPTION.
+    # ══════════════════════════════════════════════════════════════════════════
+    #
+    # Discourse renders a tag page's meta description straight from the tag row:
+    #
+    #   @description_meta = Tag.where(name: @tag_name).pick(:description) || @title
+    #     — app/controllers/tags_controller.rb
+    #
+    # So /tag/majestic-12 was serving "Topics tagged majestic-12" as its search
+    # snippet purely because nothing had ever filled that column in.
+    #
+    # ⚠ THE FIRST ATTEMPT AT THIS WAS WRONG and is worth recording. A second
+    #   `<meta name="description">` was emitted from the crawler head builder.
+    #   Measured: the page then had TWO, and a crawler reads the first — so the
+    #   good one was the loser. Writing the value Discourse already reads is the
+    #   whole fix, and it also populates the tag description in the UI.
+    #
+    # ⚠ Same discipline as the other caches: written here because this is the one
+    #   place that has already resolved the record, and guarded so a rebake that
+    #   changes nothing writes nothing. The dek is capped at 200 characters and
+    #   the column takes 1000, so it always fits.
+    # ══════════════════════════════════════════════════════════════════════════
+    # THE POSTER URL, CACHED ON THE TOPIC.
+    # ══════════════════════════════════════════════════════════════════════════
+    #
+    # So a Subject's association list can show a thumbnail beside each Work
+    # without opening 25 posts to find 25 images. Same discipline as
+    # `curiobase_kind` and `curiobase_slug`: written here, by the one piece of
+    # code that has already resolved the image, and read in one batched query.
+    #
+    # ⚠ Without this the list would be an N+1 on a page crawlers hit constantly
+    #   — the exact shape of the `ILIKE` scan that RecordTopic exists to avoid.
+    def remember_poster(url)
+      return if @topic.blank? || url.blank?
+      return if @topic.custom_fields[POSTER_FIELD] == url
+
+      @topic.custom_fields[POSTER_FIELD] = url
+      @topic.save_custom_fields
+    end
+
+    def describe_tag(record)
+      dek = record["dek"].to_s.strip
+      return if dek.blank?
+
+      tag = Tag.find_by(name: record["slug"])
+      return unless tag
+      return if tag.description.to_s.strip == dek
+
+      # ⚠ `update`, NOT `update_columns`. Tag#sanitize_description runs as a
+      #   before_save and this value is rendered as HTML on the tag page. Going
+      #   round the callback to save a timestamp write would put unsanitised
+      #   author input into a page.
+      tag.update(description: dek)
+    rescue StandardError => e
+      # A tag description is a nicety; a record that will not bake is not.
+      Rails.logger.warn("[curiobase] could not describe tag #{record["slug"]}: #{e.class}")
+    end
+
+    private
+
+    # ── work ────────────────────────────────────────────────────────────────
+    def build_work(card, w)
+      # Held for the gravity block, which needs the Work's own `gravity` rows
+      # and its `mode` to choose the anchor wording.
+      @work_record = w
+
+      head = node("div", class: "cb-head")
+
+      # ⚠ Two sources, one slot, and the post wins. A poster dragged into the
+      #   composer is served by Discourse; a WordPress one is a live
+      #   cross-origin dependency on a staff CMS. Preferring the local one means
+      #   a converted record stops needing the CMS to be up to show its cover.
+      if (dragged = hero)
+        head.add_child(dragged)
+      elsif (poster = w.dig("poster", "url")).present?
+        fig = node("div", class: "cb-poster")
+        img = node("img", src: poster, alt: w.dig("poster", "alt").to_s, loading: "lazy")
+        fig.add_child(img)
+        head.add_child(fig)
+        remember_poster(poster)
+      else
+        # ⚠ RESERVE THE SLOT. An empty column means the text starts at a
+        #   different x on every card that happens to lack a cover, and a run of
+        #   them reads as broken rather than as incomplete. The placeholder says
+        #   what the thing is instead — and it is a worklist entry for whoever
+        #   is adding posters.
+        head.add_child(poster_placeholder(w))
+      end
+
+      body = node("div", class: "cb-body")
+
+      # 1 · the dek. A sentence, FIRST IN THE DOM, always. See the order rule.
+      #
+      # ⚠ The badges used to be here and they broke the rule for a third time:
+      #   every meta description started "seriesfiction …", "documenthidden
+      #   historydebunked …". Badge text has no spaces between elements once
+      #   tags are stripped, so it reads as one nonsense word and burns thirty
+      #   characters of a snippet Google truncates at about 155.
+      #
+      #   They still LOOK like they come first — .cb-badges carries order: -1.
+      #   Visual order is CSS's job; document order belongs to the crawler.
+      body.add_child(para("cb-dek", w["dek"])) if w["dek"].present?
+      body.add_child(badge(w["medium"], w["mode"]))
+
+      # 2 · facts as one inline row. Five facts do not need five lines.
+      facts = [w["year"]&.to_s, w["creator"], w["runtime"]].compact_blank
+      body.add_child(para("cb-meta", facts.join(" · "))) unless facts.empty?
+
+      links = external_links(w["external"])
+      body.add_child(links) if links
+
+      head.add_child(body)
+      card.add_child(head)
+      # ⚠ AFTER the gravity block, not in the head. The judgement is the reason
+      #   a reader is here; the shop is what they might do afterwards. Putting a
+      #   buy button above the score would make the card read as a storefront
+      #   with an opinion attached rather than the other way round.
+      card.add_child(gravity_block(w))
+      buy = buy_links(w)
+      card.add_child(buy) if buy
+      card.add_child(annotation_link) if annotation_link
+    end
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # WHERE TO BUY IT.
+    # ══════════════════════════════════════════════════════════════════════════
+    #
+    # ⚠ `rel="nofollow sponsored"` IS NOT OPTIONAL. Google requires paid links
+    #   to be marked, and an affiliate link that passes PageRank is a manual
+    #   action waiting to happen — on a site whose entire strategy is organic
+    #   search. `sponsored` is the specific value for paid placement.
+    #
+    # ⚠ The disclosure ships with the buttons, in the same block, because the
+    #   FTC requires it close to the link — and because a catalogue that asks to
+    #   be trusted about contested claims cannot afford an undisclosed one.
+    #
+    # ⚠ Renders nothing at all unless a vendor is configured. See BuyLinks.
+    def buy_links(w)
+      vendors = BuyLinks.for(w)
+      return nil if vendors.empty?
+
+      section = node("p", class: "cb-buy")
+
+      label = node("span", class: "cb-buy-label")
+      label.content = I18n.t("curiobase.buy_heading")
+      section.add_child(label)
+
+      paid_any = false
+      vendors.each do |name, url, paid|
+        paid_any ||= paid
+        # ⚠ `sponsored` ONLY on the paid ones. Marking a free archive.org link
+        #   as sponsored would be a false declaration to Google, and marking a
+        #   paid one as ordinary is the manual action.
+        rel = paid ? "nofollow sponsored noopener" : "noopener"
+        a = node("a", class: "cb-buy-link#{paid ? "" : " cb-buy-link--free"}",
+                      href: url, rel: rel, target: "_blank")
+        a.content = name
+        section.add_child(a)
+      end
+
+      # ⚠ Only when something on this line is actually paid. A card offering
+      #   only the Internet Archive and a library has nothing to disclose, and
+      #   claiming a commission it cannot earn is its own kind of dishonest.
+      if paid_any
+        note = node("span", class: "cb-buy-note")
+        note.content = I18n.t("curiobase.buy_disclosure")
+        section.add_child(note)
+      end
+      section
+    end
+
+    # A pointer to post 2 — the community wiki. See Curiobase::Annotation.
+    #
+    # ⚠ LAST IN THE CARD, and it must stay there. The order rule is about the
+    #   search snippet, and "Community notes" is the least useful sentence a
+    #   record could open with.
+    #
+    # ⚠ Only once somebody has actually written in it. A link to an empty
+    #   skeleton promises content that is not there, which is the same reason
+    #   the rating control bakes no mount point when voting is closed.
+    def annotation_link
+      return nil unless @topic
+      post = Annotation.for_topic(@topic)
+      return nil unless Annotation.written?(post)
+
+      p = node("p", class: "cb-notes")
+      a = node("a", href: "#{@topic.relative_url}/#{post.post_number}")
+      a.content = I18n.t("curiobase.annotation.link")
+      p.add_child(a)
+      p
+    end
+
+    # Where a Work can be looked up elsewhere.
+    #
+    # ⚠ An external database is a destination, not a value. Never print
+    #   tt0390384 at a reader — the label is the readable thing.
+    #
+    # ⚠ The registry moved to `Curiobase::Identifiers` when the JSON-LD needed
+    #   the same list for `sameAs`. Two copies of "identifier → URL" is the shape
+    #   that has cost this codebase more than any other.
+    def external_links(external)
+      return nil if external.blank?
+      urls = Identifiers.links(external)
+      return nil if urls.empty?
+
+      p = node("p", class: "cb-ext")
+      urls.each_with_index do |(label, url), i|
+        p.add_child(Nokogiri::XML::Text.new(" · ", @doc.document)) if i.positive?
+        a = node("a", href: url, rel: "noopener", target: "_blank")
+        a.content = label
+        p.add_child(a)
+      end
+      p
+    end
+
+    # ── gravity ─────────────────────────────────────────────────────────────
+    #
+    # Subjects come from Discourse TAGS, not from WordPress. Tagging a topic is
+    # what creates the pairing — there is nothing else to author.
+    #
+    # ⚠ Only tags in the synced vocabulary count. Adding `funny` to a topic must
+    #   not produce a rating row.
+    def gravity_block(work)
+      slugs = Curiobase::Subjects.for_topic(@topic)
+      return node("div", class: "cb-gravity cb-gravity--empty") if slugs.empty?
+
+      # data-mode is read by the rating control to label its buttons with the
+      # right anchor set. Baked here so the client never has to guess.
+      block = node("section", class: "cb-gravity", "data-mode": work["mode"].to_s)
+      h = node("h2", class: "cb-gravity-head")
+      h.content = I18n.t("curiobase.gravity_heading")
+      block.add_child(h)
+
+      # ⚠ One read for every row on this card, not one per row.
+      readings = Gravity.for_subjects(work, slugs)
+
+      slugs.each do |slug|
+        subject = Source.subject(slug)
+        next unless subject
+        # ⚠ Gravity.work_id, not work["id"]. A post-authored record has no id,
+        #   so this baked data-work="" and the vote button posted nothing while
+        #   the score above it rendered correctly from the slug.
+        block.add_child(gravity_row(Gravity.work_id(work), subject, readings[slug.to_s]))
+      end
+
+      block.add_child(anchors)
+      block.add_child(recommend_line) if recommend_line
+      block
+    end
+
+    # ⚠ ONCE PER WORK, NOT ONCE PER SUBJECT ROW.
+    #
+    #   Gravity is a property of the PAIRING — Primer is a 5 on causal-loop and
+    #   would be something else on temporal-perception. Whether the film is worth
+    #   two hours is a property of the FILM, and does not change per subject.
+    #   Repeating it on every row would imply it did.
+    def recommend_line
+      return @recommend_line if defined?(@recommend_line)
+
+      n = Recommendations.for_topic(@topic)
+      @recommend_line =
+        if n.positive?
+          para("cb-recommend", I18n.t("curiobase.recommend", count: n))
+        end
+    end
+
+    def gravity_row(work_id, subject, reading)
+      # ⚠ data-work and data-subject are what the client island rates against.
+      #
+      #   Nothing user-specific may be baked here. `cooked` is ONE shared blob
+      #   served to everybody — a logged-out crawler, an admin, and the person
+      #   who rated this yesterday all get the same bytes. Bake "your rating: 4"
+      #   and it is wrong for every reader but one, and cached that way.
+      #
+      #   The aggregate is public and belongs in the HTML. The personal half is
+      #   fetched after load. That split is not an optimisation, it is the only
+      #   correct answer.
+      row = node("div", class: "cb-row", "data-work": work_id.to_s, "data-subject": subject["slug"])
+
+      name = node("div", class: "cb-row-name")
+      # ⚠ THE FILE, NOT THE TAG PAGE.
+      #
+      #   This linked to /tag/<slug>, which contradicted 02-IA's own rule — "the
+      #   file is canonical, the tag page is navigation" — in the most expensive
+      #   possible way: every Work card funnelled internal links into tag pages
+      #   while the files, which are the product, received none.
+      #
+      #   It was also worse to read. A tag page orders by bumped_at, so clicking
+      #   a subject landed you on whatever got a drive-by reply most recently.
+      #   The file's association list is ordered by judgement.
+      #
+      #   Falls back to the tag page when the Subject has no file yet.
+      a = node("a", href: RecordTopic.href(subject["slug"], tag: tag_for(subject["slug"])))
+      a.content = subject["title"]
+      name.add_child(a)
+      name.add_child(para("cb-row-dek", subject["dek"])) if subject["dek"].present?
+      row.add_child(name)
+
+      row.add_child(score(reading))
+      row.add_child(vote_mount) if SiteSetting.curiobase_member_voting_enabled
+      row
+    end
+
+    # Takes a Curiobase::Gravity::Reading, or nil.
+    #
+    # ⚠ TWO RULES, both learned the hard way.
+    #
+    #   1. NO BAR BELOW TWO VOTERS. One vote drawn as five segments looks like
+    #      consensus. The number alone is the honest presentation until there is
+    #      something to disagree about.
+    #
+    #   2. THE COUNT SITS AGAINST THE BAR, NOT THE NUMBER. The bar is an
+    #      unweighted count of people and the count describes it exactly. The
+    #      number is weighted by standing, so it is not the plain average of
+    #      those same voters and must not be labelled as though it were.
+    def score(reading)
+      wrap = node("div", class: "cb-score")
+
+      # Tagged but nobody has voted. Not a zero — a vacancy. A 0.0 reads as a
+      # verdict, and it would drag every average a reader eyeballs across a page.
+      if reading.nil? || !reading.rated?
+        em = node("span", class: "cb-unrated")
+        em.content = I18n.t("curiobase.unrated")
+        wrap.add_child(em)
+        return wrap
+      end
+
+      mean = node("span", class: "cb-mean")
+      mean.content = format("%.1f", reading.display.to_f)
+      wrap.add_child(mean)
+
+      return wrap unless reading.distributed?
+
+      # The distribution matters more than the mean. A 3.1 where everyone said 3
+      # and a 3.1 where half said 1 and half said 5 are different facts, and on
+      # a site about contested subjects the split is the more honest number.
+      #
+      # Unweighted on purpose — see Gravity. Weighting this would hide exactly
+      # the disagreement it exists to show.
+      dist = reading.distribution
+      if dist.is_a?(Array) && dist.sum.positive?
+        total = dist.sum.to_f
+        bar = node("span", class: "cb-dist", "aria-hidden": "true")
+        dist.each_with_index do |c, i|
+          seg = node("span", class: "cb-dist-seg cb-dist-#{i + 1}")
+          seg["style"] = "flex-grow:#{(c / total * 100).round(2)}"
+          bar.add_child(seg)
+        end
+        wrap.add_child(bar)
+
+        # The bar is aria-hidden because it duplicates nothing a screen reader
+        # can use, so the member count belongs here — attached to the BAR, which
+        # is genuinely n members, and not to the number, which is not.
+        n = node("span", class: "cb-dist-note")
+        n.content = I18n.t("curiobase.members_rated", count: reading.voter_count)
+        wrap.add_child(n)
+      end
+
+      wrap
+    end
+
+    # The mount point for the rating control.
+    #
+    # Empty on purpose. The control is behaviour, not content: it needs the
+    # current user, a CSRF token and a live endpoint, none of which can be baked
+    # into a blob that is shared by every reader and cached for months.
+    #
+    # No JavaScript therefore means no control — and every number still present.
+    # That is the right way round. A crawler needs the score, not the widget.
+    def vote_mount
+      node("div", class: "cb-vote", "data-mount": "gravity")
+    end
+
+    # See Curiobase::Anchors. The wording follows the Work's mode.
+    def anchors
+      para("cb-anchors", Anchors.for_mode(@work_record&.dig("mode")))
+    end
+
+    # Same footprint as a real poster, so the grid never moves.
+    def poster_placeholder(w)
+      fig = node("div", class: "cb-poster cb-poster--empty")
+      label = node("span", class: "cb-poster-label")
+      label.content = [w["medium"], w["year"]].compact_blank.join(" · ")
+      fig.add_child(label)
+      fig
+    end
+
+    # ── helpers ─────────────────────────────────────────────────────────────
+    # `badge` is Markup#badges. Kept as an alias because "the badge line" is
+    # what the rest of this class calls it.
+    def badge(*parts) = badges(*parts)
+
+  end
+end

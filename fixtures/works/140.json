@@ -1,0 +1,20 @@
+{
+  "id": 140,
+  "type": "work",
+  "slug": "secret-of-skinwalker-ranch",
+  "title": "The Secret of Skinwalker Ranch (2020–)",
+  "dek": "The History Channel series that has kept a team on the property since 2020, and made the ranch a household name.",
+  "medium": "series",
+  "mode": "nonfiction",
+  "year": 2020,
+  "creator": "History Channel",
+  "runtime": "7 seasons",
+  "external": {},
+  "gravity": [
+    {
+      "subject": "skinwalker-ranch",
+      "value": 5
+    }
+  ],
+  "updated_at": "2026-07-30T19:18:26"
+}

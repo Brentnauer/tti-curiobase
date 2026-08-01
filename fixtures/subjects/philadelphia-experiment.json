@@ -1,0 +1,35 @@
+{
+  "id": "7307",
+  "type": "subject",
+  "slug": "philadelphia-experiment",
+  "title": "The Philadelphia Experiment",
+  "dek": "The assertion that the USS Eldridge was made invisible and moved instantly from Philadelphia to Norfolk in 1943, resting almost entirely on letters from one correspondent.",
+  "kind": "claim",
+  "domain": "time",
+  "status": "debunked",
+  "period": [
+    "pre-1950"
+  ],
+  "evidence": [
+    "secondhand-account"
+  ],
+  "also_known_as": "Project Rainbow, Project Invisibility",
+  "facts": {},
+  "prose": [
+    {
+      "label": "The claim",
+      "body": "That in October 1943 the USS Eldridge was rendered invisible at the Philadelphia Navy Yard, teleported to Norfolk and back, and that crew members were fused into the deck on its return."
+    },
+    {
+      "label": "Supports",
+      "body": "Carl Allen, writing as Carlos Miguel Allende, sent annotated letters to the Office of Naval Research in 1956 describing the event as an eyewitness aboard a nearby ship. The Navy's own copy of the annotated book was reproduced and circulated, which gave the story an official-looking provenance."
+    },
+    {
+      "label": "Contradicts",
+      "body": "The Eldridge's deck log places her elsewhere for the period in question, and she was not commissioned until August 1943. Allen later told investigators he had imagined the account. No second witness has ever been produced in seventy years."
+    }
+  ],
+  "refs": [],
+  "links": [],
+  "updated_at": "2026-07-30T19:25:16"
+}

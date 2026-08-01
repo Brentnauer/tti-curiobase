@@ -1,0 +1,20 @@
+{
+  "id": 137,
+  "type": "work",
+  "slug": "a-conspiracy-classic",
+  "title": "A Conspiracy Classic (2020)",
+  "dek": "A making-of documentary about the 1984 film, and about how a claim becomes a franchise.",
+  "medium": "video",
+  "mode": "nonfiction",
+  "year": 2020,
+  "external": {
+    "imdb": "tt12501768"
+  },
+  "gravity": [
+    {
+      "subject": "philadelphia-experiment",
+      "value": 4
+    }
+  ],
+  "updated_at": "2026-07-30T19:18:25"
+}

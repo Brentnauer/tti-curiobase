@@ -1,0 +1,27 @@
+{
+  "id": "7291",
+  "type": "subject",
+  "slug": "excalibur",
+  "title": "Excalibur",
+  "dek": "The sword of Arthurian legend, whose earliest names predate the stone-in-the-anvil story by centuries and whose supposed grave was found at Glastonbury in 1191, just as the abbey needed funds.",
+  "kind": "object",
+  "domain": "esoterica",
+  "status": "unfalsifiable",
+  "period": [
+    "ancient",
+    "pre-1950"
+  ],
+  "evidence": [
+    "documentary-record"
+  ],
+  "also_known_as": "Caledfwlch, Caliburnus, Caliburn",
+  "facts": {
+    "object_kind": "Sword",
+    "provenance": "Named in Culhwch and Olwen (c. 1100) as Caledfwlch; Latinised by Geoffrey of Monmouth (1136).",
+    "whereabouts": "Never recovered. The 1191 Glastonbury exhumation produced a cross, not a blade."
+  },
+  "prose": [],
+  "refs": [],
+  "links": [],
+  "updated_at": "2026-07-30T19:18:23"
+}

@@ -1,0 +1,21 @@
+{
+  "id": 135,
+  "type": "work",
+  "slug": "philadelphia-experiment-project-invisibility",
+  "title": "The Philadelphia Experiment: Project Invisibility (1979)",
+  "dek": "Berlitz and Moore's book, which took Carl Allen's letters about the USS Eldridge and turned a fringe correspondence into a story with a name.",
+  "medium": "book",
+  "mode": "nonfiction",
+  "year": 1979,
+  "creator": "Charles Berlitz and William L. Moore",
+  "external": {
+    "isbn": "9780449007464"
+  },
+  "gravity": [
+    {
+      "subject": "philadelphia-experiment",
+      "value": 5
+    }
+  ],
+  "updated_at": "2026-07-30T19:18:24"
+}

@@ -1,0 +1,22 @@
+{
+  "id": 138,
+  "type": "work",
+  "slug": "hunt-for-the-skinwalker-book",
+  "title": "Hunt for the Skinwalker (2005)",
+  "dek": "Kelleher and Knapp's account of the years a privately funded science team spent on the Utah property, and what they recorded.",
+  "medium": "book",
+  "mode": "nonfiction",
+  "year": 2005,
+  "creator": "Colm A. Kelleher and George Knapp",
+  "runtime": "288 pp",
+  "external": {
+    "isbn": "9781416505211"
+  },
+  "gravity": [
+    {
+      "subject": "skinwalker-ranch",
+      "value": 5
+    }
+  ],
+  "updated_at": "2026-07-30T19:18:26"
+}

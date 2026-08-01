@@ -1,0 +1,21 @@
+{
+  "id": 145,
+  "type": "work",
+  "slug": "above-top-secret",
+  "title": "Above Top Secret (1987)",
+  "dek": "Good's survey of official UFO files, and the book that first put the MJ-12 documents in front of a general readership.",
+  "medium": "book",
+  "mode": "nonfiction",
+  "year": 1987,
+  "creator": "Timothy Good",
+  "external": {
+    "isbn": "9780688078607"
+  },
+  "gravity": [
+    {
+      "subject": "majestic-12",
+      "value": 3
+    }
+  ],
+  "updated_at": "2026-07-30T19:18:29"
+}

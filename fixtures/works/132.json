@@ -1,0 +1,21 @@
+{
+  "id": 132,
+  "type": "work",
+  "slug": "encounter-in-rendlesham-forest",
+  "title": "Encounter in Rendlesham Forest (2014)",
+  "dek": "Nick Pope, who ran the Ministry of Defence's UFO desk, writing with the two airmen at the centre of the case: Jim Penniston and John Burroughs.",
+  "medium": "book",
+  "mode": "nonfiction",
+  "year": 2014,
+  "creator": "Nick Pope, John Burroughs and Jim Penniston",
+  "external": {
+    "isbn": "9781250038104"
+  },
+  "gravity": [
+    {
+      "subject": "rendlesham-forest",
+      "value": 5
+    }
+  ],
+  "updated_at": "2026-07-30T18:54:34"
+}

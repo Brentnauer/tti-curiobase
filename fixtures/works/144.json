@@ -1,0 +1,21 @@
+{
+  "id": 144,
+  "type": "work",
+  "slug": "top-secret-majic",
+  "title": "Top Secret/Majic (1996)",
+  "dek": "Friedman's eleven-year argument that the MJ-12 briefing documents are authentic, and the most rigorous case anyone has made for it.",
+  "medium": "book",
+  "mode": "nonfiction",
+  "year": 1996,
+  "creator": "Stanton T. Friedman",
+  "external": {
+    "isbn": "9781569248300"
+  },
+  "gravity": [
+    {
+      "subject": "majestic-12",
+      "value": 5
+    }
+  ],
+  "updated_at": "2026-07-30T19:18:28"
+}

@@ -1,0 +1,22 @@
+{
+  "id": 126,
+  "type": "work",
+  "slug": "the-anubis-gates",
+  "title": "The Anubis Gates (1983)",
+  "dek": "A Coleridge scholar joins a tourist expedition to 1810 London, misses the return window, and finds that the gaps in the historical record he spent his career studying are the ones he is now making.",
+  "medium": "book",
+  "mode": "fiction",
+  "year": 1983,
+  "creator": "Tim Powers",
+  "runtime": "387 pp",
+  "external": {
+    "isbn": "9780441004010"
+  },
+  "gravity": [
+    {
+      "subject": "causal-loop",
+      "value": 3
+    }
+  ],
+  "updated_at": "2026-07-30T18:54:32"
+}

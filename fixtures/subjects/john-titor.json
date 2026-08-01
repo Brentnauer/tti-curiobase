@@ -1,0 +1,34 @@
+{
+  "id": "7283",
+  "type": "subject",
+  "slug": "john-titor",
+  "title": "John Titor",
+  "dek": "The screen name behind a series of posts made between 2000 and 2001 claiming to be a soldier sent back from 2036 to retrieve an IBM 5100...",
+  "kind": "person",
+  "domain": "time",
+  "status": "hoax-admitted",
+  "period": [
+    "2000s"
+  ],
+  "evidence": [
+    "primary-source",
+    "firsthand-account"
+  ],
+  "also_known_as": "Titor, TimeTravel_0, John Titor II",
+  "facts": {
+    "active": "Nov 2000 – Mar 2001",
+    "nationality": "American (claimed)",
+    "known_for": "The 2000–01 time traveller posts"
+  },
+  "prose": [],
+  "refs": [
+    {
+      "label": "Related",
+      "slug": "causal-loop",
+      "title": "Causal Loop"
+    }
+  ],
+  "links": [],
+  "landing_url": "https://timetravelinstitute.com/titor/",
+  "updated_at": "2026-07-30T19:25:16"
+}

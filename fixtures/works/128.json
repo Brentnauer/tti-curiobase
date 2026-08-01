@@ -1,0 +1,22 @@
+{
+  "id": 128,
+  "type": "work",
+  "slug": "why-files-titor",
+  "title": "The John Titor Story (The Why Files)",
+  "dek": "A popular explainer walks through the Titor posts, the IBM 5100 detail that gave them credibility, and the 2003 investigation that traced the account to a Florida family business.",
+  "medium": "video",
+  "mode": "nonfiction",
+  "year": 2022,
+  "creator": "The Why Files",
+  "runtime": "34 min",
+  "external": {
+    "youtube": "dQw4w9WgXcQ"
+  },
+  "gravity": [
+    {
+      "subject": "john-titor",
+      "value": 5
+    }
+  ],
+  "updated_at": "2026-07-30T18:54:32"
+}

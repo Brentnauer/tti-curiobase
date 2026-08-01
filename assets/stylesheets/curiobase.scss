@@ -1,0 +1,903 @@
+// Presentable defaults.
+//
+// Long term the look belongs in the discourse-curiobase theme component — a
+// broken component is a checkbox in the admin UI, while a broken plugin blocks
+// ./launcher rebuild. But that component does not exist for this design yet,
+// and a plugin that renders unstyled HTML is a plugin nobody can evaluate.
+//
+// Everything here uses Discourse's own CSS variables, so it follows whatever
+// theme is active rather than assuming dark.
+//
+// ══════════════════════════════════════════════════════════════════════════
+// EVERY SIZE IS ON DISCOURSE'S TYPE SCALE. NO BARE MULTIPLIERS.
+// ══════════════════════════════════════════════════════════════════════════
+//
+// Measured on a real card before this pass: **nine distinct font sizes, and
+// only one of them landed on the scale.** 13.6px and 14.08px sat a third of a
+// pixel either side of `--font-down-1` (13.93px); 11.2, 11.52 and 11.56px all
+// hovered below `--font-down-2`, which core's own font-variables.scss labels
+// *"smallest size we use"*. Nothing was badly wrong and nothing lined up, and
+// that is exactly what makes a component read as foreign — a reader does not
+// see a wrong value, they see a block that does not share the page's rhythm.
+//
+//   --font-down-3  10.56px   uppercase micro-labels ONLY
+//   --font-down-2  12.13px   the smallest readable text
+//   --font-down-1  13.93px   small text
+//   --font-0       16px      the dek and the body
+//   --font-up-1    18.38px   the gravity mean
+//
+// ⚠ THE SCALE VARIABLES ARE `em`, SO THEY COMPOUND WHEN NESTED. Applying
+//   `--font-down-2` inside an element already at `--font-down-1` gives 10.56px,
+//   not 12.13px. Set a size where the parent is at `--font-0`; below that,
+//   inherit and use colour to make a thing quieter. Two elements here — the buy
+//   disclosure and the full-text body — were doing exactly this and coming out
+//   near-illegible.
+
+// One eyebrow, not three copies of one.
+//
+// ⚠ `.cb-gravity-head`, `.cb-prose-label` and `.cb-assoc-head` were byte-
+//   identical rules. That is the same duplication the Ruby side spent a week
+//   removing, and it fails the same way: someone tunes one of the three.
+%cb-eyebrow {
+  font-size: var(--font-down-3) !important;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: var(--line-height-medium);
+  color: var(--tertiary) !important;
+}
+
+.curiobase-card {
+  border: 1px solid var(--primary-low);
+  // ⚠ Named, not `8px`. Identical value today; it follows the theme if a theme
+  //   ever changes it, which a literal cannot.
+  border-radius: var(--d-border-radius-large, 8px);
+  padding: 1em 1.1em;
+  margin-bottom: 1.2em;
+  background: var(--primary-very-low);
+
+  .cb-head {
+    display: flex;
+    gap: 1.1em;
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // THE POSTER — 2:3, PORTRAIT, AND ALWAYS THE SAME BOX.
+  // ══════════════════════════════════════════════════════════════════════════
+  //
+  // ⚠ THE RATIO IS THE TYPE SIGNAL. Portrait means somebody made this;
+  //   landscape (.cb-plate) means it happened or exists. A reader tells a Work
+  //   from a Subject before reading a word.
+  //
+  // ⚠ `aspect-ratio` + `object-fit: cover`, NOT a bare width. With only a width
+  //   set, a 2:3 film poster and a square game cover produced different heights,
+  //   so the text beside them started at a different y on every card and a run
+  //   of cards looked broken rather than varied.
+  //
+  // ⚠ NO DROP SHADOW. This carried `box-shadow: 0 2px 12px rgba(0,0,0,.35)`,
+  //   which is why it read as pasted on: Discourse is flat and signals edges
+  //   with a hairline border, never with elevation.
+  .cb-poster {
+    flex: none;
+    width: 104px;
+    aspect-ratio: 2 / 3;
+    border-radius: var(--d-border-radius, 4px);
+    border: 1px solid var(--primary-low);
+    overflow: hidden;
+    background: var(--primary-very-low);
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+  }
+
+  // No cover yet. Same footprint, so a run of cards still lines up, and it
+  // says what the thing is instead of showing an empty hole.
+  .cb-poster--empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4em;
+
+    .cb-poster-label {
+      font-size: var(--font-down-3);
+      line-height: var(--line-height-medium);
+      text-align: center;
+      color: var(--primary-medium);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // THE PLATE — 3:2, LANDSCAPE, WITH A CAPTION.
+  // ══════════════════════════════════════════════════════════════════════════
+  //
+  // ⚠ 3:2 rather than 16:9 on purpose. 3:2 is the native shape of photography,
+  //   so archival material crops gracefully; 16:9 is a video shape and slices
+  //   the top and bottom off anything older than a camcorder.
+  //
+  // ⚠ Not a hero. It sits INSIDE the card, after the dek, bordered, with its
+  //   source underneath — a plate in a file rather than a banner on a page.
+  .cb-plate-figure {
+    margin: 0.9em 0 0;
+  }
+
+  .cb-plate {
+    aspect-ratio: 3 / 2;
+    border-radius: var(--d-border-radius, 4px);
+    border: 1px solid var(--primary-low);
+    overflow: hidden;
+    background: var(--primary-very-low);
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+  }
+
+  // ⚠ The caption is the difference between a picture and evidence. A Work's
+  //   poster is the artifact and explains itself; a Subject's plate is a claim
+  //   about something contested, and an uncredited photograph is a weaker one.
+  .cb-plate-credit {
+    margin: 0.45em 0 0;
+    font-size: var(--font-down-2);
+    line-height: var(--line-height-large);
+    color: var(--primary-medium);
+    border-left: 2px solid var(--primary-low);
+    border-radius: 0;
+    padding-left: 0.6em;
+  }
+
+  // ⚠ Flex column exists so .cb-badges can carry order: -1.
+  //
+  //   The badges must LOOK like they lead and must NOT lead in document order:
+  //   Discourse builds the meta description from the start of cooked, and badge
+  //   text has no spaces once tags are stripped, so leading with them produced
+  //   "documenthidden historydebunked …" as a search snippet.
+  //
+  //   Visual order is CSS's job. Document order belongs to the crawler.
+  .cb-body {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cb-badges {
+    order: -1;
+    display: flex;
+    gap: 6px;
+    margin: 0 0 0.5em;
+  }
+
+  // ⚠ 2px matches core's `--category-badge-border-radius` exactly. The one
+  //   place in this file where a small literal radius is the native answer.
+  .cb-badge {
+    font-size: var(--font-down-3);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    line-height: var(--line-height-large);
+    padding: 0.2em 0.6em;
+    border-radius: 2px;
+
+    // ⚠ `--tertiary`, NOT `--primary`. A solid `--primary` block is the highest
+    //   contrast the theme can produce, and it was sitting at the top of every
+    //   card — louder than the title of the topic it was inside. It also gave
+    //   the card two accent colours, since the eyebrows and the gravity ramp
+    //   are both `--tertiary`. This is how core styles `.badge-notification`.
+    &--primary {
+      background: var(--tertiary);
+      color: var(--secondary);
+    }
+    &--muted {
+      border: 1px solid var(--primary-low-mid);
+      color: var(--primary-medium);
+    }
+  }
+
+  // ⚠ The dek is first, and it is a sentence. Whatever leads the post wins the
+  //   search snippet — leading with a fact table once produced "Medium Film
+  //   Year 2004 Creator Shane Carruth".
+  .cb-dek {
+    margin: 0;
+    line-height: var(--cooked-line-height, 1.5);
+  }
+
+  .cb-meta {
+    margin: 0.7em 0 0;
+    font-size: var(--font-down-1);
+    color: var(--primary-medium);
+  }
+
+  .cb-ext {
+    margin: 0.25em 0 0;
+    font-size: var(--font-down-1);
+    a { color: var(--primary-medium); }
+  }
+}
+
+// ── gravity ────────────────────────────────────────────────────────────────
+.cb-gravity {
+  margin-top: 1.1em;
+  padding-top: 0.9em;
+  border-top: 1px solid var(--primary-low);
+
+  &--empty { display: none; }
+}
+
+.cb-gravity-head {
+  @extend %cb-eyebrow;
+  margin: 0 0 0.8em !important;
+}
+
+// ⚠ A GRID WITH FIXED TRACKS, because the control changes size as you use it.
+//
+//   As a flex row the name took whatever was left after the stars and their
+//   label, so the dek wrapped into a tall narrow column with dead space beside
+//   it — and the label appearing on hover resized the control, which resized
+//   the name, which reflowed the dek. Clicking a mark made the whole row jump.
+//
+//   Fixed tracks mean the geometry is decided before any of that: the name gets
+//   everything left over, and nothing the control does can move it.
+// ⚠ THE THIRD TRACK IS A FIXED WIDTH, NOT `auto`, AND THAT IS THE REST OF THE
+//   FIX. The comment above claimed "fixed tracks" while the last one was `auto`
+//   — so the column still sized itself to .cb-vote, whose width is its widest
+//   child: the anchor label. "set dressing" and "cannot exist without it" are
+//   not the same width, so changing your vote resized the column, resized the
+//   name, and reflowed the dek. The row still moved, just later in the process.
+//
+//   9.5em holds the longest anchor in every mode at 0.72em.
+.cb-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 4.5em 9.5em;
+  column-gap: 1.5em;
+  align-items: start;
+  padding: 0.7em 0;
+  border-top: 1px solid var(--primary-low);
+
+  &:first-of-type { border-top: 0; }
+}
+
+.cb-row-name { min-width: 0; }
+
+.cb-row-dek {
+  margin: 0.2em 0 0;
+  font-size: var(--font-down-2);
+  color: var(--primary-medium);
+  line-height: var(--line-height-large);
+
+  // Two lines is enough to say what a subject is. Beyond that the row grows
+  // taller than the control beside it and the whole block goes airy.
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cb-score {
+  text-align: right;
+  min-width: 0;
+}
+
+// ⚠ The one thing on the row that goes UP the scale. It was `1.05em` — a size
+//   with no relationship to anything, and close enough to the body text to look
+//   like an accident rather than emphasis.
+.cb-mean {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-size: var(--font-up-1);
+  line-height: var(--line-height-medium);
+}
+
+.cb-count {
+  display: block;
+  font-size: var(--font-down-2);
+  line-height: var(--line-height-large);
+  color: var(--primary-medium);
+  margin-top: 2px;
+}
+
+// An unscored pairing is not a pairing scoring zero. Words, not a number.
+.cb-unrated {
+  font-size: var(--font-down-1);
+  font-style: italic;
+  color: var(--primary-medium);
+}
+
+// The distribution matters more than the mean. A 3.1 where everyone said 3 and
+// a 3.1 where half said 1 and half said 5 are different facts, and on a site
+// about contested subjects the split is the more honest number.
+.cb-dist {
+  display: flex;
+  gap: 2px;
+  height: 3px;
+  margin-top: 6px;
+
+  .cb-dist-seg {
+    background: var(--tertiary);
+    min-width: 0;
+
+    &.cb-dist-1,
+    &.cb-dist-2 { background: var(--primary-low-mid); }
+  }
+}
+
+// The anchors are load-bearing, not decoration — they are what makes the mean
+// mean something.
+.cb-anchors {
+  margin: 0.9em 0 0;
+  padding-top: 0.7em;
+  border-top: 1px solid var(--primary-low);
+  font-size: var(--font-down-2);
+  color: var(--primary-medium);
+  line-height: var(--line-height-large);
+}
+
+// ── the rating control ─────────────────────────────────────────────────────
+// Added client-side into an empty div. Everything above it — the mean, the
+// count, the distribution — is server-rendered and survives this file failing
+// to load.
+// ⚠ THE LABEL GOES UNDERNEATH, ON A RESERVED LINE.
+//
+//   It used to sit beside the marks, so hovering along the row changed the
+//   control's width — "set dressing" and "cannot exist without it" are not the
+//   same size — and everything to the left of it shuffled. A row that moves
+//   while you are aiming at it is a row you misclick.
+//
+//   Below the marks with a fixed line height, the geometry never changes: the
+//   space is there whether the label is or not.
+.cb-vote {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25em;
+
+  &:empty { display: none; }
+
+  &--saving { opacity: 0.5; pointer-events: none; }
+
+  &--anon,
+  &--locked {
+    font-size: var(--font-down-2);
+    line-height: var(--line-height-large);
+    color: var(--primary-medium);
+    text-align: right;
+    max-width: 11em;
+  }
+}
+
+.cb-stars {
+  display: flex;
+  gap: 1px;
+}
+
+// Gravity, not stars. The icon is a body with mass — the metaphor is the whole
+// reason the scale reads as "how hard does this pull on the idea" rather than
+// "did you like it".
+//
+// ⚠ BUILT LIKE A DISCOURSE FLAT BUTTON, because that is what it is. Discourse
+//   signals state with background and colour on a fixed box — never by growing
+//   one. `transform: scale(1.25)` on hover made the marks jump under the
+//   cursor, which no other control on the site does.
+.cb-star {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7em;
+  height: 1.7em;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: var(--d-border-radius, 4px);
+  line-height: 1;
+  cursor: pointer;
+  color: var(--primary-low-mid);
+  // ⚠ `var(--d-duration-fast, …)` was here and THAT VARIABLE DOES NOT EXIST in
+  //   this Discourse — checked, not assumed. It fell through to the literal on
+  //   every render, so the code read as theme-aware while being nothing of the
+  //   sort. `--d-button-transition` is the real one, and this is a button.
+  transition: var(--d-button-transition, background 0.15s ease, color 0.15s ease);
+
+  // ⚠ The icon size never changes. Every state below alters colour or
+  //   background only, so the row cannot move.
+  .d-icon {
+    width: 0.75em;
+    height: 0.75em;
+  }
+
+  &:hover {
+    background: var(--primary-low);
+    color: var(--tertiary);
+  }
+
+  // Discourse's own focus treatment, not a bespoke one.
+  &:focus-visible {
+    outline: 2px solid var(--tertiary);
+    outline-offset: -2px;
+    color: var(--tertiary);
+  }
+
+  // Filled up to and including the chosen mark.
+  &.is-on {
+    color: var(--tertiary);
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // YOUR OWN VOTE. A BACKGROUND, NOT AN UNDERLINE.
+  // ══════════════════════════════════════════════════════════════════════════
+  //
+  // ⚠ This was a `::after` with `display: block` INSIDE the button, so the rule
+  //   drawn under your own mark added its height to the button's box and
+  //   shifted the icon up a hair — visibly, and only on the one mark you had
+  //   chosen. A selected state that changes an element's size is the same class
+  //   of bug as the column that resized: geometry doing the job of colour.
+  //
+  //   A filled background is how Discourse marks a selected flat button, costs
+  //   no layout, and reads as "this one is yours" more clearly than a 2px rule.
+  &.is-mine {
+    background: var(--tertiary-low);
+    color: var(--tertiary);
+
+    &:hover {
+      background: var(--tertiary-low);
+    }
+  }
+}
+
+// The chosen anchor, in words, under the control. The number alone means
+// nothing; "builds on it" is the thing being asserted.
+//
+// ⚠ Two lines of height are reserved whether there is text or not. `nowrap` in
+//   a fixed-width track would clip "cannot exist without it"; wrapping without
+//   reserved height would make the row grow the moment you voted. Reserving the
+//   space is what makes both safe.
+.cb-vote-status {
+  min-height: 2.4em;
+  width: 100%;
+  font-size: var(--font-down-2);
+  font-style: italic;
+  line-height: var(--line-height-medium);
+  color: var(--primary-medium);
+  text-align: right;
+  overflow-wrap: break-word;
+}
+
+// ── subject ────────────────────────────────────────────────────────────────
+// Same order trick as the work card — the dek is first in the DOM, the badges
+// only look like they are.
+.curiobase-card--subject {
+  display: flex;
+  flex-direction: column;
+
+  .cb-badges { order: -1; }
+}
+
+// ⚠ Paragraphs, not definition-list cells. `supports` and `contradicts` are
+// the reason the claim kind exists; squeezed into a two-column grid they read
+// as trivia instead of as the argument.
+.cb-prose {
+  margin: 1em 0 0;
+}
+
+.cb-prose-label {
+  @extend %cb-eyebrow;
+  margin: 0.9em 0 0.3em !important;
+}
+
+.cb-prose-body {
+  margin: 0;
+  line-height: var(--cooked-line-height, 1.5);
+}
+
+.cb-refs a { font-weight: 600; }
+
+.cb-links {
+  margin: 0.7em 0 0;
+  font-size: var(--font-down-1);
+  a { color: var(--primary-medium); }
+}
+
+// The navigational facets. Quieter than the kind-specific facts — these are
+// how you get somewhere else, not what this record says.
+.cb-facets {
+  margin-top: 0.9em !important;
+  padding-top: 0.7em;
+  border-top: 1px solid var(--primary-low);
+  font-size: var(--font-down-1) !important;
+  dd { color: var(--primary-medium); }
+}
+
+// ⚠ Collapsed, and last. A recovered document runs to tens of thousands of
+// words; one exhibit's meta description was "**** * CONFIDENTIAL * ****".
+.cb-fulltext {
+  margin-top: 1em;
+  font-size: var(--font-down-1);
+
+  summary {
+    cursor: pointer;
+    color: var(--primary-medium);
+  }
+}
+
+// ⚠ INHERITS. This was `0.92em` inside a parent already scaled down, so the two
+//   compounded and a recovered document rendered at ~12.8px — the least legible
+//   text on the site, on the one block that is nothing but text to read.
+.cb-fulltext-body {
+  margin: 0.6em 0 0;
+  padding: 0.8em;
+  max-height: 26em;
+  overflow: auto;
+  white-space: pre-wrap;
+  background: var(--primary-very-low);
+  border-left: 3px solid var(--primary-low-mid);
+  line-height: var(--cooked-line-height, 1.5);
+}
+
+.cb-facts {
+  display: grid;
+  grid-template-columns: minmax(6em, max-content) 1fr;
+  gap: 0.15em 1.1em;
+  margin: 0.9em 0 0;
+  font-size: var(--font-down-1);
+
+  dt { color: var(--primary-medium); }
+  dd { margin: 0; }
+}
+
+.cb-landing {
+  margin: 0.9em 0 0;
+  font-size: var(--font-down-1);
+}
+
+@media (max-width: 700px) {
+  .curiobase-card {
+    // ⚠ The poster stays BESIDE the text rather than stacking. Stacked, a 2:3
+    //   poster at full width pushes the dek below the fold on a phone — and the
+    //   dek is the one thing that has to be read first.
+    .cb-poster { width: 76px; }
+  }
+  // Name across the top, then the number and the control side by side under it.
+  .cb-row {
+    grid-template-columns: 1fr auto;
+    row-gap: 0.4em;
+  }
+  .cb-row-name { grid-column: 1 / -1; }
+  .cb-score { text-align: left; align-self: center; }
+  .cb-star { padding: 6px 4px; } // 44px touch target territory
+}
+
+// ── the tag page banner ────────────────────────────────────────────────────
+// Deliberately quieter than the record card. This page is a list; the banner
+// says what the list is about and points at the record. If it competed with
+// the card on the record topic, there would be two pages about one Subject and
+// neither would be the obvious one.
+.curiobase-tag-banner {
+  margin-bottom: 1.2em;
+
+  .curiobase-card--banner {
+    border: 1px solid var(--primary-low);
+    border-radius: var(--d-border-radius-large, 8px);
+    padding: 0.9em 1.1em;
+    background: var(--primary-very-low);
+  }
+
+  .cb-dek {
+    margin: 0;
+    line-height: var(--cooked-line-height, 1.5);
+  }
+
+  .cb-filters { margin: 0.9em 0 0; }
+
+  .cb-landing {
+    margin: 0.7em 0 0;
+    font-size: var(--font-down-1);
+  }
+
+  .cb-record-link { font-weight: 600; }
+}
+
+// ── associations ───────────────────────────────────────────────────────────
+// Everything that engages a Subject. The discussions half comes from
+// Discourse's own tag index and costs nothing.
+.cb-assoc {
+  margin-top: 1.1em;
+  padding-top: 0.9em;
+  border-top: 1px solid var(--primary-low);
+
+  &--empty { display: none; }
+}
+
+.cb-assoc-head {
+  @extend %cb-eyebrow;
+  margin: 0 0 0.8em !important;
+}
+
+// Real links, not JS tabs — a crawler follows them and a reader without
+// scripting still gets a filtered list.
+.cb-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 1em;
+
+  // Nothing engages this subject yet. "All 0" is a control that does nothing
+  // sitting next to a number saying so.
+  &--empty { display: none; }
+}
+
+// ⚠ 10px, not 11px. Core's `.badge-wrapper` pill is 10px — an arbitrary 11 is a
+//   value that is *nearly* the house radius, which reads worse than one that is
+//   obviously different.
+.cb-filter {
+  font-size: var(--font-down-2);
+  line-height: var(--line-height-large);
+  padding: 0.2em 0.7em;
+  border: 1px solid var(--primary-low-mid);
+  border-radius: 10px;
+  color: var(--primary-medium);
+
+  &.is-active {
+    background: var(--tertiary);
+    border-color: var(--tertiary);
+    color: var(--secondary);
+  }
+}
+
+.cb-assoc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+// ⚠ A GRID, NOT A FLEX ROW.
+//
+//   Flex sized every cell to its own content, so "13 recommend" and "6
+//   recommend" started at different x positions and the column looked ragged
+//   all the way down. Fixed tracks are the whole fix — the numbers only line
+//   up if every row agrees where the columns are, which also means every row
+//   has to emit both cells even when they are empty.
+// ⚠ THREE TRACKS, NOT FIVE. The kind used to be its own 5.5em column, so a row
+//   read `[thumb] BOOK  The Voynich Manuscript (2016)` — three things racing
+//   across one line, with width spent on a word the cover beside it already
+//   implies. It is an eyebrow inside .cb-assoc-main now, and the title got the
+//   space back.
+.cb-assoc-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 4.2em 3.6em;
+  align-items: center;
+  gap: 0.9em;
+  padding: 0.5em 0;
+  border-top: 1px solid var(--primary-low);
+
+  &:first-child { border-top: 0; }
+  &[hidden] { display: none; }
+}
+
+// The thumb column only exists when at least one row in the list has a cover.
+.cb-assoc-list--thumbs .cb-assoc-row {
+  grid-template-columns: 2.4em minmax(0, 1fr) 4.2em 3.6em;
+}
+
+.cb-assoc-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1em;
+}
+
+// ⚠ A cell is still reserved on a row whose Work has no cover, so the titles
+//   stay aligned — but it is EMPTY, not a bordered grey box. A column of empty
+//   boxes reads as broken; a column of gaps reads as incomplete.
+.cb-assoc-thumb {
+  width: 2.4em;
+  aspect-ratio: 2 / 3;
+  border-radius: 2px;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: 2px;
+    border: 1px solid var(--primary-low);
+  }
+}
+
+// The eyebrow. Quiet enough that the title stays the loudest thing in the row,
+// which is the same hierarchy Discourse's own topic list uses.
+.cb-assoc-kind {
+  font-size: var(--font-down-3);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  line-height: var(--line-height-medium);
+  color: var(--primary-medium);
+}
+
+.cb-assoc-title {
+  min-width: 0;
+  line-height: var(--line-height-medium);
+}
+
+.cb-assoc-meta {
+  font-variant-numeric: tabular-nums;
+  font-size: var(--font-down-1);
+  text-align: right;
+  white-space: nowrap;
+}
+
+// ⚠ The one bare multiplier left in this file, and it is the right unit here: a
+//   glyph is sized against the text it sits in, not against the page. Putting it
+//   on the type scale would make it jump when the label beside it did not.
+.cb-glyph {
+  margin-right: 0.35em;
+  font-size: 0.9em;
+  line-height: var(--line-height-small);
+}
+
+// ⚠ The ramp is INTENSITY, not quality — gravity measures pull, and a 1 is not
+//   a bad review. So it runs along the accent colour rather than red-to-green,
+//   which would read as a verdict.
+.cb-assoc-gravity {
+  font-weight: 700;
+  color: var(--primary);
+
+  .cb-glyph { color: var(--tertiary); opacity: 0.25; }
+
+  &[data-strength="3"] .cb-glyph { opacity: 0.5; }
+  &[data-strength="4"] .cb-glyph { opacity: 0.75; }
+  &[data-strength="5"] .cb-glyph { opacity: 1; }
+  &[data-strength="5"] { color: var(--tertiary); }
+}
+
+// Matches the heart Discourse itself uses for a like, so the affordance and
+// the number are visibly the same thing.
+.cb-recommend {
+  color: var(--primary-medium);
+  .cb-glyph { color: var(--love, #fa6c8d); }
+}
+
+.cb-assoc-replies {
+  color: var(--primary-medium);
+  font-size: var(--font-down-2);
+  grid-column: 3 / -1;
+}
+
+.cb-unrated { color: var(--primary-medium); }
+
+@media (max-width: 700px) {
+  // The eyebrow already stacks inside .cb-assoc-main, so the row only has to
+  // drop its two number columns under the title.
+  .cb-assoc-row {
+    grid-template-columns: minmax(0, 1fr) 3.6em;
+    gap: 0.3em 0.8em;
+  }
+  .cb-assoc-list--thumbs .cb-assoc-row {
+    grid-template-columns: 2.4em minmax(0, 1fr) 3.6em;
+  }
+  .cb-assoc-thumb { align-self: start; }
+  .cb-assoc-gravity { justify-self: start; text-align: left; }
+}
+
+// ── where to buy it ────────────────────────────────────────────────────────
+//
+// ⚠ Quiet. This sits below the gravity block on purpose: the judgement is why
+//   a reader is here and the shop is what they might do afterwards. Styled as
+//   text links rather than filled buttons so the card reads as a catalogue
+//   entry that happens to tell you where to get one — not a storefront.
+.cb-buy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5em;
+  margin: 0.9em 0 0;
+  padding-top: 0.8em;
+  border-top: 1px solid var(--primary-low);
+  font-size: var(--font-down-1);
+}
+
+.cb-buy-label {
+  color: var(--primary-medium);
+}
+
+.cb-buy-link {
+  padding: 0.3em 0.7em;
+  border: 1px solid var(--primary-low-mid);
+  border-radius: var(--d-border-radius, 4px);
+  line-height: var(--line-height-large);
+
+  &:hover {
+    background: var(--primary-low);
+  }
+
+  // ⚠ The free sources lead, and they are allowed to look like the better
+  //   answer, because for most of this catalogue they are: a 1975 paperback is
+  //   on archive.org and out of print everywhere else.
+  &--free {
+    border-color: var(--tertiary);
+    color: var(--tertiary);
+  }
+}
+
+// ⚠ Ships WITH the links, never on another surface. The FTC wants the
+//   disclosure close to the link, and a reader who has to hunt for it has been
+//   told nothing.
+// ⚠ INHERITS its parent's size. It was `0.85em` inside a block already at
+//   `0.85em`, which compounded to 11.6px — a disclosure the reader is meant to
+//   read, set smaller than anything else on the card. Colour makes it quiet;
+//   size was making it deniable.
+.cb-buy-note {
+  flex: 1 1 100%;
+  color: var(--primary-medium);
+}
+
+// ⚠ Small on purpose. Enough to recognise the Subject; not enough to make the
+//   tag page a second copy of the record topic. See ARCHITECTURE §VI.2.
+.cb-banner-thumb {
+  float: right;
+  width: 84px;
+  aspect-ratio: 3 / 2;
+  margin: 0 0 0.6em 1em;
+  border-radius: var(--d-border-radius, 4px);
+  border: 1px solid var(--primary-low);
+  overflow: hidden;
+  background: var(--primary-very-low);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  // Nothing to show and nothing to reserve — the banner is a paragraph, not a
+  // grid, so an empty box would just be an empty box.
+  &--empty { display: none; }
+}
+
+// ── the same two numbers on a tag page's topic list ────────────────────────
+//
+// Deliberately quieter than in the association list. Discourse owns this row
+// and the title has to stay the loudest thing in it.
+// ⚠ `--font-down-2`, and the step is measured against the TOPIC TITLE, not the
+//   post body — the scale variables are `em`, so here they resolve against
+//   Discourse's list row rather than against 16px. `--font-down-1` computed to
+//   16px beside an 18.4px title, which is not "quieter", it is very nearly the
+//   same size. That relativity is a feature: this stays proportionally quiet if
+//   Discourse ever resizes the row.
+.cb-list-scores {
+  display: inline-flex;
+  gap: 0.7em;
+  margin-left: 0.6em;
+  font-size: var(--font-down-2);
+  font-variant-numeric: tabular-nums;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.cb-list-score {
+  display: inline-flex;
+  align-items: center;
+  color: var(--primary-medium);
+
+  .cb-glyph { margin-right: 0.25em; }
+}
+
+.cb-list-gravity {
+  font-weight: 700;
+  .cb-glyph { color: var(--tertiary); opacity: 0.3; }
+
+  &[data-strength="3"] .cb-glyph { opacity: 0.55; }
+  &[data-strength="4"] .cb-glyph { opacity: 0.8; }
+  &[data-strength="5"] .cb-glyph { opacity: 1; }
+  &[data-strength="5"] { color: var(--tertiary); }
+}
+
+.cb-list-recommend .cb-glyph { color: var(--love, #fa6c8d); }

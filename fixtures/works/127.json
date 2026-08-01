@@ -1,0 +1,26 @@
+{
+  "id": 127,
+  "type": "work",
+  "slug": "steins-gate",
+  "title": "Steins;Gate (2009)",
+  "dek": "A self-styled mad scientist finds his microwave can text the past, then spends the game learning that each rewritten message moves the world onto a slightly worse timeline.",
+  "medium": "game",
+  "mode": "fiction",
+  "year": 2009,
+  "creator": "5pb. and Nitroplus",
+  "runtime": "~30 h",
+  "external": {
+    "igdb": "steins-gate"
+  },
+  "gravity": [
+    {
+      "subject": "causal-loop",
+      "value": 5
+    },
+    {
+      "subject": "john-titor",
+      "value": 4
+    }
+  ],
+  "updated_at": "2026-07-30T18:54:31"
+}

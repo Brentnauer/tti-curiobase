@@ -1,0 +1,108 @@
+# ⚠ THE TOP-LEVEL KEY IS THE SETTING CATEGORY, AND IT NAMES THE ADMIN PAGE.
+#
+#   `Plugin::Instance#humanized_name` is `(setting_category_name || name)`, so
+#   with this under `plugins:` the page title fell back to the directory name
+#   and rendered as **"Tti curiobase"**. Naming the category gives it a real
+#   title and its own section in /admin/site_settings, which is what core
+#   plugins do. Settings are stored by name, so this moves nothing.
+#
+#   The label comes from `admin_js.admin.site_settings.categories.curiobase` in
+#   config/locales/client.en.yml — without that key the title is the raw
+#   translation-missing string, so the two must ship together.
+curiobase:
+  curiobase_enabled:
+    default: false
+    client: true
+
+  # Minimum trust level to cast a gravity rating.
+  curiobase_min_trust_level:
+    default: 1
+    client: true
+
+  # The tag group holding the Subject vocabulary. A tag outside it is an
+  # ordinary tag and creates no rating row.
+  curiobase_subject_tag_group:
+    default: "Subjects"
+    client: false
+
+  # Post 2 of every record topic becomes a community wiki.
+  #
+  # ⚠ Ships off because turning it on WRITES A POST to every record topic, and
+  #   that is a visible change to a live forum rather than a rendering tweak.
+  #
+  # ⚠ Who may edit is NOT set here — it is Discourse's own
+  #   `edit_wiki_post_allowed_groups`, which defaults to TL1. On a forum with a
+  #   28-year backlog of cranks, TL2 or a named group is a safer opening
+  #   position: loosening later is a click, tightening after vandalism is a
+  #   cleanup.
+  curiobase_annotation_enabled:
+    default: false
+    client: false
+
+  # ⚠ ON. Gravity IS the vote — there is no other source for the number.
+  #
+  #   This shipped off for a while, alongside an "institute assessment" that sat
+  #   outside the average at a fixed weight. That inverted the feature: gravity
+  #   is what the membership says a work has to do with a subject, and the
+  #   operator is one voter in it. Turning this off does not fall back to an
+  #   editorial number any more — it removes the number entirely.
+  curiobase_member_voting_enabled:
+    default: true
+    client: true
+
+  # ── buy links ────────────────────────────────────────────────────────────
+  #
+  # ⚠ OFF by default, and each vendor needs its own id before it renders. A
+  #   buy button with no affiliate tag is a link that earns nothing and still
+  #   costs the reader's trust.
+  curiobase_buy_links_enabled:
+    default: false
+    client: false
+
+  # Amazon Associates tag, e.g. "tti-20". Blank hides the Amazon button.
+  #
+  # ⚠ ONE TAG COVERS AMAZON AND ABEBOOKS. AbeBooks is an Amazon company and runs
+  #   on the same Associates account, which matters here because out of print is
+  #   the normal state of this catalogue.
+  curiobase_amazon_tag:
+    default: ""
+    client: false
+
+  # GOG affiliate tracking prefix. Blank hides the GOG button.
+  #
+  # ⚠ THIS IS A WHOLE URL PREFIX, NOT AN ID. GOG runs affiliates through
+  #   Adtraction, whose links wrap the destination in a redirect carrying both a
+  #   programme id and an affiliate id. Paste the prefix your affiliate
+  #   dashboard gives you, up to and including the parameter the destination URL
+  #   goes in — the GOG search URL is appended, URL-encoded.
+  #
+  #   A guessed tracking URL is the worst possible failure here: it looks like
+  #   it works and credits nobody. Better that this is fiddly once.
+  curiobase_gog_tracking_prefix:
+    default: ""
+    client: false
+
+  # eBay Partner Network campaign id. Blank hides the eBay button.
+  #
+  # ⚠ eBay links are SEARCHES, never listings. A listing id is a dead link
+  #   within weeks and a permanent chore; a search for the title never expires.
+  curiobase_ebay_campaign:
+    default: ""
+    client: false
+
+  # Members of this group get +1 on their vote weight, capped at 5.
+  #
+  # ⚠ Keep the bonus at +1. A supporter at TL3 weighs 4, not 6. If money moves
+  #   the number materially the number stops being worth reading, and every
+  #   reader who works that out stops trusting the catalogue.
+  #
+  # ⚠ `type: group` — A PICKER, NOT A TYPED NAME. This was a free-text field
+  #   holding a group name, looked up with `Group.find_by(name:)`. A typo, a
+  #   rename, or trailing whitespace returned an empty set: every supporter
+  #   silently loses their bonus and the setting still reads as configured.
+  #   That is this project's signature failure — a no-op that looks like it
+  #   worked — and a picker makes it unrepresentable.
+  curiobase_supporter_group:
+    default: ""
+    type: group
+    client: false

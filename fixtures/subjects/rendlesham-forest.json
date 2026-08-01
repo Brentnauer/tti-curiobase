@@ -1,0 +1,30 @@
+{
+  "id": "7284",
+  "type": "subject",
+  "slug": "rendlesham-forest",
+  "title": "Rendlesham Forest",
+  "dek": "Over three nights in December 1980, airmen from two adjacent USAF bases in Suffolk reported lights in the forest, and a deputy base commander recorded his own account on a handheld tape.",
+  "kind": "incident",
+  "domain": "contact",
+  "status": "contested",
+  "period": [
+    "1980s"
+  ],
+  "evidence": [
+    "firsthand-account",
+    "documentary-record",
+    "physical-trace"
+  ],
+  "also_known_as": "Rendlesham, the Halt incident, Britain's Roswell",
+  "facts": {
+    "began": "1980-12-26",
+    "ended": "1980-12-28",
+    "where": "Rendlesham Forest, Suffolk, England",
+    "witnesses": "USAF personnel from Bentwaters and Woodbridge",
+    "outcome": "The Halt memo was released in 1983; the MoD closed its file without a determination."
+  },
+  "prose": [],
+  "refs": [],
+  "links": [],
+  "updated_at": "2026-07-29T00:35:42"
+}

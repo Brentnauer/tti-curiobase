@@ -1,0 +1,20 @@
+{
+  "id": 134,
+  "type": "work",
+  "slug": "capel-green",
+  "title": "Capel Green (2025)",
+  "dek": "A feature documentary built around Larry Warren and other witnesses, named for the field beside RAF Woodbridge where the December 1980 lights were reported.",
+  "medium": "film",
+  "mode": "nonfiction",
+  "year": 2025,
+  "external": {
+    "imdb": "tt8151794"
+  },
+  "gravity": [
+    {
+      "subject": "rendlesham-forest",
+      "value": 4
+    }
+  ],
+  "updated_at": "2026-07-30T18:54:35"
+}

@@ -1,0 +1,23 @@
+{
+  "id": 125,
+  "type": "work",
+  "slug": "dark-2017",
+  "title": "Dark (2017–2020)",
+  "dek": "Four families in a German town discover that a cave beneath the nuclear plant connects 1953, 1986 and 2019, and that every attempt any of them makes to prevent a death is what causes it.",
+  "medium": "series",
+  "mode": "fiction",
+  "year": 2017,
+  "creator": "Baran bo Odar and Jantje Friese",
+  "runtime": "3 seasons",
+  "external": {
+    "imdb": "tt5753856",
+    "tmdb": "70523"
+  },
+  "gravity": [
+    {
+      "subject": "causal-loop",
+      "value": 4
+    }
+  ],
+  "updated_at": "2026-07-30T18:54:31"
+}

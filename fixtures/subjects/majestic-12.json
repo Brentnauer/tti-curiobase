@@ -1,0 +1,29 @@
+{
+  "id": "7293",
+  "type": "subject",
+  "slug": "majestic-12",
+  "title": "Majestic 12",
+  "dek": "A committee of twelve scientists and officials named in documents that surfaced on film in 1984, purporting to show a secret group convened in 1947 to handle recovered craft.",
+  "kind": "org",
+  "domain": "hidden-history",
+  "status": "debunked",
+  "period": [
+    "pre-1950",
+    "1980s"
+  ],
+  "evidence": [
+    "documentary-record",
+    "no-evidence"
+  ],
+  "also_known_as": "MJ-12, Majic 12, Operation Majestic Twelve",
+  "facts": {
+    "founded": "1947 (claimed)",
+    "dissolved": "Unknown",
+    "org_kind": "Alleged government committee",
+    "jurisdiction": "United States"
+  },
+  "prose": [],
+  "refs": [],
+  "links": [],
+  "updated_at": "2026-07-30T19:18:22"
+}

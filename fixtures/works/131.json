@@ -1,0 +1,21 @@
+{
+  "id": 131,
+  "type": "work",
+  "slug": "left-at-east-gate",
+  "title": "Left at East Gate (1997)",
+  "dek": "Airman Larry Warren's first-hand account of the December 1980 Rendlesham events, written with Peter Robbins, and the most disputed book in the case's literature.",
+  "medium": "book",
+  "mode": "nonfiction",
+  "year": 1997,
+  "creator": "Larry Warren and Peter Robbins",
+  "external": {
+    "isbn": "9781596057531"
+  },
+  "gravity": [
+    {
+      "subject": "rendlesham-forest",
+      "value": 4
+    }
+  ],
+  "updated_at": "2026-07-30T18:54:33"
+}

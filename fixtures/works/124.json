@@ -1,0 +1,22 @@
+{
+  "id": 124,
+  "type": "work",
+  "slug": "timecrimes-2007",
+  "title": "Timecrimes (2007)",
+  "dek": "A man idling in his garden with binoculars sees something he should not, and spends the rest of the afternoon becoming the cause of it.",
+  "medium": "film",
+  "mode": "fiction",
+  "year": 2007,
+  "creator": "Nacho Vigalondo",
+  "runtime": "92 min",
+  "external": {
+    "imdb": "tt0480669"
+  },
+  "gravity": [
+    {
+      "subject": "causal-loop",
+      "value": 5
+    }
+  ],
+  "updated_at": "2026-07-30T18:54:30"
+}

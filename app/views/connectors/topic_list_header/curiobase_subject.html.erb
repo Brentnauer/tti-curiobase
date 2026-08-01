@@ -1,0 +1,25 @@
+<%#
+  The Subject banner on a tag page, for CRAWLERS.
+
+  list.erb puts server_plugin_outlet "topic_list_header" at the very top of the
+  crawler view, above the <h1> — the only server-rendered hook on this route.
+  That makes this the SEO half of the tag page, and the reason the banner leads
+  with a sentence: whatever comes first wins the snippet.
+
+  ⚠ Connector templates are globbed into a frozen constant at class-load
+    (application_helper.rb). ADDING A FILE HERE NEEDS A FULL RESTART — it will
+    not appear on reload, and its absence looks exactly like a broken template.
+
+  ⚠ This runs on every list page on the site: /latest, every category, every
+    tag. Bail out cheaply and first.
+%>
+<% if SiteSetting.curiobase_enabled && @tag_name.present? %>
+  <% if Curiobase::Subjects.vocabulary.include?(@tag_name) %>
+    <% card = Curiobase::SubjectCard.for_slug(@tag_name, variant: :banner, active_filter: params[:curiobase]) %>
+    <% if card %>
+      <div class="curiobase-tag-banner">
+        <%= raw card.to_html %>
+      </div>
+    <% end %>
+  <% end %>
+<% end %>

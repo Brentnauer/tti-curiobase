@@ -1,0 +1,23 @@
+{
+  "id": 123,
+  "type": "work",
+  "slug": "primer-2004",
+  "title": "Primer (2004)",
+  "dek": "Two engineers building something in a garage discover their device leaves objects with a repeating temporal anomaly — then, carefully and catastrophically, scale it up to themselves.",
+  "medium": "film",
+  "mode": "fiction",
+  "year": 2004,
+  "creator": "Shane Carruth",
+  "runtime": "77 min",
+  "external": {
+    "imdb": "tt0390384",
+    "tmdb": "14337"
+  },
+  "gravity": [
+    {
+      "subject": "causal-loop",
+      "value": 5
+    }
+  ],
+  "updated_at": "2026-07-30T18:54:29"
+}
