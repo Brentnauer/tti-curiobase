@@ -88,6 +88,20 @@ RSpec.describe Curiobase::GravityController do
       expect(response.parsed_body["distribution"]).to be_nil
     end
 
+    # Open Subject tabs repaint association gravity without waiting on cooked.
+    it "publishes the reading on the subject MessageBus channel" do
+      messages = MessageBus.track_publish("/curiobase/subject/causal-loop") { cast(value: 4) }
+      expect(response.status).to eq(200)
+      expect(messages.length).to eq(1)
+      data = messages.first.data
+      data = JSON.parse(data) if data.is_a?(String)
+      data = data.with_indifferent_access if data.respond_to?(:with_indifferent_access)
+      # Wrap id=123 resolves through Source to the primer fixture (slug key).
+      expect(data[:work_id]).to eq("primer-2004")
+      expect(data[:display]).to eq(4.0)
+      expect(data[:voter_count]).to eq(1)
+    end
+
     it "weighs a staff vote at five against a member's one" do
       sign_in(Fabricate(:admin))
       cast(value: 5)

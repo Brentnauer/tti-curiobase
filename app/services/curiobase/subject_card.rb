@@ -44,7 +44,8 @@ module Curiobase
     def initialize(record, variant: :full, active_filter: nil, plate: nil)
       @r = record
       @variant = variant
-      @active = active_filter.presence
+      # Default "all" so the All chip is marked on file cards (no query param).
+      @active = active_filter.presence || "all"
       @plate = plate
       @doc = Nokogiri::HTML5::DocumentFragment.parse("")
     end
@@ -285,13 +286,13 @@ module Curiobase
     def associations
       assoc = Associations.new(slug)
       rows = assoc.rows
-      return node("div", class: "cb-assoc cb-assoc--empty") if rows.empty?
+      return empty_associations if rows.empty?
 
       # Held so `thumbs?` can ask whether ANY row in this list has a cover
       # before the first row decides whether to draw a cell.
       @assoc_rows = rows
 
-      block = node("section", class: "cb-assoc")
+      block = node("section", class: "cb-assoc", "data-subject": slug)
       h = node("h2", class: "cb-assoc-head")
       h.content = I18n.t("curiobase.associations_heading")
       block.add_child(h)
@@ -321,8 +322,18 @@ module Curiobase
       #
       # ⚠ Banner variant omits it: the banner is a signpost to the file, and a
       #   scale legend on a signpost is noise.
-      block.add_child(para("cb-anchors", Anchors.for_modes(assoc.modes))) if @variant == :full
+      block.add_child(Anchors.para_node(@doc.document, Anchors.key_for_modes(assoc.modes))) if @variant == :full
 
+      block
+    end
+
+    # Vacancy, not silence. Teach the pairing rule where the list would be.
+    def empty_associations
+      block = node("section", class: "cb-assoc cb-assoc--empty")
+      h = node("h2", class: "cb-assoc-head")
+      h.content = I18n.t("curiobase.associations_heading")
+      block.add_child(h)
+      block.add_child(para("cb-assoc-invite", I18n.t("curiobase.assoc_empty")))
       block
     end
 
@@ -368,12 +379,13 @@ module Curiobase
     #   that exit, and it must not infer either by counting rendered rows: the
     #   list is a union, so a count of visible rows is not a count of anything.
     def chip(label, count, kind, shown = nil)
+      key = kind || "all"
       a =
         node(
           "a",
-          class: "cb-filter#{" is-active" if @active == kind}",
+          class: "cb-filter#{" is-active" if @active == key}",
           href: tag_url(kind),
-          "data-kind": kind || "all",
+          "data-kind": key,
           "data-count": count.to_i.to_s,
           "data-shown": shown.to_i.to_s,
         )
@@ -486,13 +498,20 @@ module Curiobase
           "data-kind": kind,
           "data-buckets": Array(r.buckets).join(" "),
         )
+      if r.kind == "work" && r.work_id.present?
+        li["data-work"] = r.work_id.to_s
+        li["data-subject"] = slug
+      end
+      # Default view is All. Hide medium-only members so the union is not the
+      # initial paint for no-JS readers (JS apply() does the same on mount).
+      li["hidden"] = "hidden" unless Array(r.buckets).include?("all")
 
       li.add_child(assoc_thumb(r)) if thumbs?
 
       main = node("span", class: "cb-assoc-main")
 
       eyebrow = node("span", class: "cb-assoc-kind")
-      eyebrow.content = I18n.t("curiobase.kind.#{kind}", default: kind)
+      eyebrow.content = assoc_eyebrow(r)
       main.add_child(eyebrow)
 
       a = node("a", class: "cb-assoc-title", href: r.url)
@@ -562,6 +581,22 @@ module Curiobase
       cell.add_child(heart)
       cell.add_child(Nokogiri::XML::Text.new(n.to_s, @doc.document))
       cell
+    end
+
+    # Episode rows lead with the series family; everything else keeps medium.
+    def assoc_eyebrow(r)
+      if r.series_title.present?
+        bits = [r.series_title]
+        if r.season.to_i.positive? && r.episode.to_i.positive?
+          bits << "S#{r.season.to_i}E#{r.episode.to_i}"
+        elsif r.episode.to_i.positive?
+          bits << "E#{r.episode.to_i}"
+        end
+        return bits.join(" · ")
+      end
+
+      kind = r.kind == "discussion" ? "discussion" : r.medium.to_s
+      I18n.t("curiobase.kind.#{kind}", default: kind)
     end
 
   end

@@ -34,7 +34,13 @@ function card({ work = "deus-ex-2000", subject = "majestic-12" } = {}) {
           <div class="cb-score"><span class="cb-mean">3.6</span></div>
           <div class="cb-vote" data-mount="gravity"></div>
         </div>
-        <p class="cb-anchors">1 mentions it · 2 set dressing</p>
+        <p class="cb-anchors">
+          <span class="cb-anchor-step" data-step="1">1 mentions it</span> ·
+          <span class="cb-anchor-step" data-step="2">2 set dressing</span> ·
+          <span class="cb-anchor-step" data-step="3">3 takes it seriously</span> ·
+          <span class="cb-anchor-step" data-step="4">4 builds on it</span> ·
+          <span class="cb-anchor-step" data-step="5">5 cannot exist without it</span>
+        </p>
       </section>
     </div>`;
 }
@@ -112,6 +118,16 @@ acceptance("Curiobase | the rating control", function (needs) {
     await click(".cb-star[data-value='4']");
 
     assert.dom(".cb-mean").hasText("3.7", "the number moved without a reload");
+    assert.dom(".cb-dist-note").includesText("votes");
+  });
+
+  test("hover previews the anchor before you commit", async function (assert) {
+    await visit("/t/-/280");
+    const mark = document.querySelector(".cb-star[data-value='4']");
+    mark.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }));
+
+    assert.dom(".cb-vote-status").hasText("builds on it");
+    assert.dom('.cb-anchor-step[data-step="4"]').hasClass("is-hot");
   });
 });
 

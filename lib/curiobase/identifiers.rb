@@ -32,6 +32,7 @@ module Curiobase
       "youtube" => ["YouTube", "https://www.youtube.com/watch?v=%s"],
       "archive_org" => ["Internet Archive", "https://archive.org/details/%s"],
       "wikipedia" => ["Wikipedia", "https://en.wikipedia.org/wiki/%s"],
+      "google_books" => ["Google Books", "https://books.google.com/books?id=%s"],
     }.freeze
 
     # { "IMDb" => "https://…", … } — what the card renders as reference links.

@@ -56,6 +56,11 @@ module Curiobase
         :poster, # cached URL, or nil — a thumbnail on the row, never fetched
 
         :gravity, # Curiobase::Gravity::Reading, or nil
+        :work_id, # Gravity store key — live refresh + MessageBus target
+        :series, # parent series slug, when this Work is an episode
+        :series_title, # display name for the eyebrow
+        :season,
+        :episode,
         :recommendations, # likes on the record's first post
         :posts_count,
         :replies,
@@ -211,8 +216,11 @@ module Curiobase
           #   `plugin_store_rows` was 40 of the list's 48 queries. It did not
           #   show at seven rows, which is why it survived D-045.
           readings = Gravity.for_works(candidates.map { |_, w| Gravity.work_id(w) }, @slug)
+          series_titles = series_titles_for(candidates.map { |_, w| w["series"] })
 
           candidates.map do |topic, w|
+            wid = Gravity.work_id(w)
+            series_slug = w["series"].to_s.presence
             Row.new(
               kind: "work",
               title: topic.title,
@@ -220,11 +228,27 @@ module Curiobase
               medium: w["medium"],
               mode: w["mode"],
               poster: posters[topic.id],
-              gravity: readings[Gravity.work_id(w).to_s],
+              work_id: wid,
+              series: series_slug,
+              series_title: series_slug && series_titles[series_slug],
+              season: w["season"],
+              episode: w["episode"],
+              gravity: readings[wid.to_s],
               recommendations: likes[topic.id].to_i,
               posts_count: topic.posts_count.to_i,
             )
           end
+        end
+    end
+
+    def series_titles_for(slugs)
+      Array(slugs)
+        .map(&:to_s)
+        .reject(&:blank?)
+        .uniq
+        .each_with_object({}) do |slug, out|
+          hub = Source.work(slug)
+          out[slug] = hub&.dig("title").presence || PostRecord.titleize(slug)
         end
     end
 

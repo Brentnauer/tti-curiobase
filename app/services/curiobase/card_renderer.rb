@@ -244,28 +244,11 @@ module Curiobase
       # and its `mode` to choose the anchor wording.
       @work_record = w
 
-      head = node("div", class: "cb-head")
+      SeriesEpisodes.remember!(@topic, w["series"])
+      embed = Embeds.for_record(w, @topic)
 
-      # ⚠ Two sources, one slot, and the post wins. A poster dragged into the
-      #   composer is served by Discourse; a WordPress one is a live
-      #   cross-origin dependency on a staff CMS. Preferring the local one means
-      #   a converted record stops needing the CMS to be up to show its cover.
-      if (dragged = hero)
-        head.add_child(dragged)
-      elsif (poster = w.dig("poster", "url")).present?
-        fig = node("div", class: "cb-poster")
-        img = node("img", src: poster, alt: w.dig("poster", "alt").to_s, loading: "lazy")
-        fig.add_child(img)
-        head.add_child(fig)
-        remember_poster(poster)
-      else
-        # ⚠ RESERVE THE SLOT. An empty column means the text starts at a
-        #   different x on every card that happens to lack a cover, and a run of
-        #   them reads as broken rather than as incomplete. The placeholder says
-        #   what the thing is instead — and it is a worklist entry for whoever
-        #   is adding posters.
-        head.add_child(poster_placeholder(w))
-      end
+      head = node("div", class: work_head_class(w, embed))
+      attach_work_media(head, w, embed)
 
       body = node("div", class: "cb-body")
 
@@ -281,24 +264,255 @@ module Curiobase
       #   Visual order is CSS's job; document order belongs to the crawler.
       body.add_child(para("cb-dek", w["dek"])) if w["dek"].present?
       body.add_child(badge(w["medium"], w["mode"]))
+      body.add_child(series_line(w)) if w["series"].present?
 
       # 2 · facts as one inline row. Five facts do not need five lines.
       facts = [w["year"]&.to_s, w["creator"], w["runtime"]].compact_blank
+      se = [season_episode_label(w)].compact_blank
+      facts = se + facts if se.any?
       body.add_child(para("cb-meta", facts.join(" · "))) unless facts.empty?
 
-      links = external_links(w["external"])
+      links = external_links(w["external"], omit: embed_omit_keys(embed))
       body.add_child(links) if links
 
       head.add_child(body)
       card.add_child(head)
-      # ⚠ AFTER the gravity block, not in the head. The judgement is the reason
-      #   a reader is here; the shop is what they might do afterwards. Putting a
-      #   buy button above the score would make the card read as a storefront
-      #   with an opinion attached rather than the other way round.
+
+      # Discord stock order: identity block, then media, then the rest.
+      # Video / trailer / Books / Archive all land here — never inside .cb-head.
+      card.add_child(embed_stage(embed)) if embed
+
       card.add_child(gravity_block(w))
+      card.add_child(episodes_block(w)) if w["medium"].to_s == "series"
       buy = buy_links(w)
       card.add_child(buy) if buy
       card.add_child(annotation_link) if annotation_link
+    end
+
+    # Video is the work itself — no poster column. Everything else keeps one
+    # (authored art, cover from the embed host, or a labelled placeholder).
+    def work_head_class(w, _embed = nil)
+      skip_poster?(w) ? "cb-head cb-head--text" : "cb-head"
+    end
+
+    def skip_poster?(w)
+      %w[video].include?(w["medium"].to_s)
+    end
+
+    def attach_work_media(head, w, embed)
+      return if skip_poster?(w)
+
+      attached =
+        if (dragged = hero)
+          head.add_child(dragged)
+          true
+        elsif (poster = w.dig("poster", "url")).present?
+          fig = node("div", class: "cb-poster")
+          img = node("img", src: poster, alt: w.dig("poster", "alt").to_s, loading: "lazy")
+          fig.add_child(img)
+          head.add_child(fig)
+          remember_poster(poster)
+          true
+        elsif (cover = poster_from_embed(embed))
+          head.add_child(cover)
+          true
+        elsif embed.blank?
+          # Labelled empty tile only when nothing else carries the visual.
+          head.add_child(poster_placeholder(w))
+          true
+        else
+          # Stage has the trailer / preview — don't invent a "SERIES" hole.
+          false
+        end
+
+      head["class"] = "cb-head cb-head--text" unless attached
+    end
+
+    # Host cover / still for the identity column. Books & Archive link out;
+    # YouTube trailers use the still as a quiet catalogue thumb (stage plays).
+    def poster_from_embed(embed)
+      return nil unless embed&.thumb.present?
+
+      case embed.provider
+      when "google_books", "archive"
+        return nil unless embed.link?
+
+        a =
+          node(
+            "a",
+            class: "cb-poster cb-poster--link",
+            href: embed.href,
+            rel: "noopener",
+            target: "_blank",
+            "data-provider": embed.provider,
+            title: embed.label,
+          )
+        img = node("img", src: embed.thumb, alt: embed.label.to_s, loading: "lazy")
+        a.add_child(img)
+        a
+      when "youtube"
+        fig = node("div", class: "cb-poster")
+        img = node("img", src: embed.thumb, alt: "", loading: "lazy")
+        fig.add_child(img)
+        fig
+      end
+    end
+
+    # Full-width media strip between the identity head and gravity.
+    def embed_stage(embed)
+      stage = node("div", class: "cb-stage", "data-provider": embed.provider)
+      stage.add_child(embed_chrome(embed))
+      stage
+    end
+
+    # iframe for YouTube heroes; link card for trailers / outbound media.
+    def embed_chrome(embed)
+      return embed_iframe(embed) if embed.iframe?
+      embed_link_card(embed)
+    end
+
+    def embed_omit_keys(embed)
+      case embed&.provider
+      when "youtube" then %w[youtube]
+      when "archive" then %w[archive_org]
+      when "google_books" then %w[google_books]
+      else []
+      end
+    end
+
+    def embed_iframe(embed)
+      kind = embed.secondary? ? "trailer" : "hero"
+      fig =
+        node(
+          "div",
+          class: "cb-embed cb-embed--#{kind}",
+          "data-provider": embed.provider,
+        )
+      iframe =
+        node(
+          "iframe",
+          src: embed.src,
+          title: embed.label,
+          loading: "lazy",
+          allowfullscreen: "allowfullscreen",
+          referrerpolicy: "strict-origin-when-cross-origin",
+          allow:
+            "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
+        )
+      iframe["frameborder"] = "0"
+      # Discourse onebox/CSS hooks key off this; keep our player unmarked.
+      iframe["class"] = "cb-embed-frame"
+      fig.add_child(iframe)
+      fig
+    end
+
+    def embed_link_card(embed)
+      a =
+        node(
+          "a",
+          class: "cb-media-link track-link",
+          href: embed.href,
+          rel: "noopener",
+          target: "_blank",
+          "data-provider": embed.provider,
+        )
+      # Cover already lives in .cb-poster for Books/Archive — don't double it.
+      if embed.thumb.present? && !%w[google_books archive].include?(embed.provider)
+        thumb = node("span", class: "cb-media-link-thumb")
+        img = node("img", src: embed.thumb, alt: "", loading: "lazy")
+        thumb.add_child(img)
+        a.add_child(thumb)
+      end
+      meta = node("span", class: "cb-media-link-meta")
+      eye = node("span", class: "cb-media-link-label")
+      eye.content = embed.label
+      meta.add_child(eye)
+      host = node("span", class: "cb-media-link-host")
+      host.content = media_link_host(embed)
+      meta.add_child(host)
+      a.add_child(meta)
+      a
+    end
+
+    def media_link_host(embed)
+      case embed.provider
+      when "youtube" then "YouTube"
+      when "archive" then "archive.org"
+      when "google_books" then "Google Books"
+      else embed.provider.to_s
+      end
+    end
+
+    # Episode → series hub. The rateable unit stays the episode; this is the
+    # exit to the family without making the series absorb gravity.
+    def series_line(w)
+      slug = w["series"].to_s
+      return nil if slug.blank?
+
+      hub = Source.work(slug)
+      title = hub&.dig("title").presence || PostRecord.titleize(slug)
+      url = record_url(slug, type: :work)
+
+      p = node("p", class: "cb-series")
+      p.add_child(Nokogiri::XML::Text.new("#{I18n.t("curiobase.part_of")} ", @doc.document))
+      if url
+        a = node("a", class: "cb-series-link", href: url)
+        a.content = title
+        p.add_child(a)
+      else
+        p.add_child(Nokogiri::XML::Text.new(title, @doc.document))
+      end
+      p
+    end
+
+    def season_episode_label(w)
+      s = w["season"].to_i
+      e = w["episode"].to_i
+      return nil if s <= 0 && e <= 0
+      if s.positive? && e.positive?
+        I18n.t("curiobase.season_episode", season: s, episode: e)
+      elsif e.positive?
+        I18n.t("curiobase.episode_only", episode: e)
+      else
+        I18n.t("curiobase.season_only", season: s)
+      end
+    end
+
+    def episodes_block(w)
+      rows = SeriesEpisodes.for(w["slug"])
+      return nil if rows.empty?
+
+      block = node("section", class: "cb-episodes")
+      h = node("h2", class: "cb-episodes-head")
+      h.content = I18n.t("curiobase.episodes_heading")
+      block.add_child(h)
+
+      list = node("ol", class: "cb-episodes-list")
+      rows.each do |r|
+        li = node("li", class: "cb-episodes-row")
+        li["data-work"] = r.work_id.to_s if r.work_id.present?
+        main = node("span", class: "cb-episodes-main")
+        if (label = season_episode_label("season" => r.season, "episode" => r.episode))
+          eye = node("span", class: "cb-episodes-num")
+          eye.content = label
+          main.add_child(eye)
+        end
+        a = node("a", class: "cb-episodes-title", href: r.url)
+        a.content = r.title
+        main.add_child(a)
+        li.add_child(main)
+        list.add_child(li)
+      end
+      block.add_child(list)
+      block
+    end
+
+    def record_url(slug, type:)
+      topic_id = RecordTopic.find(slug, type: type)
+      return nil unless topic_id
+      Topic.find_by(id: topic_id)&.relative_url
+    rescue StandardError
+      nil
     end
 
     # ══════════════════════════════════════════════════════════════════════════
@@ -378,13 +592,14 @@ module Curiobase
     # ⚠ The registry moved to `Curiobase::Identifiers` when the JSON-LD needed
     #   the same list for `sameAs`. Two copies of "identifier → URL" is the shape
     #   that has cost this codebase more than any other.
-    def external_links(external)
+    def external_links(external, omit: [])
       return nil if external.blank?
-      urls = Identifiers.links(external)
-      return nil if urls.empty?
+      omit = Array(omit).map(&:to_s)
+      rows = Identifiers.each(external).reject { |key, _label, _url| omit.include?(key) }
+      return nil if rows.empty?
 
       p = node("p", class: "cb-ext")
-      urls.each_with_index do |(label, url), i|
+      rows.each_with_index do |(_key, label, url), i|
         p.add_child(Nokogiri::XML::Text.new(" · ", @doc.document)) if i.positive?
         a = node("a", href: url, rel: "noopener", target: "_blank")
         a.content = label
@@ -402,7 +617,7 @@ module Curiobase
     #   not produce a rating row.
     def gravity_block(work)
       slugs = Curiobase::Subjects.for_topic(@topic)
-      return node("div", class: "cb-gravity cb-gravity--empty") if slugs.empty?
+      return empty_gravity if slugs.empty?
 
       # data-mode is read by the rating control to label its buttons with the
       # right anchor set. Baked here so the client never has to guess.
@@ -423,8 +638,18 @@ module Curiobase
         block.add_child(gravity_row(Gravity.work_id(work), subject, readings[slug.to_s]))
       end
 
-      block.add_child(anchors)
+      block.add_child(Anchors.para_node(@doc.document, Anchors.key_for_mode(work["mode"])))
       block.add_child(recommend_line) if recommend_line
+      block
+    end
+
+    # No Subject tags yet — invitation, not a blank hole in the card.
+    def empty_gravity
+      block = node("section", class: "cb-gravity cb-gravity--empty")
+      h = node("h2", class: "cb-gravity-head")
+      h.content = I18n.t("curiobase.gravity_heading")
+      block.add_child(h)
+      block.add_child(para("cb-gravity-invite", I18n.t("curiobase.gravity_empty")))
       block
     end
 
@@ -532,11 +757,39 @@ module Curiobase
         # can use, so the member count belongs here — attached to the BAR, which
         # is genuinely n members, and not to the number, which is not.
         n = node("span", class: "cb-dist-note")
-        n.content = I18n.t("curiobase.members_rated", count: reading.voter_count)
+        n.content = distribution_note_text(dist, reading.voter_count)
+        title = distribution_breakdown(dist)
+        n["title"] = title if title.present?
         wrap.add_child(n)
       end
 
       wrap
+    end
+
+    # Unweighted headcount on the bar. When low and high anchors both have
+    # real weight, name the disagreement — that is the contested-archive signal.
+    def distribution_note_text(dist, voter_count)
+      base = I18n.t("curiobase.members_rated", count: voter_count)
+      return base unless contested_distribution?(dist)
+
+      "#{base} · #{I18n.t("curiobase.members_disagree")}"
+    end
+
+    def contested_distribution?(dist)
+      return false unless dist.is_a?(Array) && dist.size == 5
+
+      low = dist[0].to_i + dist[1].to_i
+      high = dist[3].to_i + dist[4].to_i
+      low >= 2 && high >= 2
+    end
+
+    def distribution_breakdown(dist)
+      return "" unless dist.is_a?(Array)
+
+      dist
+        .each_with_index
+        .filter_map { |c, i| "#{c} at #{i + 1}" if c.to_i.positive? }
+        .join(" · ")
     end
 
     # The mount point for the rating control.
@@ -549,11 +802,6 @@ module Curiobase
     # That is the right way round. A crawler needs the score, not the widget.
     def vote_mount
       node("div", class: "cb-vote", "data-mount": "gravity")
-    end
-
-    # See Curiobase::Anchors. The wording follows the Work's mode.
-    def anchors
-      para("cb-anchors", Anchors.for_mode(@work_record&.dig("mode")))
     end
 
     # Same footprint as a real poster, so the grid never moves.

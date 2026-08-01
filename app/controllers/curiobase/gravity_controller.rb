@@ -41,23 +41,35 @@ module Curiobase
 
       # A rating is cheap to cast and expensive to un-cast. 30 an hour is far
       # more than honest use and far less than a script.
-      RateLimiter.new(current_user, "curiobase-gravity", 30, 1.hour).performed!
+      begin
+        RateLimiter.new(current_user, "curiobase-gravity", 30, 1.hour).performed!
 
-      VoteStore.cast(
-        work_id: @work_id,
-        subject: @subject,
-        user_id: current_user.id,
-        value: value,
-      )
+        VoteStore.cast(
+          work_id: @work_id,
+          subject: @subject,
+          user_id: current_user.id,
+          value: value,
+        )
+      rescue RateLimiter::LimitExceeded
+        return render_json_error(I18n.t("curiobase.errors.rate_limited"), status: 429)
+      rescue StandardError => e
+        # Never report success for a write that did not land.
+        Rails.logger.error("[curiobase] gravity write failed: #{e.class}: #{e.message}")
+        return render_json_error(I18n.t("curiobase.errors.upstream"), status: 502)
+      end
 
-      Curiobase.schedule_pairing_rebake!(@topic, @subject)
+      # Rebake is best-effort. A failed Subject render must not tell the voter
+      # their cast was discarded when PluginStore already has it.
+      begin
+        Curiobase.schedule_pairing_rebake!(@topic, @subject)
+      rescue StandardError => e
+        Rails.logger.warn(
+          "[curiobase] gravity rebake schedule failed topic=#{@topic.id}: #{e.class}: #{e.message}",
+        )
+      end
+
+      publish_subject_reading!
       render json: reading_payload(value)
-    rescue RateLimiter::LimitExceeded
-      render_json_error(I18n.t("curiobase.errors.rate_limited"), status: 429)
-    rescue StandardError => e
-      # Never report success for a write that did not land.
-      Rails.logger.error("[curiobase] gravity write failed: #{e.class}: #{e.message}")
-      render_json_error(I18n.t("curiobase.errors.upstream"), status: 502)
     end
 
     # ⚠ NO TRUST-LEVEL CHECK AND NO RATE LIMIT ON THE WAY OUT.
@@ -65,8 +77,22 @@ module Curiobase
     #   Taking your own vote back is not a privileged act, and someone who has
     #   hit the hourly cap must still be able to undo the last thing they did.
     def destroy
-      VoteStore.retract(work_id: @work_id, subject: @subject, user_id: current_user.id)
-      Curiobase.schedule_pairing_rebake!(@topic, @subject)
+      begin
+        VoteStore.retract(work_id: @work_id, subject: @subject, user_id: current_user.id)
+      rescue StandardError => e
+        Rails.logger.error("[curiobase] gravity retract failed: #{e.class}: #{e.message}")
+        return render_json_error(I18n.t("curiobase.errors.upstream"), status: 502)
+      end
+
+      begin
+        Curiobase.schedule_pairing_rebake!(@topic, @subject)
+      rescue StandardError => e
+        Rails.logger.warn(
+          "[curiobase] gravity rebake schedule failed topic=#{@topic.id}: #{e.class}: #{e.message}",
+        )
+      end
+
+      publish_subject_reading!
       render json: reading_payload(nil)
     end
 
@@ -117,6 +143,22 @@ module Curiobase
         # baked card. See Gravity::Reading#distributed?.
         distribution: reading&.distributed? ? reading.distribution : nil,
       }
+    end
+
+    # Open Subject file tabs update the association row without waiting on
+    # cooked rebake. Channel is per-subject slug; payload is one Work's reading.
+    def publish_subject_reading!
+      reading = Gravity.for({ "slug" => @work_id }, @subject)
+      MessageBus.publish(
+        "/curiobase/subject/#{@subject}",
+        {
+          work_id: @work_id,
+          display: reading&.display,
+          voter_count: reading&.voter_count.to_i,
+        },
+      )
+    rescue StandardError => e
+      Rails.logger.warn("[curiobase] subject bus publish failed: #{e.class}: #{e.message}")
     end
   end
 end

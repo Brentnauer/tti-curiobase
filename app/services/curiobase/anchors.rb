@@ -37,12 +37,42 @@ module Curiobase
       present.one? ? line(present.first) : line("neutral")
     end
 
-    def self.line(key)
+    def self.key_for_mode(mode)
+      SETS.key?(mode.to_s) ? mode.to_s : "neutral"
+    end
+
+    def self.key_for_modes(modes)
+      present = Array(modes).map(&:to_s).select { |m| SETS.key?(m) }.uniq
+      present.one? ? present.first : "neutral"
+    end
+
+    # [[1, "mentions it"], ...] for baking step spans the client can highlight.
+    def self.steps(key)
+      k = SETS.key?(key.to_s) ? key.to_s : "neutral"
       SETS
-        .fetch(key)
+        .fetch(k)
         .each_with_index
-        .map { |token, i| "#{i + 1} #{I18n.t("curiobase.anchors.#{key}.#{token}")}" }
-        .join(" · ")
+        .map { |token, i| [i + 1, I18n.t("curiobase.anchors.#{k}.#{token}")] }
+    end
+
+    def self.line(key)
+      steps(key).map { |n, label| "#{n} #{label}" }.join(" · ")
+    end
+
+    # Baked legend with step spans so the vote control can highlight on hover.
+    # Built against the caller's document so Nokogiri will adopt the nodes.
+    def self.para_node(document, key)
+      p = Nokogiri::XML::Node.new("p", document)
+      p["class"] = "cb-anchors"
+      steps(key).each_with_index do |(n, label), i|
+        p.add_child(Nokogiri::XML::Text.new(" · ", document)) if i.positive?
+        span = Nokogiri::XML::Node.new("span", document)
+        span["class"] = "cb-anchor-step"
+        span["data-step"] = n.to_s
+        span.content = "#{n} #{label}"
+        p.add_child(span)
+      end
+      p
     end
   end
 end

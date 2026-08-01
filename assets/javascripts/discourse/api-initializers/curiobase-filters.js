@@ -63,6 +63,12 @@ export default apiInitializer("1.0", (api) => {
           return;
         }
 
+        // ⚠ APPLY "ALL" ON MOUNT. The baked list is a UNION of overall + per-
+        //   medium top-N. Without this, film-only / book-only rows stay visible
+        //   until someone clicks a chip — and no-JS crawlers need the server
+        //   `hidden` attribute (see SubjectCard#assoc_row) for the same fact.
+        apply(block, chips, "all");
+
         chips.forEach((chip) =>
           chip.addEventListener("click", (event) => {
             // Let modified clicks through — someone opening the filtered tag

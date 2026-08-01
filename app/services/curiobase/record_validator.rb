@@ -81,6 +81,16 @@ module Curiobase
         errors << I18n.t("curiobase.invalid.year", year: fields["year"])
       end
 
+      %w[season episode].each do |key|
+        next if fields[key].blank?
+        next if fields[key].to_s.match?(/\A\d{1,4}\z/)
+        errors << I18n.t("curiobase.invalid.number", key: key, value: fields[key])
+      end
+
+      if fields["series"].present? && !fields["series"].match?(/\A[a-z0-9][a-z0-9-]*\z/)
+        errors << I18n.t("curiobase.invalid.slug", slug: fields["series"])
+      end
+
       # ⚠ A ref pointing at a subject that does not exist renders as a link to
       #   nothing. Cheap to catch here, invisible everywhere else.
       Array(fields["refs"]).each do |slug|

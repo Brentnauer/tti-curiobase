@@ -24,6 +24,7 @@ en:
       members_rated:
         one: "1 vote"
         other: "%{count} votes"
+      members_disagree: "members disagree"
       # The anchors are the whole point of the scale. A star with no stated
       # meaning is a popularity contest; "4 — builds on it" is a claim someone
       # can actually disagree with.

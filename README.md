@@ -146,6 +146,21 @@ dek: Three nights of lights near two USAF bases in December 1980.
 
 Drag an image into the post and it becomes the poster (Works, 2:3) or the plate (Subjects, 3:2).
 
+**Embeds (baked when we know they work):**
+
+| Medium | Hero | Secondary |
+|--------|------|-----------|
+| `film` / `series` / `game` | Compact poster | YouTube **link card** (thumb → watch) — not a full player |
+| `video` (episodes too) | YouTube **iframe** | — (no poster column) |
+| `book` | Google Books **link card** (cover → books.google.com) | — |
+| `document` | Archive.org **link card** (thumb → details) | — |
+
+Google Books iframes are blocked (`X-Frame-Options: SAMEORIGIN`); Archive collection embeds paint donation shells. Link cards are intentional — a working exit beats a dead rectangle.
+
+If YouTube iframes are blocked by the site CSP / `allowed_iframes`, add `https://www.youtube-nocookie.com/embed/`.
+
+**Series / episodes:** rate at episode level; link the family with `series: hub-slug` plus optional `season:` / `episode:`. The hub Work (`medium: series`) lists children. Subject association rows show `Series · S1E12` as the eyebrow.
+
 ### Vocabulary
 
 | | |
@@ -158,7 +173,8 @@ Drag an image into the post and it becomes the poster (Works, 2:3) or the plate 
 | `status` | `open` `contested` `explained` `debunked` `hoax-admitted` `unfalsifiable` |
 | `period` | `ancient` `pre-1950` `1950s` … `2020s` |
 | `evidence` | `primary-source` `firsthand-account` `secondhand-account` `physical-trace` `documentary-record` `no-evidence` |
-| identifiers | `imdb` `tmdb` `isbn` `igdb` `youtube` `archive_org` `wikipedia` `asin` |
+| identifiers | `imdb` `tmdb` `isbn` `igdb` `youtube` `archive_org` `wikipedia` `asin` `google_books` |
+| series link | `series` (hub slug) `season` `episode` |
 
 Required: a Work needs `slug`, `medium`, `dek`. A Subject needs `slug`, `kind`, `domain`, `dek`.
 

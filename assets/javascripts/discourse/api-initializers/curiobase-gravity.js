@@ -31,9 +31,8 @@ export default apiInitializer("1.0", (api) => {
     return;
   }
 
-  // ⚠ The institute's assessment stands alone by default and there are no
-  //   mount points in the HTML when voting is off. Bailing here as well means
-  //   the control cannot appear from a stale bundle against a fresh page.
+  // Mount points are absent from the HTML when voting is off. Bailing here as
+  // well means the control cannot appear from a stale bundle against a fresh page.
   if (!siteSettings.curiobase_member_voting_enabled) {
     return;
   }
@@ -101,10 +100,10 @@ function buildControl(mount, ctx) {
     b.dataset.value = String(v);
     b.setAttribute("role", "radio");
     b.setAttribute("aria-checked", "false");
+    b.setAttribute("tabindex", v === 1 ? "0" : "-1");
     // The anchor is the label. A star with no stated meaning is a popularity
     // contest; "4 — builds on it" is a judgement someone can disagree with.
-    b.setAttribute("aria-label", `${v} — ${anchor(mode, v)}`);
-    b.title = anchor(mode, v);
+    labelButton(b, mode, v, false);
     b.innerHTML = iconHTML("circle");
     // ⚠ Clicking your own mark again takes the vote back. "I no longer have a
     //   view" is a different statement from "I think it is a 3", and a scale
@@ -113,8 +112,13 @@ function buildControl(mount, ctx) {
       const mine = parseInt(mount.dataset.mine || "", 10);
       return mine === v ? retract(mount, ctx) : cast(mount, ctx, v);
     });
+    b.addEventListener("mouseenter", () => preview(mount, v));
+    b.addEventListener("focus", () => preview(mount, v));
+    b.addEventListener("keydown", (event) => onKey(event, mount, ctx, v));
     stars.appendChild(b);
   }
+
+  stars.addEventListener("mouseleave", () => clearPreview(mount));
 
   const status = document.createElement("span");
   status.className = "cb-vote-status";
@@ -133,6 +137,83 @@ function buildControl(mount, ctx) {
     });
 }
 
+function onKey(event, mount, ctx, value) {
+  const keys = {
+    ArrowRight: 1,
+    ArrowUp: 1,
+    ArrowLeft: -1,
+    ArrowDown: -1,
+  };
+  const delta = keys[event.key];
+  if (delta) {
+    event.preventDefault();
+    const next = Math.min(5, Math.max(1, value + delta));
+    focusMark(mount, next);
+    preview(mount, next);
+    return;
+  }
+  if (event.key === "Home") {
+    event.preventDefault();
+    focusMark(mount, 1);
+    preview(mount, 1);
+    return;
+  }
+  if (event.key === "End") {
+    event.preventDefault();
+    focusMark(mount, 5);
+    preview(mount, 5);
+    return;
+  }
+  if (event.key === " " || event.key === "Enter") {
+    event.preventDefault();
+    const mine = parseInt(mount.dataset.mine || "", 10);
+    return mine === value ? retract(mount, ctx) : cast(mount, ctx, value);
+  }
+}
+
+function focusMark(mount, value) {
+  mount.querySelectorAll(".cb-star").forEach((b) => {
+    const on = parseInt(b.dataset.value, 10) === value;
+    b.setAttribute("tabindex", on ? "0" : "-1");
+    if (on) {
+      b.focus();
+    }
+  });
+}
+
+function preview(mount, value) {
+  mount.dataset.preview = String(value);
+  paintMarks(mount, parseInt(mount.dataset.mine || "", 10) || null, value);
+  const status = mount.querySelector(".cb-vote-status");
+  if (status) {
+    status.textContent = anchor(mount.dataset.anchorMode || "neutral", value);
+  }
+  highlightLegend(mount, value);
+}
+
+function clearPreview(mount) {
+  delete mount.dataset.preview;
+  const mine = parseInt(mount.dataset.mine || "", 10) || null;
+  paintMarks(mount, mine, null);
+  const status = mount.querySelector(".cb-vote-status");
+  if (status) {
+    status.textContent = mine ? anchor(mount.dataset.anchorMode || "neutral", mine) : "";
+  }
+  highlightLegend(mount, mine);
+}
+
+function highlightLegend(mount, step) {
+  const legend =
+    mount.closest(".cb-gravity")?.querySelector(".cb-anchors") ||
+    mount.closest(".curiobase-card")?.querySelector(".cb-anchors");
+  if (!legend) {
+    return;
+  }
+  legend.querySelectorAll(".cb-anchor-step").forEach((s) => {
+    s.classList.toggle("is-hot", step != null && s.dataset.step === String(step));
+  });
+}
+
 function cast(mount, ctx, value) {
   mount.classList.add("cb-vote--saving");
 
@@ -143,6 +224,7 @@ function cast(mount, ctx, value) {
     .then((r) => {
       paint(mount, r?.mine ?? value);
       updateAggregate(mount, r);
+      broadcastReading(mount, ctx, r);
     })
     .catch(popupAjaxError)
     .finally(() => mount.classList.remove("cb-vote--saving"));
@@ -158,35 +240,72 @@ function retract(mount, ctx) {
     .then((r) => {
       paint(mount, null);
       updateAggregate(mount, r);
+      broadcastReading(mount, ctx, r);
     })
     .catch(popupAjaxError)
     .finally(() => mount.classList.remove("cb-vote--saving"));
 }
 
+// Same-tab Subject lists (and any other listener) without waiting on MessageBus.
+function broadcastReading(mount, ctx, r) {
+  const workId = mount.closest(".cb-row")?.dataset.work;
+  if (!workId || !ctx?.subject) {
+    return;
+  }
+  document.dispatchEvent(
+    new CustomEvent("curiobase:reading", {
+      detail: {
+        subject: ctx.subject,
+        work_id: workId,
+        display: r?.display,
+        voter_count: r?.voter_count,
+      },
+    })
+  );
+}
+
 function paint(mount, value) {
-  const chosen = parseInt(value, 10);
+  const chosen = parseInt(value, 10) || null;
   // Remembered so the next click on the same mark knows to retract.
   if (chosen) {
     mount.dataset.mine = String(chosen);
   } else {
     delete mount.dataset.mine;
   }
-  mount.querySelectorAll(".cb-star").forEach((b) => {
-    const v = parseInt(b.dataset.value, 10);
-    const mine = v === chosen;
-    b.classList.toggle("is-on", !!chosen && v <= chosen);
-    b.classList.toggle("is-mine", mine);
-    b.setAttribute("aria-checked", mine ? "true" : "false");
-    // The label has to say what a click will do, and for your own mark that is
-    // the opposite of what it does everywhere else.
-    b.title = mine ? I18n.t("curiobase.retract") : anchor(mount.dataset.anchorMode || "neutral", v);
-  });
+  delete mount.dataset.preview;
+  paintMarks(mount, chosen, null);
+  highlightLegend(mount, chosen);
 
   const status = mount.querySelector(".cb-vote-status");
   if (status) {
     const mode = mount.dataset.anchorMode || "neutral";
     status.textContent = chosen ? anchor(mode, chosen) : "";
   }
+}
+
+function paintMarks(mount, mine, previewValue) {
+  const mode = mount.dataset.anchorMode || "neutral";
+  const fillTo = previewValue || mine;
+  mount.querySelectorAll(".cb-star").forEach((b) => {
+    const v = parseInt(b.dataset.value, 10);
+    const isMine = mine != null && v === mine;
+    b.classList.toggle("is-on", !!fillTo && v <= fillTo);
+    b.classList.toggle("is-mine", isMine);
+    b.classList.toggle("is-preview", previewValue != null && v === previewValue);
+    b.setAttribute("aria-checked", isMine ? "true" : "false");
+    labelButton(b, mode, v, isMine);
+    // Roving tabindex: focused mark, else the chosen vote, else 1.
+    const focusTarget = previewValue || mine || 1;
+    b.setAttribute("tabindex", v === focusTarget ? "0" : "-1");
+  });
+}
+
+function labelButton(b, mode, v, isMine) {
+  const text = isMine
+    ? I18n.t("curiobase.retract")
+    : `${v} — ${anchor(mode, v)}`;
+  b.setAttribute("aria-label", text);
+  b.title = text;
 }
 
 // Move the numbers the server baked, so the row agrees with what was just cast.
@@ -233,6 +352,7 @@ function updateAggregate(mount, r) {
     score.prepend(mean);
   }
   mean.textContent = Number(r.display).toFixed(1);
+  pulse(mean);
 
   const dist = Array.isArray(r.distribution) ? r.distribution : null;
   const total = dist ? dist.reduce((a, b) => a + b, 0) : 0;
@@ -270,7 +390,45 @@ function updateAggregate(mount, r) {
     note.className = "cb-dist-note";
     bar.after(note);
   }
-  note.textContent = I18n.t("curiobase.members_rated", { count: r.voter_count });
+  note.textContent = distributionNote(dist, r.voter_count);
+  note.title = distributionBreakdown(dist);
+}
+
+function distributionNote(dist, count) {
+  const base = I18n.t("curiobase.members_rated", { count });
+  if (!contested(dist)) {
+    return base;
+  }
+  return `${base} · ${I18n.t("curiobase.members_disagree")}`;
+}
+
+function contested(dist) {
+  if (!Array.isArray(dist) || dist.length !== 5) {
+    return false;
+  }
+  const low = (dist[0] || 0) + (dist[1] || 0);
+  const high = (dist[3] || 0) + (dist[4] || 0);
+  return low >= 2 && high >= 2;
+}
+
+function distributionBreakdown(dist) {
+  if (!Array.isArray(dist)) {
+    return "";
+  }
+  return dist
+    .map((c, i) => (c > 0 ? `${c} at ${i + 1}` : null))
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function pulse(el) {
+  if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    return;
+  }
+  el.classList.remove("cb-mean--pulse");
+  // Restart the animation if it is already mid-flight.
+  void el.offsetWidth;
+  el.classList.add("cb-mean--pulse");
 }
 
 function anchor(mode, v) {

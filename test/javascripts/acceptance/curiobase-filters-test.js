@@ -73,10 +73,10 @@ acceptance("Curiobase | the association filters", function (needs) {
     server.get("/t/280.json", () => helper.response(topicWith(assoc())));
   });
 
-  test("shows everything under All, and only the overall top", async function (assert) {
+  test("shows everything under All on mount, and only the overall top", async function (assert) {
     await visit("/t/-/280");
-    await click('.cb-filter[data-kind="all"]');
 
+    assert.dom('.cb-filter[data-kind="all"]').hasClass("is-active");
     assert.deepEqual(
       visibleTitles(),
       ["film-top", "book-overall"],

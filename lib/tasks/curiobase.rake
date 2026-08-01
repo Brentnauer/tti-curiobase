@@ -288,6 +288,21 @@ task "curiobase:doctor" => :environment do
       slug = record["slug"].to_s
       next if slug.blank?
 
+      # ⚠ TAGS THAT CREATE PAIRINGS MUST BE IN THE SUBJECT VOCABULARY.
+      #
+      #   Gravity rows bake from whatever was in the group at cook time. If a
+      #   Subject tag later sits outside `curiobase_subject_tag_group`, the card
+      #   can still show a vote control from stale cooked while the endpoint
+      #   rejects every cast with InvalidParameters :subject.
+      tags.each do |name|
+        next if vocabulary.include?(name)
+        next unless Curiobase::RecordTopic.find(name, type: :subject)
+        say.call(
+          "#{label}: tagged '#{name}' which has a Subject file but is not in " \
+          "the '#{SiteSetting.curiobase_subject_tag_group}' tag group — votes will 400",
+        )
+      end
+
       PluginStoreRow
         .where(plugin_name: Curiobase::VoteStore::PLUGIN)
         .where("key LIKE ?", "votes:#{slug}:%")

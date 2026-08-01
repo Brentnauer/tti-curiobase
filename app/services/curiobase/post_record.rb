@@ -42,7 +42,8 @@ module Curiobase
     SCALARS = %w[type slug title dek kind domain status also_known_as coords landing_url
                  image_credit
                  medium mode year creator runtime
-                 imdb tmdb isbn igdb youtube archive_org wikipedia asin].freeze
+                 series season episode
+                 imdb tmdb isbn igdb youtube archive_org wikipedia asin google_books].freeze
     LISTS = %w[period evidence refs].freeze
 
     # ⚠ FACTS ARE FLAT, and that is the concession the fenced block makes.
@@ -93,7 +94,7 @@ module Curiobase
     #   an external identifier — the same shape as an ISBN. It is optional: with
     #   no ASIN the Amazon link falls back to a title search, so nobody has to
     #   go and find one for 34 records before the buttons work.
-    EXTERNAL = %w[imdb tmdb isbn igdb youtube archive_org wikipedia asin].freeze
+    EXTERNAL = %w[imdb tmdb isbn igdb youtube archive_org wikipedia asin google_books].freeze
 
     KEYS = (SCALARS + LISTS + FACTS).freeze
 
@@ -166,8 +167,10 @@ module Curiobase
       fields = result.fields
       out = { "type" => fields["type"], "slug" => fields["slug"] }
 
-      (SCALARS - %w[type slug year] - EXTERNAL).each { |k| out[k] = fields[k] if fields[k].present? }
+      (SCALARS - %w[type slug year season episode] - EXTERNAL).each { |k| out[k] = fields[k] if fields[k].present? }
       out["year"] = fields["year"].to_i if fields["year"].present?
+      out["season"] = fields["season"].to_i if fields["season"].present?
+      out["episode"] = fields["episode"].to_i if fields["episode"].present?
       (LISTS - %w[refs]).each { |k| out[k] = fields[k] if fields[k].present? }
 
       external = EXTERNAL.each_with_object({}) { |k, h| h[k] = fields[k] if fields[k].present? }

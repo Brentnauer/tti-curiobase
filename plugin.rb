@@ -42,6 +42,17 @@ require_relative "lib/curiobase/markup"
 # ══════════════════════════════════════════════════════════════════════════
 
 after_initialize do
+  # ── YouTube players inside Curiobase cards ──────────────────────────────
+  #
+  # PrettyText only keeps <iframe> srcs whose prefix is on this list (and has
+  # ≥3 slashes). Without youtube.com/embed here, our stage players are
+  # stripped on any path that re-sanitises cooked HTML, and watch-URL leftovers
+  # surface as Discourse oneboxes instead of our card chrome.
+  register_modifier(:pretty_text_allowed_iframes) do |list|
+    extras = Curiobase::Embeds::ALLOWED_IFRAME_PREFIXES
+    extras.reduce(list) { |acc, prefix| acc.include?(prefix) ? acc : acc + [prefix] }
+  end
+
   # ── the render path ─────────────────────────────────────────────────────
   #
   # CookedPostProcessor hands over the Nokogiri document after sanitisation
@@ -88,6 +99,8 @@ after_initialize do
   Curiobase::TopicKind.register!
   Curiobase::RecordTopic.register!
   Curiobase::Annotation.register!
+  Curiobase::SeriesEpisodes.register!
+  Curiobase::GoogleBooks.register!
   # The poster URL, so a Subject's association list can show thumbnails without
   # opening every Work's post. Written by CardRenderer at bake time.
   ::Topic.register_custom_field_type(Curiobase::CardRenderer::POSTER_FIELD, :string)
@@ -254,6 +267,8 @@ after_initialize do
     post "/curiobase/gravity" => "curiobase/gravity#create", :defaults => { format: :json }
     # Clicking your own mark again takes the vote back.
     delete "/curiobase/gravity" => "curiobase/gravity#destroy", :defaults => { format: :json }
+    # Live association scores for a Subject file (batched; complements baked HTML).
+    get "/curiobase/readings" => "curiobase/readings#index", :defaults => { format: :json }
   end
 
   # ⚠ REQUIRED. Routes appended during after_initialize do not take effect

@@ -14,7 +14,16 @@ module Jobs
       return unless SiteSetting.curiobase_enabled
       post = Post.find_by(id: args[:post_id])
       return unless post
+
       Curiobase.rebake_now!(post)
+    rescue StandardError
+      # ⚠ A failed rebake must not leave the 60s throttle locked — otherwise a
+      #   broken Subject render (or a Sidekiq blip) freezes a stale card until
+      #   something else votes after the key expires.
+      if post&.topic_id
+        Discourse.redis.del("curiobase:rebake:#{post.topic_id}")
+      end
+      raise
     end
   end
 end

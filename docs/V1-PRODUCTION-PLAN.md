@@ -199,8 +199,10 @@ Rollback: set `curiobase_enabled` false. Cooked HTML may still contain old cards
 - **One door** for “what record is this”: `TopicRecord` + `Source`.  
 - **One score path**: `Gravity.readings` → `Scores.blend` + `Standing`.  
 - **Bake for truth, fetch for “mine”** — never personal data in shared `cooked`.  
-- **Throttle rebakes** (`schedule_record_rebake!` / `schedule_pairing_rebake!`) — votes and tag changes; Work + Subject file, independently capped at one/minute each.  
-- **Outside HTTP use `rebake_now!`** — plain `rebake!` in rake strips cards.  
+- **Throttle rebakes** (`schedule_record_rebake!` / `schedule_pairing_rebake!`) — votes and tag changes; Work + Subject file, independently capped at one/minute each.
+- **Live association scores** — Subject lists refresh via `GET /curiobase/readings` (batched PluginStore) + MessageBus `/curiobase/subject/:slug` after vote; baked HTML remains the crawler path.
+- **Medium-aware embeds** — film/series/game trailer; video/document/book hero players (YouTube, Archive, Google Books when embeddable); series hubs list episodes via `series:` / `season` / `episode`.
+- **Outside HTTP use `rebake_now!`** — plain `rebake!` in rake strips cards.
 - Prefer Discourse plugin APIs (`validate`, events, serializers) over ad-hoc `class_eval`.
 
 ---

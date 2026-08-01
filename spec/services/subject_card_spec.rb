@@ -46,6 +46,19 @@ RSpec.describe Curiobase::SubjectCard do
       expect(h).to include("cb-assoc")
       expect(h.index("cb-dek")).to be < h.index("cb-assoc")
     end
+
+    it "marks the All chip active when no filter is selected" do
+      expect(html(:full)).to include('data-kind="all"').and include("cb-filter is-active")
+      # The active class sits on the All chip specifically.
+      frag = Nokogiri::HTML5.fragment(html(:full))
+      expect(frag.at_css('.cb-filter.is-active')["data-kind"]).to eq("all")
+    end
+
+    it "invites a pairing when nothing engages the Subject yet" do
+      chat_topic.tags = []
+      expect(html(:full)).to include("cb-assoc--empty")
+      expect(html(:full)).to include(I18n.t("curiobase.assoc_empty"))
+    end
   end
 
   describe "the banner" do

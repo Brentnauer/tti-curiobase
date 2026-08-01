@@ -47,42 +47,277 @@
   color: var(--primary-medium) !important;
 }
 
+// ══════════════════════════════════════════════════════════════════════════
+// DISCOURSE FRAME OF REFERENCE — design tokens on the card root.
+// ══════════════════════════════════════════════════════════════════════════
+//
+// These alias Discourse theme variables so the card shares the post's rhythm
+// (asides, oneboxes, quotes) instead of inventing a second visual language.
+// Tune here; do not sprinkle one-off colours/spacings into child rules.
+//
+// Section chrome (stage / gravity / episodes / buy) all use the same hairline
+// rule + padding. That is what makes a video, a book preview, and "how
+// strongly…" read as one catalogue card rather than bolted-on widgets.
+
+%cb-section {
+  margin-top: var(--cb-section-gap, 0.85em);
+  padding-top: var(--cb-section-pad, 0.75em);
+  // Literal hairline — do not route through --cb-rule. Nested var() border
+  // shorthands are easy to lose when Sass @extend regroups selectors.
+  border-top: 1px solid var(--primary-low);
+}
+
 .curiobase-card {
-  // Sit in cooked like Discourse asides / onebox-result: soft fill + left rule,
-  // not a boxed product panel floating on the post.
+  --cb-rule: 1px solid var(--primary-low);
+  --cb-section-gap: 0.85em;
+  --cb-section-pad: 0.75em;
+  --cb-radius: var(--d-border-radius, 4px);
+  --cb-pad-block: 0.85em;
+  --cb-pad-inline: 1em;
+  --cb-poster-w: 72px;
+  --cb-head-gap: 0.85em;
+  --cb-muted: var(--primary-medium);
+  --cb-ink: var(--primary);
+  --cb-surface: var(--d-post-aside-background, var(--primary-very-low));
+  --cb-media-surface: var(--secondary);
+  --cb-media-border: var(--onebox-border-color, var(--primary-low-mid, var(--primary-low)));
+
+  // Same shell as Discourse asides / onebox-result — left rule + soft fill.
   border: 0;
   border-left: var(--d-post-aside-border, 3px solid var(--primary-low));
-  border-radius: var(--d-border-radius, 4px);
-  padding: 0.85em 1em 0.95em;
+  border-radius: var(--cb-radius);
+  padding: var(--cb-pad-block) var(--cb-pad-inline);
   margin: 0.6em 0 1.1em;
-  background: var(--d-post-aside-background, var(--primary-very-low));
+  background: var(--cb-surface);
+  color: var(--cb-ink);
 
+  // ── identity head ──────────────────────────────────────────────────────
   .cb-head {
     display: flex;
-    gap: 1.1em;
+    align-items: flex-start;
+    gap: var(--cb-head-gap);
+
+    // Video works: no poster column — copy alone, stage below.
+    &--text {
+      flex-direction: column;
+      gap: 0;
+    }
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // THE POSTER — 2:3, PORTRAIT, AND ALWAYS THE SAME BOX.
-  // ══════════════════════════════════════════════════════════════════════════
+  .cb-body {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  // ── STAGE — media slot shared by video / trailer / books / archive ─────
   //
-  // ⚠ THE RATIO IS THE TYPE SIGNAL. Portrait means somebody made this;
-  //   landscape (.cb-plate) means it happened or exists. A reader tells a Work
-  //   from a Subject before reading a word.
+  // Same place on every Work card: after the head, before gravity, with the
+  // same hairline as every other section. Video fills it with a 16:9 player;
+  // Books/Archive fill it with a Discourse-shaped link preview.
+  .cb-stage {
+    @extend %cb-section;
+    width: 100%;
+  }
+
+  .cb-embed {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--cb-radius);
+    border: 1px solid var(--primary-low);
+    overflow: hidden;
+    background: #000;
+
+    iframe,
+    .cb-embed-frame {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+    }
+  }
+
+  // Books / Archive — Discourse onebox-body vocabulary, not a second product.
+  // No extra left accent: the card already carries --d-post-aside-border.
+  .cb-media-link {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--cb-media-border);
+    border-radius: var(--cb-radius);
+    background: var(--cb-media-surface);
+    text-decoration: none !important;
+    color: var(--cb-ink);
+    min-height: 5rem;
+    box-sizing: border-box;
+    overflow: hidden;
+
+    &:hover {
+      background: var(--primary-very-low);
+      border-color: var(--primary-medium);
+    }
+  }
+
+  .cb-media-link-thumb {
+    flex: none;
+    width: 7.5rem;
+    min-height: 5rem;
+    overflow: hidden;
+    background: var(--primary-low);
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+  }
+
+  .cb-media-link[data-provider="google_books"] .cb-media-link-thumb {
+    width: 4.5rem;
+  }
+
+  .cb-media-link-meta {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.15em;
+    padding: 0.75em 0.9em;
+  }
+
+  .cb-media-link-label {
+    font-size: var(--font-up-1);
+    font-weight: 600;
+    line-height: var(--line-height-medium);
+    color: var(--cb-ink);
+  }
+
+  .cb-media-link-host {
+    font-size: var(--font-down-2);
+    line-height: var(--line-height-small);
+    color: var(--cb-muted);
+  }
+
+  .cb-series {
+    margin: 0.2em 0 0;
+    font-size: var(--font-down-1);
+    line-height: var(--line-height-large);
+    color: var(--cb-muted);
+  }
+
+  .cb-series-link {
+    font-weight: 600;
+  }
+
+  // ── episodes (series hubs) ─────────────────────────────────────────────
+  // Topic-list rhythm: one section hairline, then quiet rows — not a nested
+  // panel. Matches how Discourse lists related topics under a post.
+  .cb-episodes {
+    @extend %cb-section;
+  }
+
+  .cb-episodes-head {
+    @extend %cb-eyebrow;
+    margin: 0 0 0.35em !important;
+  }
+
+  .cb-episodes-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .cb-episodes-row {
+    margin: 0;
+    padding: 0.4em 0;
+    border-top: var(--cb-rule);
+
+    &:first-child {
+      border-top: 0;
+      padding-top: 0.15em;
+    }
+  }
+
+  .cb-episodes-main {
+    display: flex;
+    align-items: baseline;
+    gap: 0.65em;
+    min-width: 0;
+  }
+
+  .cb-episodes-num {
+    flex: none;
+    min-width: 4.25em;
+    font-size: var(--font-down-2);
+    color: var(--cb-muted);
+    letter-spacing: 0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cb-episodes-title {
+    min-width: 0;
+    font-weight: 500;
+    font-size: var(--font-down-1);
+    line-height: var(--line-height-large);
+    color: var(--tertiary);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  // Text-only Books/Archive stage — a Discourse outbound row, not a nested chip.
+  // Cover already lives in .cb-poster; the stage is just "Preview · Google Books".
+  .cb-media-link:not(:has(.cb-media-link-thumb)) {
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+
+    .cb-media-link-meta {
+      padding: 0;
+      gap: 0.2em;
+    }
+
+    .cb-media-link-label {
+      color: var(--tertiary);
+      font-size: var(--font-0);
+    }
+
+    &:hover {
+      background: transparent;
+      border-color: transparent;
+
+      .cb-media-link-label {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  // ── poster ─────────────────────────────────────────────────────────────
   //
-  // ⚠ `aspect-ratio` + `object-fit: cover`, NOT a bare width. With only a width
-  //   set, a 2:3 film poster and a square game cover produced different heights,
-  //   so the text beside them started at a different y on every card and a run
-  //   of cards looked broken rather than varied.
+  // ⚠ Was 104px wide → taller than a short dek, which left a dead column under
+  //   the text. 72px keeps the type signal without the empty stage.
   //
-  // ⚠ NO DROP SHADOW. This carried `box-shadow: 0 2px 12px rgba(0,0,0,.35)`,
-  //   which is why it read as pasted on: Discourse is flat and signals edges
-  //   with a hairline border, never with elevation.
+  // ⚠ `aspect-ratio` + `object-fit: cover`, NOT a bare width.
+  //
+  // ⚠ NO DROP SHADOW. Discourse signals edges with hairlines.
   .cb-poster {
     flex: none;
-    width: 104px;
+    width: var(--cb-poster-w);
     aspect-ratio: 2 / 3;
-    border-radius: var(--d-border-radius, 4px);
+    border-radius: var(--cb-radius);
     border: 1px solid var(--primary-low);
     overflow: hidden;
     background: var(--primary-very-low);
@@ -93,10 +328,18 @@
       object-fit: cover;
       display: block;
     }
+
+    &--link {
+      display: block;
+      text-decoration: none !important;
+
+      &:hover {
+        border-color: var(--primary-medium);
+      }
+    }
   }
 
-  // No cover yet. Same footprint, so a run of cards still lines up, and it
-  // says what the thing is instead of showing an empty hole.
+  // No cover yet. Same footprint, so a run of cards still lines up.
   .cb-poster--empty {
     display: flex;
     align-items: center;
@@ -107,7 +350,7 @@
       font-size: var(--font-down-3);
       line-height: var(--line-height-medium);
       text-align: center;
-      color: var(--primary-medium);
+      color: var(--cb-muted);
       text-transform: uppercase;
       letter-spacing: 0.04em;
     }
@@ -226,12 +469,21 @@
 }
 
 // ── gravity ────────────────────────────────────────────────────────────────
+// Shares %cb-section with .cb-stage / .cb-episodes / .cb-buy so the hairline
+// above "How strongly…" matches the hairline above the video stage.
 .cb-gravity {
-  margin-top: 0.9em;
-  padding-top: 0.7em;
-  border-top: 1px solid var(--primary-low);
+  @extend %cb-section;
 
-  &--empty { display: none; }
+  // Invitation when nothing is tagged yet — not a blank hole.
+  &--empty {
+    .cb-gravity-invite {
+      margin: 0;
+      font-size: var(--font-down-1);
+      font-style: italic;
+      color: var(--cb-muted, var(--primary-medium));
+      line-height: var(--line-height-large);
+    }
+  }
 }
 
 .cb-gravity-head {
@@ -296,6 +548,20 @@
   font-variant-numeric: tabular-nums;
   font-size: var(--font-up-1);
   line-height: var(--line-height-medium);
+
+  &--pulse {
+    animation: cb-mean-pulse 0.45s ease;
+  }
+}
+
+@keyframes cb-mean-pulse {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cb-mean--pulse { animation: none; }
 }
 
 .cb-count {
@@ -340,6 +606,15 @@
   font-size: var(--font-down-2);
   color: var(--primary-medium);
   line-height: var(--line-height-large);
+
+  .cb-anchor-step {
+    transition: color 0.15s ease, opacity 0.15s ease;
+  }
+
+  .cb-anchor-step.is-hot {
+    color: var(--tertiary);
+    font-weight: 600;
+  }
 }
 
 // ── the rating control ─────────────────────────────────────────────────────
@@ -450,6 +725,10 @@
     &:hover {
       background: var(--tertiary-low);
     }
+  }
+
+  &.is-preview:not(.is-mine) {
+    color: var(--tertiary);
   }
 }
 
@@ -563,7 +842,7 @@
     // ⚠ The poster stays BESIDE the text rather than stacking. Stacked, a 2:3
     //   poster at full width pushes the dek below the fold on a phone — and the
     //   dek is the one thing that has to be read first.
-    .cb-poster { width: 76px; }
+    .cb-poster { width: 64px; }
   }
   // Name across the top, then the number and the control side by side under it.
   .cb-row {
@@ -614,7 +893,15 @@
   padding-top: 0.7em;
   border-top: 1px solid var(--primary-low);
 
-  &--empty { display: none; }
+  &--empty {
+    .cb-assoc-invite {
+      margin: 0;
+      font-size: var(--font-down-1);
+      font-style: italic;
+      color: var(--primary-medium);
+      line-height: var(--line-height-large);
+    }
+  }
 }
 
 .cb-assoc-head {
@@ -795,13 +1082,11 @@
 //   text links rather than filled buttons so the card reads as a catalogue
 //   entry that happens to tell you where to get one — not a storefront.
 .cb-buy {
+  @extend %cb-section;
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: 0.5em;
-  margin: 0.9em 0 0;
-  padding-top: 0.8em;
-  border-top: 1px solid var(--primary-low);
   font-size: var(--font-down-1);
 }
 
