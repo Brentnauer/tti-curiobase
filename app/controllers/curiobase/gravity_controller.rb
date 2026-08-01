@@ -50,7 +50,7 @@ module Curiobase
         value: value,
       )
 
-      Curiobase.schedule_record_rebake!(@topic)
+      Curiobase.schedule_pairing_rebake!(@topic, @subject)
       render json: reading_payload(value)
     rescue RateLimiter::LimitExceeded
       render_json_error(I18n.t("curiobase.errors.rate_limited"), status: 429)
@@ -66,7 +66,7 @@ module Curiobase
     #   hit the hourly cap must still be able to undo the last thing they did.
     def destroy
       VoteStore.retract(work_id: @work_id, subject: @subject, user_id: current_user.id)
-      Curiobase.schedule_record_rebake!(@topic)
+      Curiobase.schedule_pairing_rebake!(@topic, @subject)
       render json: reading_payload(nil)
     end
 

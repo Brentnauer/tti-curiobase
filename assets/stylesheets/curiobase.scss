@@ -1,9 +1,9 @@
 // Presentable defaults.
 //
-// Long term the look belongs in the discourse-curiobase theme component — a
-// broken component is a checkbox in the admin UI, while a broken plugin blocks
-// ./launcher rebuild. But that component does not exist for this design yet,
-// and a plugin that renders unstyled HTML is a plugin nobody can evaluate.
+// Cards use Discourse aside tokens (`--d-post-aside-*`) so they sit in cooked
+// like quotes/oneboxes rather than as a product panel. Long term the look can
+// move to a theme component — a broken component is a checkbox; a broken plugin
+// blocks rebuild — but until TTI's theme is chosen, the plugin owns the CSS.
 //
 // Everything here uses Discourse's own CSS variables, so it follows whatever
 // theme is active rather than assuming dark.
@@ -40,21 +40,22 @@
 //   removing, and it fails the same way: someone tunes one of the three.
 %cb-eyebrow {
   font-size: var(--font-down-3) !important;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   line-height: var(--line-height-medium);
   color: var(--primary-medium) !important;
 }
 
 .curiobase-card {
-  // Closer to Discourse oneboxes than a filled product panel: hairline edge,
-  // transparent body, so the card sits in cooked rather than on top of it.
-  border: 1px solid var(--primary-low);
-  border-radius: var(--d-border-radius-large, 8px);
-  padding: 1em 1.1em;
-  margin-bottom: 1.2em;
-  background: transparent;
+  // Sit in cooked like Discourse asides / onebox-result: soft fill + left rule,
+  // not a boxed product panel floating on the post.
+  border: 0;
+  border-left: var(--d-post-aside-border, 3px solid var(--primary-low));
+  border-radius: var(--d-border-radius, 4px);
+  padding: 0.85em 1em 0.95em;
+  margin: 0.6em 0 1.1em;
+  background: var(--d-post-aside-background, var(--primary-very-low));
 
   .cb-head {
     display: flex;
@@ -180,21 +181,18 @@
   //   place in this file where a small literal radius is the native answer.
   .cb-badge {
     font-size: var(--font-down-3);
-    font-weight: 700;
-    letter-spacing: 0.12em;
+    font-weight: 600;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     line-height: var(--line-height-large);
-    padding: 0.2em 0.6em;
+    padding: 0.15em 0.5em;
     border-radius: 2px;
 
-    // ⚠ `--tertiary`, NOT `--primary`. A solid `--primary` block is the highest
-    //   contrast the theme can produce, and it was sitting at the top of every
-    //   card — louder than the title of the topic it was inside. It also gave
-    //   the card two accent colours, since the eyebrows and the gravity ramp
-    //   are both `--tertiary`. This is how core styles `.badge-notification`.
+    // Quiet chips — kind/domain are classification, not a call to action.
+    // Solid tertiary blocks competed with the topic title above the card.
     &--primary {
-      background: var(--tertiary);
-      color: var(--secondary);
+      background: var(--primary-low);
+      color: var(--primary-high, var(--primary));
     }
     &--muted {
       border: 1px solid var(--primary-low-mid);
@@ -225,8 +223,8 @@
 
 // ── gravity ────────────────────────────────────────────────────────────────
 .cb-gravity {
-  margin-top: 1.1em;
-  padding-top: 0.9em;
+  margin-top: 0.9em;
+  padding-top: 0.7em;
   border-top: 1px solid var(--primary-low);
 
   &--empty { display: none; }
@@ -257,9 +255,9 @@
 .cb-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 4.5em 9.5em;
-  column-gap: 1.5em;
+  column-gap: 1.25em;
   align-items: start;
-  padding: 0.7em 0;
+  padding: 0.55em 0;
   border-top: 1px solid var(--primary-low);
 
   &:first-of-type { border-top: 0; }
@@ -582,10 +580,11 @@
   margin-bottom: 1.2em;
 
   .curiobase-card--banner {
-    border: 1px solid var(--primary-low);
-    border-radius: var(--d-border-radius-large, 8px);
-    padding: 0.9em 1.1em;
-    background: transparent;
+    border: 0;
+    border-left: var(--d-post-aside-border, 3px solid var(--primary-low));
+    border-radius: var(--d-border-radius, 4px);
+    padding: 0.75em 1em;
+    background: var(--d-post-aside-background, var(--primary-very-low));
   }
 
   .cb-dek {
@@ -607,8 +606,8 @@
 // Everything that engages a Subject. The discussions half comes from
 // Discourse's own tag index and costs nothing.
 .cb-assoc {
-  margin-top: 1.1em;
-  padding-top: 0.9em;
+  margin-top: 0.9em;
+  padding-top: 0.7em;
   border-top: 1px solid var(--primary-low);
 
   &--empty { display: none; }
@@ -632,21 +631,19 @@
   &--empty { display: none; }
 }
 
-// ⚠ 10px, not 11px. Core's `.badge-wrapper` pill is 10px — an arbitrary 11 is a
-//   value that is *nearly* the house radius, which reads worse than one that is
-//   obviously different.
+// Match topic-list / category chip radii rather than a separate pill system.
 .cb-filter {
   font-size: var(--font-down-2);
   line-height: var(--line-height-large);
-  padding: 0.2em 0.7em;
+  padding: 0.15em 0.55em;
   border: 1px solid var(--primary-low-mid);
-  border-radius: 10px;
+  border-radius: var(--d-border-radius, 4px);
   color: var(--primary-medium);
 
   &.is-active {
-    background: var(--tertiary);
-    border-color: var(--tertiary);
-    color: var(--secondary);
+    background: var(--primary-low);
+    border-color: var(--primary-medium);
+    color: var(--primary);
   }
 }
 
@@ -672,8 +669,9 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) 4.2em 3.6em;
   align-items: center;
-  gap: 0.9em;
-  padding: 0.5em 0;
+  gap: 0.7em;
+  // Topic-list density: shorter rows, quieter separators.
+  padding: 0.35em 0;
   border-top: 1px solid var(--primary-low);
 
   &:first-child { border-top: 0; }

@@ -40,7 +40,7 @@ Time Travel Institute’s forum is already a 28-year archive of contested subjec
 | Authoring UX | B+ | Fence + validator is real; still text-first, no composer UI |
 | Ops / durability | B− | PluginStore OK to start; plan a table; doctor/rake required |
 | SEO honesty | B+ | AggregateRating off by default + min voters; one primary pairing |
-| Visual native-ness | B | Tokens good; catalogue card will never be “just a post” |
+| Visual native-ness | B+ | Aside/onebox chrome; quieter badges/eyebrows; denser assoc rows |
 | Docs / install | B+ | README + plan aligned to latest/`tests-passed` and guardrails |
 
 ---
@@ -144,7 +144,7 @@ A release is “good v1” when all of the following are true on staging (then p
 3. **Convert legacy wraps** on any leftover topics (`curiobase:convert` / `doctor`).
 4. ~~**README / install**~~ — done (latest/`tests-passed`, annotation auto + rake, sync script, structured-ratings guardrails).
 5. **Wiki edit groups** — set `edit_wiki_post_allowed_groups` before enabling annotations.
-6. **Smoke script** — Googlebot curl on one Work + one Subject tag + Structured Data test (or Search Console URL inspection). Leave `curiobase_structured_ratings` off unless intentionally testing stars.
+6. ~~**Smoke script**~~ — `bin/smoke-googlebot.py` (Work + Subject + tag). Leave `curiobase_structured_ratings` off unless intentionally testing stars.
 
 ### P1 — first month
 7. **Vote durability plan** — stay on PluginStore for launch; schedule migration design to `curiobase_votes` (user_id, work_slug, subject_slug, value, timestamps) when volume or analytics need it.
@@ -199,7 +199,7 @@ Rollback: set `curiobase_enabled` false. Cooked HTML may still contain old cards
 - **One door** for “what record is this”: `TopicRecord` + `Source`.  
 - **One score path**: `Gravity.readings` → `Scores.blend` + `Standing`.  
 - **Bake for truth, fetch for “mine”** — never personal data in shared `cooked`.  
-- **Throttle rebakes** (`schedule_record_rebake!`) — votes and tag changes.  
+- **Throttle rebakes** (`schedule_record_rebake!` / `schedule_pairing_rebake!`) — votes and tag changes; Work + Subject file, independently capped at one/minute each.  
 - **Outside HTTP use `rebake_now!`** — plain `rebake!` in rake strips cards.  
 - Prefer Discourse plugin APIs (`validate`, events, serializers) over ad-hoc `class_eval`.
 
@@ -225,7 +225,7 @@ Rollback: set `curiobase_enabled` false. Cooked HTML may still contain old cards
 | A | Keep AggregateRating despite “not quality”? | **Yes, optional** — off by default; on + min voters (default 5); one primary pairing; copy must not say “review score” |
 | B | Who may create Subject tags? | Staff / trusted; not open TL0 |
 | C | When to migrate votes off PluginStore? | When analytics, integrity, or scale hurt — design before pain |
-| D | Theme component now or after visual pass? | After one more design pass on staging |
+| D | Theme component now or after visual pass? | Visual pass done in plugin; extract when TTI theme is chosen |
 | E | Public catalogue size before buy links? | Prefer free identifiers first; shops when IDs are real |
 
 ---
@@ -247,11 +247,12 @@ Until then: **excellent v1 candidate**, continue hardening via the checklist —
 ## 13. Suggested next engineering slices (priority)
 
 1. ~~README sync + structured-ratings guardrails~~.  
-2. Staging install + doctor + Googlebot smoke.  
-3. Convert any remaining wraps; freeze “no new wraps.”  
-4. Vote table design doc (no migrate yet unless needed).  
-5. Optional: theme-component extraction after visual sign-off.
+2. ~~Local staging smoke (`curiobase:doctor` + `bin/smoke-googlebot.py`) + visual pass~~.  
+3. Staging install on real TTI staging (if separate from local docker-dev).  
+4. Convert any remaining wraps; freeze “no new wraps.”  
+5. Vote table design doc (no migrate yet unless needed).  
+6. Theme-component extraction after TTI theme sign-off.
 
 ---
 
-*Last updated: 2026-08-01 — README sync; structured ratings off by default + min-voter floor; post-tighten codebase.*
+*Last updated: 2026-08-01 — smoke script; aside-style cards; AggregateRating gated; README sync.*

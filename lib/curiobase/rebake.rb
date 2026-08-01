@@ -43,6 +43,24 @@ module Curiobase
     Jobs.enqueue_in(5.seconds, :curiobase_rebake, post_id: post_id)
   end
 
+  # Subject file whose association list includes this pairing. Lookup is the
+  # cached RecordTopic path (indexed custom field), not a cooked scan.
+  def self.schedule_subject_file_rebake!(slug)
+    topic_id = RecordTopic.find(slug, type: :subject)
+    return unless topic_id
+
+    schedule_record_rebake!(Topic.find_by(id: topic_id))
+  end
+
+  # A gravity vote (or tag change that creates/breaks a pairing) updates two
+  # baked surfaces: the Work card's gravity row and the Subject file's
+  # association list. Each topic keeps its own 60s throttle — a busy Subject
+  # is at most one rebake/minute no matter how many Works are rated against it.
+  def self.schedule_pairing_rebake!(work_topic, subject_slug)
+    schedule_record_rebake!(work_topic)
+    schedule_subject_file_rebake!(subject_slug)
+  end
+
   # Seed post 2 as a wiki when annotation is enabled. Idempotent; refuses if
   # slot 2 is already taken. Backfill remaining history with curiobase:annotate.
   def self.maybe_ensure_annotation!(post)

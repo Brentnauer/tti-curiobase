@@ -132,6 +132,41 @@ RSpec.describe Curiobase::Annotation do
         )
       end
     end
+
+    it "also schedules a rebake of the Subject file whose list membership changed" do
+      other = Fabricate(:tag, name: "john-titor")
+      group.tags = [tag, other]
+      group.save!
+      Curiobase::Subjects.reset_cache!
+
+      subject_topic = Fabricate(:topic, title: "John Titor file", user: Fabricate(:admin), tags: [other])
+      subject_op =
+        Fabricate(
+          :post,
+          topic: subject_topic,
+          user: subject_topic.user,
+          raw: <<~RAW,
+            ```curiobase
+            type: subject
+            slug: john-titor
+            kind: person
+            domain: time
+            dek: The screen name behind a series of posts.
+            ```
+          RAW
+        )
+      Curiobase.rebake_now!(subject_op)
+      Discourse.redis.del("curiobase:rebake:#{topic.id}")
+      Discourse.redis.del("curiobase:rebake:#{subject_topic.id}")
+
+      expect_enqueued_with(job: :curiobase_rebake, args: { post_id: subject_op.id }) do
+        DiscourseTagging.tag_topic_by_names(
+          topic,
+          Guardian.new(Fabricate(:admin)),
+          [tag.name, other.name],
+        )
+      end
+    end
   end
 
   describe "the link on the card" do

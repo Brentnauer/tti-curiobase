@@ -210,11 +210,14 @@ That pulls Discourse, remounts this plugin from
 # inside the Discourse container / via d/rspec
 LOAD_PLUGINS=1 bin/rspec plugins/tti-curiobase/spec
 bin/qunit --standalone --target tti-curiobase   # needs a browser in the container
+
+# Googlebot / crawler smoke (host; Discourse on :3000)
+python3 bin/smoke-googlebot.py http://127.0.0.1:3000
 ```
 
 Records render through `post_process_cooked` into `posts.cooked`, so **a change to the renderer
 needs a rebake before it is visible**. Ruby under `lib/` and `config/settings.yml` need a server
-restart; `app/` reloads.
+restart; `app/` reloads. SCSS changes recompile with the asset pipeline — hard-refresh the browser.
 
 Planning / rollout: [`docs/V1-PRODUCTION-PLAN.md`](docs/V1-PRODUCTION-PLAN.md).
 

@@ -44,6 +44,38 @@ RSpec.describe Curiobase::GravityController do
       expect(response.parsed_body["mine"]).to eq(4)
     end
 
+    # ⚠ Subject association lists are baked into the Subject file. A vote that
+    #   only rebaked the Work left those lists stale. Both topics are throttled
+    #   independently (≤1 rebake/minute each).
+    it "schedules a throttled rebake of the Work and the Subject file" do
+      subject_topic = Fabricate(:topic, title: "Causal Loop, the file", user: Fabricate(:admin), tags: [tag])
+      subject_op =
+        Fabricate(
+          :post,
+          topic: subject_topic,
+          user: subject_topic.user,
+          raw: <<~RAW,
+            ```curiobase
+            type: subject
+            slug: causal-loop
+            kind: idea
+            domain: time
+            dek: When an effect is among its own causes.
+            ```
+          RAW
+        )
+      Curiobase.rebake_now!(subject_op)
+      Discourse.redis.del("curiobase:rebake:#{topic.id}")
+      Discourse.redis.del("curiobase:rebake:#{subject_topic.id}")
+
+      expect_enqueued_with(job: :curiobase_rebake, args: { post_id: op.id }) do
+        expect_enqueued_with(job: :curiobase_rebake, args: { post_id: subject_op.id }) do
+          cast(value: 4)
+        end
+      end
+      expect(response.status).to eq(200)
+    end
+
     # ⚠ The response must carry the number the card will bake a minute later,
     #   computed the same way. Returning anything else makes the row jump back
     #   on rebake and readers conclude their vote was thrown away.

@@ -228,9 +228,14 @@ after_initialize do
     new_names = Array(payload&.dig(:new_tag_names) || payload&.dig("new_tag_names"))
     touched = (old_names + new_names).map(&:to_s).uniq
     next if touched.empty?
-    next unless touched.any? { |name| Curiobase::Subjects.vocabulary.include?(name) }
 
+    touched_subjects = touched.select { |name| Curiobase::Subjects.vocabulary.include?(name) }
+    next if touched_subjects.empty?
+
+    # Work card (gravity rows) and each Subject file whose association list
+    # gained or lost this Work — both throttled independently.
     Curiobase.schedule_record_rebake!(topic)
+    touched_subjects.each { |slug| Curiobase.schedule_subject_file_rebake!(slug) }
   end
 
   # ── routes ──────────────────────────────────────────────────────────────
