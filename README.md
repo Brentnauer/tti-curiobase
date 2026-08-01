@@ -9,6 +9,10 @@ members rate how strongly each one pulls on the other.
 Records are written in the post itself, rendered into the page, and readable by search engines
 without JavaScript. Nothing is moved: a topic keeps its replies, its links and its history.
 
+**Facts vs views:** pairings and votes are the truth; cards, lists, and structured data are derived
+views. Gravity is always about a Work↔Subject *pair*, never a single collapsed “score for this
+Work.”
+
 ---
 
 ## What it adds
@@ -24,23 +28,27 @@ cannot exist without it.*
 **Association lists.** A Subject's topic shows the works that engage it, ranked, with filter chips
 per medium. The chips are real links, so a crawler follows them to a complete filtered page.
 
-**A community wiki** as post 2 of every record, so corrections live beside the record.
+**A community wiki** as post 2 of every record (when enabled), so corrections live beside the file.
 
 **"Find a copy."** Free sources first — Internet Archive, libraries, Steam, streaming lookups —
 then affiliate links, marked as paid. If a work is freely available, the shops are not shown.
 
 **Structured data.** Works are emitted as `Movie`, `Book`, `VideoGame`, `TVSeries`, `VideoObject`
 or `CreativeWork`; Subjects as `Person`, `Organization`, `Event`, `Place`, `Claim` and others, with
-`sameAs`, `image`, ISBNs, credits, dates and coordinates where the record has them.
+`sameAs`, `image`, ISBNs, credits, dates and coordinates where the record has them. Optional
+`AggregateRating` stars are **off by default** (see settings) — entity markup stays either way.
 
 ---
 
 ## Requirements
 
-Discourse 2.7.0 or later. No database migrations — votes live in `PluginStore` and caches in topic
-custom fields.
+Discourse **latest** / `tests-passed` (developed against `2026.8.x`). Plugin header requires 3.2.0+.
 
-## Install
+Votes live in `PluginStore` for v1 (no migration required to install). Topic custom fields cache
+kind, slug claim, and poster URL. A SQL vote table is a planned later durability step — same
+`(work, subject, user)` shape.
+
+## Install (production)
 
 Add to `containers/app.yml` and rebuild:
 
@@ -57,7 +65,8 @@ hooks:
 cd /var/discourse && ./launcher rebuild app
 ```
 
-Then enable `curiobase_enabled` in **Admin → Settings → Curiobase**.
+Create the Subject tag group, then enable `curiobase_enabled` in **Admin → Settings → Curiobase**.
+See [`docs/V1-PRODUCTION-PLAN.md`](docs/V1-PRODUCTION-PLAN.md) for staged rollout.
 
 ---
 
@@ -72,13 +81,19 @@ All under **Curiobase** in `/admin/site_settings`.
 | `curiobase_min_trust_level` | `1` | Minimum trust level to rate. |
 | `curiobase_member_voting_enabled` | on | Gravity *is* the vote. Off means no score at all, not a fallback. |
 | `curiobase_supporter_group` | — | Group picker. Members get +1 vote weight, capped at 5. |
-| `curiobase_annotation_enabled` | off | Adds the community wiki. **Turning this on writes a post to every record topic.** |
+| `curiobase_annotation_enabled` | off | Community wiki at post 2. **New** records auto-seed when on; run `curiobase:annotate` once to backfill history. Set Discourse `edit_wiki_post_allowed_groups` before enabling. |
+| `curiobase_structured_ratings` | off | Emit `AggregateRating` on Work pages (SEO experiment). Off = entity markup only. |
+| `curiobase_structured_ratings_min_voters` | `5` | Minimum voters on the primary pairing before stars are emitted. |
 | `curiobase_buy_links_enabled` | off | The "Find a copy" line. |
 | `curiobase_amazon_tag` | — | Amazon Associates tag. Covers Amazon and AbeBooks. |
 | `curiobase_ebay_campaign` | — | eBay Partner Network campaign id. |
 | `curiobase_gog_tracking_prefix` | — | GOG affiliate tracking prefix — a full URL, not an id. |
 
 Each shop stays hidden until its id is set. The free half of "Find a copy" needs no configuration.
+
+When structured ratings are on, Google sees **one** `AggregateRating` per Work URL from the pairing
+with the most voters (not an average across all Subject tags). Likes/recommends are never exported
+as ratings.
 
 ### Vote weight
 
@@ -91,6 +106,9 @@ current standing rather than freezing at the moment they voted.
 ## Writing a record
 
 Put a fenced `curiobase` block at the top of the first post. The topic title is the record's title.
+
+**This is the only production authoring format.** Legacy `[wrap=…]` markers remain readable until
+converted; do not add new wraps.
 
 A Work:
 
@@ -156,7 +174,8 @@ page's meta description.
 ### Connecting a Work to a Subject
 
 Tag the Work's topic with the Subject's slug. That tag *is* the pairing, and it is what makes the
-Work appear in the Subject's association list and become rateable.
+Work appear in the Subject's association list and become rateable. Adding or removing a Subject tag
+rebakes the card (throttled).
 
 ---
 
@@ -166,9 +185,11 @@ Work appear in the Subject's association list and become rateable.
 |---|---|
 | `curiobase:doctor` | Health check — stale claims, slug collisions, records missing a medium or a cached kind. |
 | `curiobase:rebake` | Re-render every record. No revisions, no bumps. |
-| `curiobase:convert` | Move a record from a legacy `[wrap]` into a fenced block. Refuses rather than dropping a field it cannot express. |
+| `curiobase:annotate` | Backfill community wikis for existing records (setting must be on). |
+| `curiobase:convert` | Move a legacy `[wrap]` into a fenced block. Refuses rather than dropping a field. |
 | `curiobase:repair[write]` | Restore anything an earlier conversion dropped. |
 | `curiobase:unclaim` | Release stale slug claims. |
+| `curiobase:seed` | Local demo topics (fenced blocks). |
 
 Run `curiobase:doctor` after any bulk change.
 
@@ -176,17 +197,26 @@ Run `curiobase:doctor` after any bulk change.
 
 ## Development
 
+Local Discourse docker-dev should track **`tests-passed`** (prod `latest`). From WSL:
+
 ```bash
-bin/rspec plugins/tti-curiobase/spec
+~/sync-discourse-latest   # or: bin/sync-discourse-latest
+```
+
+That pulls Discourse, remounts this plugin from
+`Documents/GitHub/tti-curiobase`, migrates, and starts `bin/dev`.
+
+```bash
+# inside the Discourse container / via d/rspec
+LOAD_PLUGINS=1 bin/rspec plugins/tti-curiobase/spec
 bin/qunit --standalone --target tti-curiobase   # needs a browser in the container
 ```
 
 Records render through `post_process_cooked` into `posts.cooked`, so **a change to the renderer
-needs a rebake before it is visible** — the page serves what is already stored. Ruby under `lib/`
-and anything in `config/settings.yml` is loaded at boot and needs a server restart; `app/` reloads.
+needs a rebake before it is visible**. Ruby under `lib/` and `config/settings.yml` need a server
+restart; `app/` reloads.
 
-Design notes, and the reasoning behind most of the decisions in here, live in the companion
-[`discourse-curiobase`](https://github.com/Brentnauer/discourse-curiobase) repository.
+Planning / rollout: [`docs/V1-PRODUCTION-PLAN.md`](docs/V1-PRODUCTION-PLAN.md).
 
 ## License
 

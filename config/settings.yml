@@ -27,14 +27,12 @@ curiobase:
 
   # Post 2 of every record topic becomes a community wiki.
   #
-  # ⚠ Ships off because turning it on WRITES A POST to every record topic, and
-  #   that is a visible change to a live forum rather than a rendering tweak.
+  # ⚠ Ships off. When on, *new* valid records auto-seed post 2; run
+  #   `curiobase:annotate` once to backfill history. That rake writes posts.
   #
   # ⚠ Who may edit is NOT set here — it is Discourse's own
-  #   `edit_wiki_post_allowed_groups`, which defaults to TL1. On a forum with a
-  #   28-year backlog of cranks, TL2 or a named group is a safer opening
-  #   position: loosening later is a click, tightening after vandalism is a
-  #   cleanup.
+  #   `edit_wiki_post_allowed_groups`. On a crank-heavy archive, tighten that
+  #   before enabling.
   curiobase_annotation_enabled:
     default: false
     client: false
@@ -44,6 +42,25 @@ curiobase:
   curiobase_member_voting_enabled:
     default: true
     client: true
+
+  # ── structured data (optional SEO export) ───────────────────────────────
+  #
+  # ⚠ OFF BY DEFAULT. Catalogue truth is pairings + votes; AggregateRating is
+  #   a search experiment. Google may show it as review stars even though
+  #   gravity is centrality. Entity markup (Movie/Book/sameAs/about) emits
+  #   either way.
+  #
+  # When on: one AggregateRating per Work URL from the primary pairing (most
+  # voters), only if that pairing meets the min-voter floor.
+  curiobase_structured_ratings:
+    default: false
+    client: false
+
+  curiobase_structured_ratings_min_voters:
+    default: 5
+    min: 1
+    max: 100
+    client: false
 
   # ── buy links ────────────────────────────────────────────────────────────
   #

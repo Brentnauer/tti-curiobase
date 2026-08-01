@@ -254,10 +254,11 @@ RSpec.describe Curiobase::JsonLd do
   end
 
   # ⚠ Gravity is CENTRALITY, not quality. Google renders aggregateRating as
-  #   review stars — we still emit one clear signal per Work URL when real
-  #   voters exist, from the primary pairing only (never N stacked ratings).
+  #   review stars. Emission is gated: setting on + primary pairing meets the
+  #   min-voter floor. One signal per Work URL (never N stacked ratings).
   it "never publishes a rating without real voters" do
     SiteSetting.curiobase_member_voting_enabled = true
+    SiteSetting.curiobase_structured_ratings = true
     film = record!("Coherence (2013), the dinner party", <<~R.strip)
       type: work
       slug: coherence
@@ -268,8 +269,47 @@ RSpec.describe Curiobase::JsonLd do
     expect(ld(film)).not_to have_key("aggregateRating")
   end
 
+  it "omits AggregateRating when structured ratings are off, even with voters" do
+    SiteSetting.curiobase_member_voting_enabled = true
+    SiteSetting.curiobase_structured_ratings = false
+
+    film = record!("Coherence off (2013), ratings gated", <<~R.strip)
+      type: work
+      slug: coherence-off-ld
+      medium: film
+      dek: A dinner party during the passage of a comet.
+    R
+    5.times do
+      u = Fabricate(:user, trust_level: TrustLevel[1])
+      Curiobase::VoteStore.cast(work_id: "coherence-off-ld", subject: "majestic-12", user_id: u.id, value: 4)
+    end
+
+    expect(ld(film)).not_to have_key("aggregateRating")
+  end
+
+  it "omits AggregateRating when the primary pairing is below the voter floor" do
+    SiteSetting.curiobase_member_voting_enabled = true
+    SiteSetting.curiobase_structured_ratings = true
+    SiteSetting.curiobase_structured_ratings_min_voters = 5
+
+    film = record!("Coherence floor (2013), too few voters", <<~R.strip)
+      type: work
+      slug: coherence-floor-ld
+      medium: film
+      dek: A dinner party during the passage of a comet.
+    R
+    3.times do
+      u = Fabricate(:user, trust_level: TrustLevel[1])
+      Curiobase::VoteStore.cast(work_id: "coherence-floor-ld", subject: "majestic-12", user_id: u.id, value: 5)
+    end
+
+    expect(ld(film)).not_to have_key("aggregateRating")
+  end
+
   it "publishes one AggregateRating from the primary pairing, and subjects as about" do
     SiteSetting.curiobase_member_voting_enabled = true
+    SiteSetting.curiobase_structured_ratings = true
+    SiteSetting.curiobase_structured_ratings_min_voters = 5
     other = Fabricate(:tag, name: "causal-loop")
     TagGroupMembership.create!(tag: other, tag_group: group)
 
@@ -281,8 +321,8 @@ RSpec.describe Curiobase::JsonLd do
     R
     film.tags = [tag, other]
 
-    # More voters on majestic-12 → that pairing is primary.
-    3.times do
+    # More voters on majestic-12 → that pairing is primary; must clear the floor.
+    5.times do
       u = Fabricate(:user, trust_level: TrustLevel[1])
       Curiobase::VoteStore.cast(work_id: "primer-ratings-ld", subject: "majestic-12", user_id: u.id, value: 5)
     end
@@ -299,7 +339,7 @@ RSpec.describe Curiobase::JsonLd do
       "ratingValue" => 5.0,
       "bestRating" => 5,
       "worstRating" => 1,
-      "ratingCount" => 3,
+      "ratingCount" => 5,
     )
     expect(blob["about"]).to be_an(Array)
     expect(blob["about"].map { |a| a["name"] }.join).to match(/majestic|causal/i)

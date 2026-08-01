@@ -339,8 +339,9 @@ module Curiobase
     #    subjects. Subjects travel as `about` / related entities without their
     #    own AggregateRating on this page.
     #
-    # So: no votes, no markup. With votes, the primary pairing (most voters,
-    # then highest display) is the single AggregateRating. ratingValue is the
+    # So: no votes, no markup. Structured ratings off → no AggregateRating.
+    # When on: primary pairing (most voters, then highest display), only if it
+    # meets curiobase_structured_ratings_min_voters. ratingValue is the
     # unweighted member mean of that pairing — what ratingCount describes —
     # not the standing-weighted display used on the card.
     def self.resolve(topic)
@@ -353,6 +354,7 @@ module Curiobase
 
     def self.aggregate(topic, record)
       return nil unless SiteSetting.curiobase_member_voting_enabled
+      return nil unless SiteSetting.curiobase_structured_ratings
 
       readings =
         Gravity
@@ -367,6 +369,9 @@ module Curiobase
       primary =
         readings.max_by { |r| [r.voter_count.to_i, r.display.to_f] }
       return nil unless primary
+
+      min = SiteSetting.curiobase_structured_ratings_min_voters.to_i
+      return nil if primary.voter_count.to_i < min
 
       dist = Array(primary.distribution)
       total = dist.sum
