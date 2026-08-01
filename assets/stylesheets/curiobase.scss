@@ -180,12 +180,16 @@
   // ⚠ 2px matches core's `--category-badge-border-radius` exactly. The one
   //   place in this file where a small literal radius is the native answer.
   .cb-badge {
+    display: inline-flex;
+    align-items: center;
     font-size: var(--font-down-3);
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    line-height: var(--line-height-large);
-    padding: 0.15em 0.5em;
+    // Caps + `--line-height-large` left a tall line box with empty space under
+    // the glyphs. Tight line-height + flex centers the label in the chip.
+    line-height: 1;
+    padding: 0.35em 0.55em;
     border-radius: 2px;
 
     // Quiet chips — kind/domain are classification, not a call to action.
