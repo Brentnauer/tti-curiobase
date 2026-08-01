@@ -254,8 +254,8 @@ RSpec.describe Curiobase::JsonLd do
   end
 
   # ⚠ Gravity is CENTRALITY, not quality. Google renders aggregateRating as
-  #   review stars, and stars beside a number that is not a review score is a
-  #   lie told to everyone who sees the listing.
+  #   review stars — we still emit one clear signal per Work URL when real
+  #   voters exist, from the primary pairing only (never N stacked ratings).
   it "never publishes a rating without real voters" do
     SiteSetting.curiobase_member_voting_enabled = true
     film = record!("Coherence (2013), the dinner party", <<~R.strip)
@@ -266,6 +266,43 @@ RSpec.describe Curiobase::JsonLd do
     R
 
     expect(ld(film)).not_to have_key("aggregateRating")
+  end
+
+  it "publishes one AggregateRating from the primary pairing, and subjects as about" do
+    SiteSetting.curiobase_member_voting_enabled = true
+    other = Fabricate(:tag, name: "causal-loop")
+    TagGroupMembership.create!(tag: other, tag_group: group)
+
+    film = record!("Primer (2004), the garage film for ratings", <<~R.strip)
+      type: work
+      slug: primer-ratings-ld
+      medium: film
+      dek: Two engineers in a garage.
+    R
+    film.tags = [tag, other]
+
+    # More voters on majestic-12 → that pairing is primary.
+    3.times do
+      u = Fabricate(:user, trust_level: TrustLevel[1])
+      Curiobase::VoteStore.cast(work_id: "primer-ratings-ld", subject: "majestic-12", user_id: u.id, value: 5)
+    end
+    Curiobase::VoteStore.cast(
+      work_id: "primer-ratings-ld",
+      subject: "causal-loop",
+      user_id: Fabricate(:user, trust_level: TrustLevel[1]).id,
+      value: 2,
+    )
+
+    blob = ld(film)
+    expect(blob["aggregateRating"]).to eq(
+      "@type" => "AggregateRating",
+      "ratingValue" => 5.0,
+      "bestRating" => 5,
+      "worstRating" => 1,
+      "ratingCount" => 3,
+    )
+    expect(blob["about"]).to be_an(Array)
+    expect(blob["about"].map { |a| a["name"] }.join).to match(/majestic|causal/i)
   end
 
   # ⚠ One registry, read by the card AND by sameAs. Two lists of

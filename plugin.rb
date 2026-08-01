@@ -5,7 +5,7 @@
 # version: 0.1.0
 # authors: Time Travel Institute
 # url: https://github.com/Brentnauer/tti-curiobase
-# required_version: 2.7.0
+# required_version: 3.2.0
 
 enabled_site_setting :curiobase_enabled
 
@@ -175,35 +175,23 @@ after_initialize do
 
   # ── a broken record never gets saved ────────────────────────────────────
   #
-  # ⚠ THE COMPOSER IS THE ONLY PLACE THIS CAN BE CAUGHT USEFULLY.
-  #
-  #   Authoring a record in a post trades a CMS dropdown for a textarea, and a
-  #   textarea takes anything. Without this, `evidence: firsthand_account` saves
-  #   happily and renders nothing — the exact silent failure that has cost more
-  #   time on this project than every other class of bug together.
-  #
-  #   Rejecting on validate puts the error in front of the person who can fix
-  #   it, at the moment they can fix it.
-  Post.class_eval do
-    validate :curiobase_record_is_well_formed
+  # Authoring in a textarea needs composer-time refusal — otherwise a bad
+  # facet saves cleanly and renders nothing. Plugin::Instance#validate is the
+  # Discourse-native form (reload-safe, gated on plugin.enabled?).
+  validate(:post, :curiobase_record_is_well_formed) do
+    return unless is_first_post?
+    return unless Curiobase::PostKind.present?(raw)
 
-    def curiobase_record_is_well_formed
-      return unless SiteSetting.curiobase_enabled
-      return unless is_first_post?
-      return unless Curiobase::PostKind.present?(raw)
-
-      # ⚠ `post:` is what lets the validator check the slug is not already
-      #   another topic's. Without it a second record can claim `majestic-12`
-      #   and the only symptom is a tag page quietly serving the wrong file.
-      Curiobase::RecordValidator.errors_for(raw, post: self).each { |e| errors.add(:base, e) }
-    end
+    # ⚠ `post:` lets the validator check the slug is not already another
+    #   topic's. Without it a second record can claim the same slug and the
+    #   tag page quietly serves the wrong file.
+    Curiobase::RecordValidator.errors_for(raw, post: self).each { |e| errors.add(:base, e) }
   end
 
   # ── a deleted member's votes stop counting ──────────────────────────────
   #
   # ⚠ PluginStore has no foreign key, so nothing cascades. Without this a
-  #   deleted account goes on scoring every pairing it ever rated, forever, and
-  #   there is no screen anywhere that would show you.
+  #   deleted account goes on scoring every pairing it ever rated, forever.
   on(:user_destroyed) { |user| Curiobase::VoteStore.forget_user(user.id) }
 
   # ── keep the vocabulary cache honest ────────────────────────────────────
@@ -211,21 +199,38 @@ after_initialize do
   on(:tag_updated)  { Curiobase::Subjects.reset_cache! }
   on(:tag_destroyed) { Curiobase::Subjects.reset_cache! }
 
-  # ── rebake when tags change ─────────────────────────────────────────────
+  # ── rebake when a record's subject tags change ──────────────────────────
   #
-  # Adding a subject tag must make the row appear. rebake! writes no revision
-  # and bypasses the bump, and it calls publish_change_to_clients!(:rebaked),
-  # so MessageBus pushes the new HTML to everyone with the topic open.
-  #
-  # Plain rebake! is correct HERE and only here: we are inside the running
-  # server, so Sidekiq picks up the Jobs::ProcessPost it enqueues and the card
-  # gets rendered a moment later. Anywhere outside a request — rake, runner,
-  # console — use Curiobase.rebake_now!, or the card is stripped and never
-  # replaced. See lib/curiobase/rebake.rb.
+  # Adding a subject tag must make the gravity row appear. Tag edits via
+  # DiscourseTagging fire `:topic_tags_changed` without `:post_edited`, so
+  # both hooks are required. Throttled like vote rebakes — one per topic per
+  # minute. Outside a request, use Curiobase.rebake_now! (see rebake.rb).
   on(:post_edited) do |post, topic_changed|
     next unless SiteSetting.curiobase_enabled
-    next unless topic_changed && post.is_first_post?
-    post.rebake!
+    next unless post.is_first_post?
+
+    Curiobase.maybe_ensure_annotation!(post)
+
+    next unless topic_changed
+    Curiobase.schedule_record_rebake!(post.topic)
+  end
+
+  on(:post_created) do |post|
+    next unless SiteSetting.curiobase_enabled
+    next unless post.is_first_post?
+    Curiobase.maybe_ensure_annotation!(post)
+  end
+
+  on(:topic_tags_changed) do |topic, payload|
+    next unless SiteSetting.curiobase_enabled
+
+    old_names = Array(payload&.dig(:old_tag_names) || payload&.dig("old_tag_names"))
+    new_names = Array(payload&.dig(:new_tag_names) || payload&.dig("new_tag_names"))
+    touched = (old_names + new_names).map(&:to_s).uniq
+    next if touched.empty?
+    next unless touched.any? { |name| Curiobase::Subjects.vocabulary.include?(name) }
+
+    Curiobase.schedule_record_rebake!(topic)
   end
 
   # ── routes ──────────────────────────────────────────────────────────────

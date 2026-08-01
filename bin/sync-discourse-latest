@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+# Refresh the local Discourse docker-dev environment to match prod "latest"
+# (tests-passed). Run from WSL: bin/sync-discourse-latest
+set -euo pipefail
+
+DISCOURSE_DIR="${DISCOURSE_DIR:-/home/brent/discourse}"
+PLUGIN_DIR="${PLUGIN_DIR:-/mnt/c/Users/brent/Documents/GitHub/tti-curiobase}"
+IMAGE="${DISCOURSE_IMAGE:-discourse/discourse_dev:release}"
+
+cd "$DISCOURSE_DIR"
+
+echo "==> Fetching Discourse tests-passed (prod latest channel)"
+git fetch origin tests-passed
+git checkout tests-passed
+git pull --ff-only origin tests-passed
+echo "    at $(git rev-parse --short HEAD) ($(git describe --tags --always))"
+
+echo "==> Ensuring plugin symlink -> $PLUGIN_DIR"
+ln -sfn "$PLUGIN_DIR" "$DISCOURSE_DIR/plugins/tti-curiobase"
+test -f "$DISCOURSE_DIR/plugins/tti-curiobase/plugin.rb"
+
+echo "==> Pulling latest discourse_dev image"
+docker pull "$IMAGE"
+
+echo "==> Restarting container"
+"$DISCOURSE_DIR/bin/docker/shutdown_dev" || true
+
+# boot_dev always pulls :release; call docker run ourselves so we keep mounts
+# and can fall back if Postgres major bumped (see README note below).
+docker run -d \
+  -p 127.0.0.1:8025:8025 \
+  -p 127.0.0.1:3000:3000 \
+  -p 127.0.0.1:9292:9292 \
+  -p 127.0.0.1:9405:9405 \
+  -v "$DISCOURSE_DIR/data/postgres:/shared/postgres_data:delegated" \
+  -v "$DISCOURSE_DIR:/src:delegated" \
+  -v "$PLUGIN_DIR:/src/plugins/tti-curiobase:delegated" \
+  -e UNICORN_BIND_ALL=true \
+  --hostname=discourse \
+  --name=discourse_dev \
+  --restart=always \
+  "$IMAGE" /sbin/boot
+
+echo "==> Waiting for Postgres"
+for i in $(seq 1 60); do
+  if docker exec discourse_dev pg_isready -U postgres >/dev/null 2>&1; then
+    break
+  fi
+  if ! docker ps --filter name=discourse_dev --format '{{.Status}}' | grep -q Up; then
+    echo "Container died during boot — check Postgres major compatibility:"
+    echo "  docker logs discourse_dev 2>&1 | tail -40"
+    exit 1
+  fi
+  sleep 1
+done
+
+PG_DATA_VER=$(docker exec discourse_dev cat /shared/postgres_data/PG_VERSION 2>/dev/null || echo missing)
+PG_IMG_VER=$(docker exec discourse_dev printenv PG_MAJOR)
+echo "    data=$PG_DATA_VER image=$PG_IMG_VER"
+
+if [[ "$PG_DATA_VER" != "$PG_IMG_VER" ]]; then
+  echo "ERROR: Postgres data is $PG_DATA_VER but image expects $PG_IMG_VER."
+  echo "Dump, move data aside, restore — same flow as the Aug 2026 15→18 cutover."
+  exit 1
+fi
+
+echo "==> bundle + pnpm (no TTY)"
+docker exec -u discourse -w /src discourse_dev bundle install
+docker exec -u discourse -w /src discourse_dev pnpm install
+
+echo "==> db:migrate"
+docker exec -u discourse -w /src discourse_dev bundle exec rake db:migrate
+
+echo "==> Starting bin/dev"
+docker exec -d -u discourse -w /src \
+  -e RUBY_GLOBAL_METHOD_CACHE_SIZE=131072 \
+  -e LD_PRELOAD=/usr/lib/libjemalloc.so \
+  discourse_dev bin/dev
+
+echo "Done. Discourse latest at http://127.0.0.1:3000"
+echo "Plugin: $PLUGIN_DIR"

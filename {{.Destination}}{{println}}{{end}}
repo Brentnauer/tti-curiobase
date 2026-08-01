@@ -1,0 +1,7 @@
+-rwxrwxrwx 1 root root 12853 Aug  1 17:24 /src/plugins/tti-curiobase/plugin.rb
+/src/Gemfile
+# frozen_string_literal: true
+
+# name: tti-curiobase
+# about: A catalogue of works and the subjects they circle, authored in the posts themselves and baked into the page.
+# version: 0.1.0

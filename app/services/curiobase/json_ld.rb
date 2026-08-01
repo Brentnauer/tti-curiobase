@@ -227,12 +227,36 @@ module Curiobase
 
         agg = aggregate(topic, record)
         base["aggregateRating"] = agg if agg
+
+        # Subjects this Work engages — entities, not competing AggregateRatings.
+        about = subject_about(topic)
+        base["about"] = about if about.present?
       else
         base["@type"] = KIND[record["kind"]] || "CreativeWork"
         subject_facts(base, record)
       end
 
       base
+    end
+
+    # Subject entities linked from a Work page. No AggregateRating here — that
+    # lives once on the Work, from the primary pairing.
+    def self.subject_about(topic)
+      Subjects.for_topic(topic).filter_map do |slug|
+        subject = Source.subject(slug)
+        next unless subject
+
+        entity = {
+          "@type" => KIND[subject["kind"]] || "Thing",
+          "name" => subject["title"].presence || slug.tr("-", " "),
+        }
+        entity["description"] = subject["dek"] if subject["dek"].present?
+        if (file = RecordTopic.find(slug, type: :subject))
+          t = Topic.select(:id, :slug).find_by(id: file)
+          entity["url"] = "#{Discourse.base_url}#{t.relative_url}" if t
+        end
+        entity
+      end
     end
 
     # ⚠ ABSOLUTE, because structured data is read off-site. A relative
@@ -299,43 +323,26 @@ module Curiobase
     end
 
     # ══════════════════════════════════════════════════════════════════════════
-    # ⚠ MEMBER VOTES ONLY. THE INSTITUTE'S ASSESSMENT IS DELIBERATELY NOT HERE.
+    # ⚠ MEMBER VOTES ONLY. ONE AggregateRating PER WORK URL.
     # ══════════════════════════════════════════════════════════════════════════
     #
     # Two separate reasons, and both have to hold for a line of markup to be
     # worth emitting.
     #
     # 1. AggregateRating REQUIRES a ratingCount, and ratingCount means people.
-    #    With voting off, every pairing has an assessment and zero voters. The
-    #    only ways to emit markup anyway are to publish ratingCount 0 (invalid)
-    #    or to count the institute as a voter (false). Both are the kind of thing
-    #    that earns a structured-data manual action, and the recovery from one is
-    #    measured in months.
+    #    With voting off, every pairing has zero voters. Publishing
+    #    ratingCount 0 is invalid structured data.
     #
-    # 2. More fundamentally, GRAVITY IS NOT A QUALITY RATING. It measures how
-    #    central a Subject is to a Work. *Primer* scoring 5 on causal-loop says
-    #    the film is built on the idea, not that it is a good film — a 1 is not a
-    #    pan. schema.org's rating vocabulary means "how good", and Google renders
-    #    it as stars beside the result. Stars that a reader will read as a review
-    #    score, attached to a number that is not one, is a lie told to everyone
-    #    who sees the search listing.
+    # 2. Gravity is CENTRALITY, not quality — but Google still renders
+    #    AggregateRating as stars. Emitting it is a deliberate discovery trade:
+    #    one clear signal on the Work URL, never N competing ratings for N
+    #    subjects. Subjects travel as `about` / related entities without their
+    #    own AggregateRating on this page.
     #
-    # So: no votes, no markup. That costs a rich result the site was never
-    # entitled to. Everything else in this document — the type, the year, the
-    # creator, sameAs — is true and stays.
-    #
-    # ⚠ DO NOT "FIX" THIS by feeding the blended display value in here. That is
-    #   the same lie with an extra step, and the blend includes the institute.
-    # ⚠ NO RESOLUTION LOGIC HERE — and for a while there was some anyway.
-    #
-    #   The comment above this method said exactly that while thirteen lines of
-    #   its own parse-the-post-then-fall-back-to-a-wrap sequence sat underneath
-    #   it. That is how the tag page and the topic page ended up rendering
-    #   different records: two answers to "what record is this", diverging in
-    #   silence.
-    #
-    #   TopicRecord knows both authoring formats and Source is the one door.
-    #   Between them there is nothing left for this method to decide.
+    # So: no votes, no markup. With votes, the primary pairing (most voters,
+    # then highest display) is the single AggregateRating. ratingValue is the
+    # unweighted member mean of that pairing — what ratingCount describes —
+    # not the standing-weighted display used on the card.
     def self.resolve(topic)
       ref = Curiobase::TopicRecord.for(topic)
       return [nil, nil] unless ref
@@ -348,25 +355,31 @@ module Curiobase
       return nil unless SiteSetting.curiobase_member_voting_enabled
 
       readings =
-        Gravity.for_subjects(record, Subjects.for_topic(topic)).values.compact.select(&:voters?)
+        Gravity
+          .for_subjects(record, Subjects.for_topic(topic))
+          .values
+          .compact
+          .select(&:voters?)
       return nil if readings.empty?
 
-      total = readings.sum(&:voter_count)
+      # One pairing wins the page. Stacking every subject's votes into one
+      # ratingCount would invent a consensus that does not exist.
+      primary =
+        readings.max_by { |r| [r.voter_count.to_i, r.display.to_f] }
+      return nil unless primary
+
+      dist = Array(primary.distribution)
+      total = dist.sum
       return nil if total.zero?
 
-      # Unweighted member mean, reconstructed from the distributions. Not the
-      # display value: this figure has to be exactly what ratingCount describes.
-      sum =
-        readings.sum do |r|
-          Array(r.distribution).each_with_index.sum { |count, i| count * (i + 1) }
-        end
+      sum = dist.each_with_index.sum { |count, i| count * (i + 1) }
 
       {
         "@type" => "AggregateRating",
         "ratingValue" => (sum / total.to_f).round(2),
         "bestRating" => 5,
         "worstRating" => 1,
-        "ratingCount" => total,
+        "ratingCount" => primary.voter_count.to_i,
       }
     end
   end

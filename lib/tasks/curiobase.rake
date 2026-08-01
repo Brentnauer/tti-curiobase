@@ -4,8 +4,11 @@
 #
 #   cd ~/discourse && LOAD_PLUGINS=1 bundle exec rake curiobase:seed
 #
-# Creates the subject tag group, the tags, and two topics carrying the wrap.
-# Idempotent — safe to run repeatedly.
+# Creates the subject tag group, the tags, and topics with fenced `curiobase`
+# records. Idempotent — safe to run repeatedly.
+#
+# ⚠ Fenced blocks are the only production authoring format. Wraps remain
+#   readable for legacy topics but new content must not introduce them.
 desc "Seed local Curiobase demo content"
 task "curiobase:seed" => :environment do
   SUBJECTS = {
@@ -51,13 +54,20 @@ task "curiobase:seed" => :environment do
     end
   end
 
-  # ── a work with two rated pairings and one unrated ───────────────────────
+  # ── a work with two subject tags ─────────────────────────────────────────
   upsert_topic(
     admin, category,
     "Primer (2004)",
     <<~RAW,
-      [wrap=work id=primer-2004]
-      [/wrap]
+      ```curiobase
+      type: work
+      slug: primer-2004
+      medium: film
+      mode: fiction
+      year: 2004
+      creator: Shane Carruth
+      dek: Two engineers building something in a garage.
+      ```
 
       Written, directed, produced, edited, scored by and starring Shane Carruth on a $7,000
       budget. Grand Jury Prize, Sundance 2004.
@@ -69,8 +79,15 @@ task "curiobase:seed" => :environment do
     admin, category,
     "Timecrimes (2007)",
     <<~RAW,
-      [wrap=work id=timecrimes-2007]
-      [/wrap]
+      ```curiobase
+      type: work
+      slug: timecrimes-2007
+      medium: film
+      mode: fiction
+      year: 2007
+      creator: Nacho Vigalondo
+      dek: A man walks into a machine and meets himself leaving.
+      ```
 
       Vigalondo keeps the camera with the man who has already made the mistake.
     RAW
@@ -82,8 +99,14 @@ task "curiobase:seed" => :environment do
     admin, category,
     "John Titor",
     <<~RAW,
-      [wrap=subject id=john-titor]
-      [/wrap]
+      ```curiobase
+      type: subject
+      slug: john-titor
+      kind: person
+      domain: time
+      status: hoax-admitted
+      dek: The screen name behind a series of posts made in 2000 and 2001.
+      ```
 
       He posted here for four months between November 2000 and March 2001.
     RAW
@@ -156,12 +179,14 @@ task "curiobase:repoint" => :environment do
   puts "Repointed #{changed}."
 end
 
-# ⚠ A SEPARATE COMMAND ON PURPOSE, and not folded into rebake.
+# ⚠ A SEPARATE COMMAND ON PURPOSE for BACKFILL, and not folded into rebake.
 #
-#   This WRITES A POST to every record topic. Rebaking re-renders what is
-#   already there and is safe to run on a whim; this changes the forum's
-#   content, and a content change should be something somebody typed rather
-#   than a side effect of a rendering task.
+#   New records get a wiki automatically when curiobase_annotation_enabled is
+#   on (see Curiobase.maybe_ensure_annotation!). This task fills history.
+#
+#   This WRITES A POST to every record topic without one. Rebaking re-renders
+#   what is already there and is safe to run on a whim; this changes the
+#   forum's content.
 #
 #   Idempotent — a topic that already has its annotation is skipped.
 desc "Give every record topic its community wiki at post 2"

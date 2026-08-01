@@ -12,9 +12,9 @@ import { apiInitializer } from "discourse/lib/api";
 // staying on the file and hiding the rows that do not match.
 //
 // ⚠ Why not just let them navigate? Because the association list is ordered by
-//   the institute's assessment and the tag page is ordered by bumped_at.
-//   Clicking "Film" used to take a reader from a ranked list to an unranked
-//   one, which is the opposite of what a filter is for.
+//   gravity and the tag page is ordered by bumped_at. Clicking "Film" used to
+//   take a reader from a ranked list to an unranked one, which is the opposite
+//   of what a filter is for.
 //
 // ⚠ Nothing here is user-specific and nothing is fetched. It is a class toggle
 //   over HTML that is already on the page.

@@ -79,6 +79,61 @@ RSpec.describe Curiobase::Annotation do
     end
   end
 
+  describe "auto-ensure on new records" do
+    it "seeds the wiki when a fenced record is created and the setting is on" do
+      raw = <<~RAW
+        ```curiobase
+        type: work
+        slug: auto-annotate-demo
+        medium: film
+        mode: fiction
+        dek: A film that triggers annotation.
+        ```
+      RAW
+      post = create_post(title: "Auto annotate demo film topic here", raw: raw, tags: [tag.name])
+
+      wiki = described_class.for_topic(post.topic)
+      expect(wiki).to be_present
+      expect(wiki.post_number).to eq(2)
+      expect(wiki).to be_wiki
+    end
+
+    it "does not seed when the setting is off" do
+      SiteSetting.curiobase_annotation_enabled = false
+      raw = <<~RAW
+        ```curiobase
+        type: work
+        slug: no-auto-annotate
+        medium: film
+        mode: fiction
+        dek: Should not get a wiki.
+        ```
+      RAW
+      post = create_post(title: "No auto annotate film topic title xx", raw: raw, tags: [tag.name])
+
+      expect(described_class.for_topic(post.topic)).to be_nil
+      expect(post.topic.reload.posts_count).to eq(1)
+    end
+  end
+
+  describe "rebake when subject tags change" do
+    it "schedules a rebake when a subject tag is added via DiscourseTagging" do
+      other = Fabricate(:tag, name: "john-titor")
+      group.tags = [tag, other]
+      group.save!
+      Curiobase::Subjects.reset_cache!
+      Discourse.redis.del("curiobase:rebake:#{topic.id}")
+
+      expect_enqueued_with(job: :curiobase_rebake, args: { post_id: op.id }) do
+        DiscourseTagging.tag_topic_by_names(
+          topic,
+          Guardian.new(Fabricate(:admin)),
+          [tag.name, other.name],
+        )
+      end
+    end
+  end
+
   describe "the link on the card" do
     def cooked
       Curiobase.rebake_now!(op)

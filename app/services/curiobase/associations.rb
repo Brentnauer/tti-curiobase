@@ -7,11 +7,11 @@ module Curiobase
   #
   #   Discourse already knows every topic carrying a tag, going back 28 years.
   #   A Subject's association list is therefore mostly real data that costs one
-  #   query and needs nothing from WordPress — and on an old forum it is usually
-  #   the largest and oldest part of the list.
+  #   query — and on an old forum it is usually the largest and oldest part of
+  #   the list.
   #
-  #   Works come from Source (WordPress, or fixtures until it exists).
-  #   Discussions come from Discourse. Nothing is duplicated between them.
+  # ⚠ Works come from Source (post-authored records, or fixtures for legacy
+  #   wraps still awaiting conversion). Discussions come from Discourse.
   class Associations
     # ══════════════════════════════════════════════════════════════════════════
     # TOP N PER BUCKET, AND THE BUCKETS ARE RANKED SEPARATELY.

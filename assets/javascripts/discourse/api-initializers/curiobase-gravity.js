@@ -262,8 +262,8 @@ function updateAggregate(mount, r) {
     seg.style.flexGrow = ((dist[i] / total) * 100).toFixed(2);
   });
 
-  // ⚠ The count labels the BAR, never the number beside it. The number blends
-  //   in the institute's assessment, so "4.3 · 12 members rated" would be false.
+  // ⚠ The count labels the BAR, never the number beside it. The number is
+  //   standing-weighted; the bar is an unweighted headcount.
   let note = score.querySelector(".cb-dist-note");
   if (!note) {
     note = document.createElement("span");

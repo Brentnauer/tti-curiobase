@@ -41,20 +41,20 @@
 %cb-eyebrow {
   font-size: var(--font-down-3) !important;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   line-height: var(--line-height-medium);
-  color: var(--tertiary) !important;
+  color: var(--primary-medium) !important;
 }
 
 .curiobase-card {
+  // Closer to Discourse oneboxes than a filled product panel: hairline edge,
+  // transparent body, so the card sits in cooked rather than on top of it.
   border: 1px solid var(--primary-low);
-  // ⚠ Named, not `8px`. Identical value today; it follows the theme if a theme
-  //   ever changes it, which a literal cannot.
   border-radius: var(--d-border-radius-large, 8px);
   padding: 1em 1.1em;
   margin-bottom: 1.2em;
-  background: var(--primary-very-low);
+  background: transparent;
 
   .cb-head {
     display: flex;
@@ -585,7 +585,7 @@
     border: 1px solid var(--primary-low);
     border-radius: var(--d-border-radius-large, 8px);
     padding: 0.9em 1.1em;
-    background: var(--primary-very-low);
+    background: transparent;
   }
 
   .cb-dek {

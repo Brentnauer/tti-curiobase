@@ -25,7 +25,7 @@ module Curiobase
       topic.tags.map(&:name).select { |t| vocab.include?(t) }.sort
     end
 
-    # The synced vocabulary — the tag group mirroring WordPress subjects.
+    # The synced vocabulary — the subject tag group.
     #
     # A tag outside it is an ordinary tag: adding `funny` to a topic creates no
     # rating row and no association.

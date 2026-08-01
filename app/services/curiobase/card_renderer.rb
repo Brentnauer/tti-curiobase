@@ -61,8 +61,9 @@ module Curiobase
 
       record = kind == "work" ? Source.work(id) : Source.subject(id)
       unless record
-        # WordPress unreachable, or the id is wrong. Leave the post alone rather
-        # than replacing it with an error — a stale card beats a broken page.
+        # Source miss (bad id, or fixture not found for a legacy wrap). Leave
+        # the post alone rather than replacing it with an error — a stale card
+        # beats a broken page.
         Rails.logger.warn("[curiobase] no #{kind} #{id} for post #{@post.id}")
         return
       end

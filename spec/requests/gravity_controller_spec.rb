@@ -16,10 +16,7 @@ RSpec.describe Curiobase::GravityController do
 
   before do
     SiteSetting.curiobase_enabled = true
-    # ⚠ OFF IN PRODUCTION. The institute's assessment stands on its own and the
-    #   endpoint 404s when voting is closed — see the last example in this file.
-    #   Every other example here is about a request that gets as far as being
-    #   refused for a better reason, so voting has to be open for them to run.
+    # ⚠ Endpoint 404s when voting is closed — see the last example in this file.
     SiteSetting.curiobase_member_voting_enabled = true
     SiteSetting.curiobase_subject_tag_group = "Subjects"
     SiteSetting.curiobase_min_trust_level = 1

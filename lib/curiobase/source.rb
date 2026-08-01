@@ -9,32 +9,12 @@ module Curiobase
   #
   # Two ways a record can exist, in preference order:
   #
-  #   1. THE POST ITSELF — a fenced ```curiobase block in the topic's first
-  #      post. This is how records are authored.
+  #   1. THE POST ITSELF — a fenced ```curiobase block. Production authoring.
   #   2. `fixtures/` — JSON on disk, for a topic still carrying a legacy
   #      `[wrap=…]` marker that has not been converted yet.
   #
-  # ⚠ THE WORDPRESS READ PATH IS GONE, and this is the reason it could go.
-  #
-  #   `Source::Http` spoke to cms.timetravelinstitute.com over wp/v2 + ACF and
-  #   was the primary source until 30 July 2026. It was removed once every
-  #   record resolved from its own post: measured, 34 of 34, zero HTTP calls.
-  #   The CMS records were not touched — nothing upstream was deleted — so the
-  #   content is still there if it is ever wanted back. Recovering the CODE
-  #   means git, not a site setting.
-  #
-  #   Why it had to go rather than sit dormant: two sources for one fact is
-  #   what produced a tag page and a topic page rendering DIFFERENT records
-  #   with nobody noticing. A dormant second source is still a second source
-  #   the next reader has to reason about.
-  #
-  # ⚠ RESOLUTION LIVES HERE AND NOWHERE ELSE.
-  #
-  #   Three separate places used to answer "what record is this": the card
-  #   renderer, the JSON-LD builder, and this. When post-authored records
-  #   arrived, each had to learn about them separately, and the one that did
-  #   not — this — produced /t/rendlesham-forest and /tag/rendlesham-forest
-  #   rendering different deks with nothing anywhere saying they disagreed.
+  # ⚠ Do not add a third source. Dual paths for one fact is how tag pages and
+  #   topic pages drifted apart.
   module Source
     # ⚠ TYPE-SCOPED, because Works and Subjects share one slug namespace. Asking
     #   for the Subject `majestic-12` must never resolve a Work that claims the

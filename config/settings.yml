@@ -39,13 +39,8 @@ curiobase:
     default: false
     client: false
 
-  # ⚠ ON. Gravity IS the vote — there is no other source for the number.
-  #
-  #   This shipped off for a while, alongside an "institute assessment" that sat
-  #   outside the average at a fixed weight. That inverted the feature: gravity
-  #   is what the membership says a work has to do with a subject, and the
-  #   operator is one voter in it. Turning this off does not fall back to an
-  #   editorial number any more — it removes the number entirely.
+  # ⚠ Gravity IS the vote — there is no other source for the number. Turning
+  #   this off removes the number entirely (no editorial fallback).
   curiobase_member_voting_enabled:
     default: true
     client: true
