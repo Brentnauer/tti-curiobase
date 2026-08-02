@@ -10,7 +10,9 @@
   "creator": "Nacho Vigalondo",
   "runtime": "92 min",
   "external": {
-    "imdb": "tt0480669"
+    "imdb": "tt0480669",
+    "tmdb": "1412",
+    "wikipedia": "Timecrimes"
   },
   "gravity": [
     {
@@ -18,5 +20,5 @@
       "value": 5
     }
   ],
-  "updated_at": "2026-07-30T18:54:30"
+  "updated_at": "2026-08-02T03:00:00"
 }

@@ -11,13 +11,18 @@
   "runtime": "174 pp",
   "external": {
     "isbn": "9781591964360",
-    "archive_org": "titor-book"
+    "archive_org": "titor-book",
+    "wikipedia": "John_Titor"
   },
   "gravity": [
     {
       "subject": "john-titor",
       "value": 5
+    },
+    {
+      "subject": "causal-loop",
+      "value": 4
     }
   ],
-  "updated_at": "2026-07-30T18:54:33"
+  "updated_at": "2026-08-02T03:00:00"
 }

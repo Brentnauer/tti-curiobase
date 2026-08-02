@@ -9,13 +9,22 @@
   "year": 2014,
   "creator": "Nick Pope, John Burroughs and Jim Penniston",
   "external": {
-    "isbn": "9781250038104"
+    "isbn": "9781250038104",
+    "wikipedia": "Rendlesham_Forest_incident"
   },
   "gravity": [
     {
       "subject": "rendlesham-forest",
       "value": 5
+    },
+    {
+      "subject": "orfordness-lighthouse",
+      "value": 3
+    },
+    {
+      "subject": "majestic-12",
+      "value": 2
     }
   ],
-  "updated_at": "2026-07-30T18:54:34"
+  "updated_at": "2026-08-02T03:00:00"
 }

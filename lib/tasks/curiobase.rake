@@ -1,21 +1,32 @@
 # frozen_string_literal: true
 
-# Seeds enough to exercise the render path against fixtures.
+# Seeds the full fixture catalogue for local UI testing.
 #
 #   cd ~/discourse && LOAD_PLUGINS=1 bundle exec rake curiobase:seed
 #
-# Creates the subject tag group, the tags, and topics with fenced `curiobase`
-# records. Idempotent — safe to run repeatedly.
+# Creates the subject tag group, every fixture subject/work as a fenced
+# `curiobase` topic, and tags works from their gravity rows. Idempotent.
 #
 # ⚠ Fenced blocks are the only production authoring format. Wraps remain
 #   readable for legacy topics but new content must not introduce them.
 desc "Seed local Curiobase demo content"
 task "curiobase:seed" => :environment do
-  SUBJECTS = {
-    "causal-loop" => "Causal Loop",
-    "temporal-perception" => "Temporal Perception",
-    "john-titor" => "John Titor",
-  }.freeze
+  fixture_root = File.expand_path("../../fixtures", __dir__)
+
+  load_json = lambda do |path|
+    JSON.parse(File.read(path))
+  rescue StandardError => e
+    abort "Cannot read #{path}: #{e.message}"
+  end
+
+  subjects =
+    Dir[File.join(fixture_root, "subjects", "*.json")].map { |f| load_json.call(f) }
+  works =
+    Dir[File.join(fixture_root, "works", "*.json")]
+      .sort_by { |f| File.basename(f, ".json").to_i }
+      .map { |f| load_json.call(f) }
+
+  abort "No subject fixtures in #{fixture_root}/subjects" if subjects.empty?
 
   admin = User.where(admin: true).order(:id).first
   abort "No admin user. Create one first." unless admin
@@ -24,21 +35,51 @@ task "curiobase:seed" => :environment do
   # A tag outside this group is an ordinary tag and produces no rating row.
   group_name = SiteSetting.curiobase_subject_tag_group
   group = TagGroup.find_or_create_by!(name: group_name)
-  tags = SUBJECTS.keys.map { |slug| Tag.find_or_create_by!(name: slug) }
-  group.tags = tags
+  tags = subjects.map { |s| Tag.find_or_create_by!(name: s["slug"]) }
+  group.tags = (group.tags.to_a + tags).uniq
   group.save!
-  puts "  tag group '#{group_name}': #{tags.map(&:name).join(', ')}"
+  puts "  tag group '#{group_name}': #{group.tags.map(&:name).sort.join(', ')}"
 
   category = Category.find_by(slug: "uncategorized") || Category.first
 
-  def upsert_topic(admin, category, title, raw, tag_names)
-    existing = Topic.find_by(title: title)
+  # Prefer the topic that already owns this record slug, then title match.
+  # Title-only lookup misses when an earlier draft used a different title.
+  find_existing = lambda do |slug, type, title|
+    topic_id =
+      Curiobase::RecordTopic.find(slug, type: type) ||
+      Curiobase::RecordTopic.claimants(slug).first
+    topic = topic_id && Topic.find_by(id: topic_id)
+    topic ||= Topic.find_by(title: title)
+    return topic if topic
+
+    # Last resort: a live first-post already claims the slug in its fence/wrap
+    # but the custom-field cache was never written (common after partial seeds).
+    Post
+      .where(post_number: 1)
+      .where("raw ILIKE ?", "%slug: #{slug}%")
+      .includes(:topic)
+      .find_each do |post|
+        next if post.topic&.deleted_at
+        ref = Curiobase::TopicRecord.for(post.topic)
+        next unless ref && ref[:id].to_s == slug
+        return post.topic
+      end
+    nil
+  end
+
+  upsert_topic = lambda do |slug, type, title, raw, tag_names|
+    existing = find_existing.call(slug, type, title)
     if existing
+      # Keep the catalogue title in sync with the fixture.
+      if existing.title != title
+        existing.title = title
+        existing.save!(validate: false)
+      end
       post = existing.first_post
       revisor = PostRevisor.new(post, existing)
       revisor.revise!(admin, { raw: raw, tags: tag_names }, skip_validations: true)
       Curiobase.rebake_now!(post)
-      puts "  updated  /t/#{existing.slug}/#{existing.id}"
+      puts "  updated  /t/#{existing.slug}/#{existing.id}  (#{slug})"
       existing
     else
       result = PostCreator.create!(
@@ -49,80 +90,53 @@ task "curiobase:seed" => :environment do
         tags: tag_names,
         skip_validations: true,
       )
-      puts "  created  /t/#{result.topic.slug}/#{result.topic.id}"
+      puts "  created  /t/#{result.topic.slug}/#{result.topic.id}  (#{slug})"
       result.topic
     end
   end
 
-  # ── a work with two subject tags ─────────────────────────────────────────
-  upsert_topic(
-    admin, category,
-    "Primer (2004)",
-    <<~RAW,
-      ```curiobase
-      type: work
-      slug: primer-2004
-      medium: film
-      mode: fiction
-      year: 2004
-      creator: Shane Carruth
-      dek: Two engineers building something in a garage.
-      ```
+  raw_for = lambda do |record|
+    fence = Curiobase::RecordWriter.fence(record)
+    body = Curiobase::RecordWriter.body_additions(record, "").join("\n\n")
+    [fence, body.presence].compact.join("\n\n").strip
+  end
 
-      Written, directed, produced, edited, scored by and starring Shane Carruth on a $7,000
-      budget. Grand Jury Prize, Sundance 2004.
-    RAW
-    %w[causal-loop temporal-perception john-titor],
-  )
+  puts "  subjects (#{subjects.size})"
+  subjects.each do |record|
+    slug = record["slug"].to_s
+    title = record["title"].presence || slug.tr("-", " ").split.map(&:capitalize).join(" ")
+    raw = raw_for.call(record)
+    errors = Curiobase::RecordValidator.errors_for(raw)
+    if errors.any?
+      puts "  ✗ skip subject #{slug}: #{errors.first}"
+      next
+    end
+    upsert_topic.call(slug, :subject, title, raw, [slug])
+  end
 
-  upsert_topic(
-    admin, category,
-    "Timecrimes (2007)",
-    <<~RAW,
-      ```curiobase
-      type: work
-      slug: timecrimes-2007
-      medium: film
-      mode: fiction
-      year: 2007
-      creator: Nacho Vigalondo
-      dek: A man walks into a machine and meets himself leaving.
-      ```
-
-      Vigalondo keeps the camera with the man who has already made the mistake.
-    RAW
-    %w[causal-loop],
-  )
-
-  # ── a subject record ────────────────────────────────────────────────────
-  upsert_topic(
-    admin, category,
-    "John Titor",
-    <<~RAW,
-      ```curiobase
-      type: subject
-      slug: john-titor
-      kind: person
-      domain: time
-      status: hoax-admitted
-      dek: The screen name behind a series of posts made in 2000 and 2001.
-      ```
-
-      He posted here for four months between November 2000 and March 2001.
-    RAW
-    %w[john-titor],
-  )
+  puts "  works (#{works.size})"
+  works.each do |record|
+    slug = record["slug"].to_s
+    title = record["title"].presence || slug
+    raw = raw_for.call(record)
+    errors = Curiobase::RecordValidator.errors_for(raw)
+    if errors.any?
+      puts "  ✗ skip work #{slug}: #{errors.first}"
+      next
+    end
+    tag_names = Array(record["gravity"]).map { |r| r["subject"] }.compact.uniq
+    # Untagged works still need a topic so the empty-assessment card is visible.
+    upsert_topic.call(slug, :work, title, raw, tag_names)
+  end
 
   puts <<~NEXT
 
     Enable the plugin if you have not:
       /admin/site_settings — curiobase_enabled
 
-    Then the exit test, against the Primer topic:
-      curl -s -H 'User-Agent: Googlebot' http://localhost:3000/t/primer-2004/ID \\
-        | sed 's/<script[^>]*>.*<\\/script>//g' | sed 's/<[^>]*>/ /g' | tr -s ' '
-
-    The dek, the facts and the subject names must all appear.
+    Then open a subject with typed edges (e.g. Rendlesham Forest) and a multi-
+    gravity work (e.g. Primer, Left at East Gate). Subject cards should show
+    grouped edge lists; work cards should show association rows for each tag.
   NEXT
 end
 

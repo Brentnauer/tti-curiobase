@@ -3,7 +3,7 @@
   "type": "subject",
   "slug": "majestic-12",
   "title": "Majestic 12",
-  "dek": "A committee of twelve scientists and officials named in documents that surfaced on film in 1984, purporting to show a secret group convened in 1947 to handle recovered craft.",
+  "dek": "A committee of twelve named in documents that surfaced on film in 1984, purporting to show a secret group convened in 1947 to handle recovered craft.",
   "kind": "org",
   "domain": "hidden-history",
   "status": "debunked",
@@ -22,8 +22,39 @@
     "org_kind": "Alleged government committee",
     "jurisdiction": "United States"
   },
-  "prose": [],
-  "refs": [],
-  "links": [],
-  "updated_at": "2026-07-30T19:18:22"
+  "prose": [
+    {
+      "label": "The documents",
+      "body": "Anonymous film packages in 1984 named twelve scientists and officials as members of a Truman-era UFO committee. AFOSI and independent researchers later treated the papers as modern fabrications."
+    }
+  ],
+  "refs": [
+    {
+      "verb": "contradicts",
+      "label": "Contradicts",
+      "slug": "philadelphia-experiment",
+      "title": "The Philadelphia Experiment"
+    },
+    {
+      "verb": "related",
+      "label": "Related",
+      "slug": "rendlesham-forest",
+      "title": "Rendlesham Forest"
+    },
+    {
+      "verb": "related",
+      "label": "Related",
+      "slug": "skinwalker-ranch",
+      "title": "Skinwalker Ranch"
+    }
+  ],
+  "links": [
+    {
+      "label": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Majestic_12"
+    }
+  ],
+  "landing_url": "https://en.wikipedia.org/wiki/Majestic_12",
+  "image_credit": "Document photographs are reproductions of disputed papers.",
+  "updated_at": "2026-08-02T03:00:00"
 }

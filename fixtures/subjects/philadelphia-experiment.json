@@ -3,18 +3,24 @@
   "type": "subject",
   "slug": "philadelphia-experiment",
   "title": "The Philadelphia Experiment",
-  "dek": "The assertion that the USS Eldridge was made invisible and moved instantly from Philadelphia to Norfolk in 1943, resting almost entirely on letters from one correspondent.",
+  "dek": "The claim that the USS Eldridge was made invisible and teleported from Philadelphia to Norfolk in 1943, resting almost entirely on one correspondent.",
   "kind": "claim",
   "domain": "time",
   "status": "debunked",
   "period": [
-    "pre-1950"
+    "pre-1950",
+    "1950s"
   ],
   "evidence": [
-    "secondhand-account"
+    "secondhand-account",
+    "documentary-record",
+    "no-evidence"
   ],
   "also_known_as": "Project Rainbow, Project Invisibility",
-  "facts": {},
+  "facts": {
+    "asserted": "October 1943 at the Philadelphia Navy Yard",
+    "claimant": "Carl Allen (Carlos Miguel Allende)"
+  },
   "prose": [
     {
       "label": "The claim",
@@ -22,14 +28,40 @@
     },
     {
       "label": "Supports",
-      "body": "Carl Allen, writing as Carlos Miguel Allende, sent annotated letters to the Office of Naval Research in 1956 describing the event as an eyewitness aboard a nearby ship. The Navy's own copy of the annotated book was reproduced and circulated, which gave the story an official-looking provenance."
+      "body": "Carl Allen, writing as Carlos Miguel Allende, sent annotated letters to the Office of Naval Research in 1956 describing the event as an eyewitness aboard a nearby ship."
     },
     {
       "label": "Contradicts",
-      "body": "The Eldridge's deck log places her elsewhere for the period in question, and she was not commissioned until August 1943. Allen later told investigators he had imagined the account. No second witness has ever been produced in seventy years."
+      "body": "The Eldridge's deck log places her elsewhere for the period in question. Allen later told investigators he had imagined the account. No second witness has been produced."
     }
   ],
-  "refs": [],
-  "links": [],
-  "updated_at": "2026-07-30T19:25:16"
+  "refs": [
+    {
+      "verb": "related",
+      "label": "Related",
+      "slug": "causal-loop",
+      "title": "Causal Loop"
+    },
+    {
+      "verb": "precedes",
+      "label": "Precedes",
+      "slug": "john-titor",
+      "title": "John Titor"
+    },
+    {
+      "verb": "related",
+      "label": "Related",
+      "slug": "majestic-12",
+      "title": "Majestic 12"
+    }
+  ],
+  "links": [
+    {
+      "label": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Philadelphia_Experiment"
+    }
+  ],
+  "landing_url": "https://en.wikipedia.org/wiki/Philadelphia_Experiment",
+  "image_credit": "USS Eldridge photographs are public-domain Navy imagery when attached.",
+  "updated_at": "2026-08-02T03:00:00"
 }

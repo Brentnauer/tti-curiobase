@@ -11,13 +11,19 @@
   "runtime": "3 seasons",
   "external": {
     "imdb": "tt5753856",
-    "tmdb": "70523"
+    "tmdb": "70523",
+    "wikipedia": "Dark_(TV_series)",
+    "youtube": "cq2iTHoLrt0"
   },
   "gravity": [
     {
       "subject": "causal-loop",
-      "value": 4
+      "value": 5
+    },
+    {
+      "subject": "john-titor",
+      "value": 3
     }
   ],
-  "updated_at": "2026-07-30T18:54:31"
+  "updated_at": "2026-08-02T03:00:00"
 }

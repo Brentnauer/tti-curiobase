@@ -853,7 +853,17 @@
   line-height: var(--cooked-line-height, 1.5);
 }
 
-.cb-refs a { font-weight: 600; }
+.cb-refs {
+  a { font-weight: 600; }
+
+  .cb-refs-verb[data-verb="contradicts"] {
+    color: var(--danger, var(--primary-medium));
+  }
+
+  .cb-refs-verb[data-verb="explains"] {
+    color: var(--success, var(--primary-medium));
+  }
+}
 
 .cb-links {
   margin: 0.7em 0 0;

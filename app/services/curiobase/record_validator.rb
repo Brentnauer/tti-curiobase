@@ -91,14 +91,91 @@ module Curiobase
         errors << I18n.t("curiobase.invalid.slug", slug: fields["series"])
       end
 
-      # ⚠ A ref pointing at a subject that does not exist renders as a link to
-      #   nothing. Cheap to catch here, invisible everywhere else.
-      Array(fields["refs"]).each do |slug|
-        next if Curiobase::Subjects.vocabulary.include?(slug)
-        errors << I18n.t("curiobase.invalid.ref", slug: slug)
-      end
+      # ⚠ Subject→Subject edges. Targets must exist; self-refs and cross-verb
+      #   duplicates are refuse-loud (a silent dedupe would hide paste errors).
+      edge_errors(fields).each { |e| errors << e }
 
       errors
+    end
+
+    def self.edge_errors(fields)
+      entries = edge_entries(fields)
+      return [] if entries.empty?
+
+      out = []
+      type = fields["type"].presence || "subject"
+      if type != "subject"
+        out << I18n.t(
+          "curiobase.invalid.edges_on_work",
+          default: "Typed subject edges (#{PostRecord::EDGES.join(", ")}) belong on Subjects, not Works.",
+        )
+        return out
+      end
+
+      if entries.size > PostRecord::EDGE_CAP
+        out << I18n.t(
+          "curiobase.invalid.edge_cap",
+          count: entries.size,
+          max: PostRecord::EDGE_CAP,
+          default: "At most %{max} subject edges per record (this has %{count}).",
+        )
+      end
+
+      self_slug = fields["slug"].to_s
+      by_target = Hash.new { |h, k| h[k] = [] }
+
+      entries.each do |verb, slug|
+        if slug.blank? || !slug.match?(/\A[a-z0-9][a-z0-9-]*\z/)
+          out << I18n.t("curiobase.invalid.slug", slug: slug)
+          next
+        end
+        if self_slug.present? && slug == self_slug
+          out << I18n.t(
+            "curiobase.invalid.edge_self",
+            slug: slug,
+            default: "A record cannot link to itself (%{slug}).",
+          )
+        end
+        unless Curiobase::Subjects.vocabulary.include?(slug)
+          out << I18n.t("curiobase.invalid.ref", slug: slug)
+        end
+        by_target[slug] << verb
+      end
+
+      by_target.each do |slug, verbs|
+        if verbs.size != verbs.uniq.size
+          out << I18n.t(
+            "curiobase.invalid.edge_duplicate",
+            slug: slug,
+            default: "Duplicate edge to '%{slug}' under the same verb.",
+          )
+        end
+        uniq = verbs.uniq
+        next if uniq.size < 2
+
+        out << I18n.t(
+          "curiobase.invalid.edge_conflict",
+          slug: slug,
+          verbs: uniq.join(", "),
+          default: "'%{slug}' is listed under more than one verb (%{verbs}). Pick one.",
+        )
+      end
+
+      out
+    end
+
+    # [[verb, slug], ...]
+    def self.edge_entries(fields)
+      entries = []
+      PostRecord::EDGES.each do |verb|
+        Array(fields[verb]).each { |slug| entries << [verb, slug.to_s.strip] }
+      end
+      Array(fields["refs"]).each do |token|
+        verb, slug = PostRecord.parse_ref_token(token)
+        next if slug.blank?
+        entries << [verb, slug]
+      end
+      entries
     end
 
     # ══════════════════════════════════════════════════════════════════════════

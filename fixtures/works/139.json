@@ -9,13 +9,18 @@
   "year": 2018,
   "creator": "Jeremy Kenyon Lockyer Corbell",
   "external": {
-    "imdb": "tt8399718"
+    "imdb": "tt8399718",
+    "wikipedia": "Skinwalker_Ranch"
   },
   "gravity": [
     {
       "subject": "skinwalker-ranch",
       "value": 5
+    },
+    {
+      "subject": "majestic-12",
+      "value": 2
     }
   ],
-  "updated_at": "2026-07-30T19:18:26"
+  "updated_at": "2026-08-02T03:00:00"
 }

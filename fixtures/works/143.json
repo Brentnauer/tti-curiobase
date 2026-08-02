@@ -10,13 +10,15 @@
   "creator": "Wolfgang Reitherman",
   "runtime": "79 min",
   "external": {
-    "imdb": "tt0057546"
+    "imdb": "tt0057546",
+    "tmdb": "9078",
+    "wikipedia": "The_Sword_in_the_Stone_(film)"
   },
   "gravity": [
     {
       "subject": "excalibur",
-      "value": 2
+      "value": 5
     }
   ],
-  "updated_at": "2026-07-30T19:18:28"
+  "updated_at": "2026-08-02T03:00:00"
 }

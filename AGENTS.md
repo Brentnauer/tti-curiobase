@@ -16,6 +16,7 @@ Discourse plugin that turns first-post fenced `curiobase` blocks into catalogue 
 6. **One vote is one vote** — no TL/staff/supporter weight ladder. `Standing` is 1.0 or 0.0 (min trust + not suspended/silenced).
 7. **No plugin “annotation” wiki** — community notes are Discourse first-post wiki + `edit_wiki_post_allowed_groups` (e.g. TL2). Do not reintroduce auto-seeded post 2.
 8. **Disagreement is computed** — `Gravity.disagree?` (low≥2 and high≥2). Surface on Work bars, assoc rows (`disagree` in readings/MessageBus), and status-mismatch notes when staff status is settled.
+9. **Typed Subject edges** — `explains` / `contradicts` / `precedes` / `part_of` / `same_as` / `involves` + untyped `refs`. One array with `verb` after `to_record`. No inverse auto-bake. No Work→Work here.
 
 ## Media / embeds (current contract)
 

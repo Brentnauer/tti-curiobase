@@ -8,6 +8,10 @@
   "mode": "fiction",
   "year": 1981,
   "creator": "Luigi Serafini",
-  "external": {},
-  "updated_at": "2026-07-30T19:18:30"
+  "external": {
+    "isbn": "9780847842131",
+    "asin": "0847842134",
+    "wikipedia": "Codex_Seraphinianus"
+  },
+  "updated_at": "2026-08-02T03:00:00"
 }

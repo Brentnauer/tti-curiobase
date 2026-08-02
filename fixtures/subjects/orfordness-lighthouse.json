@@ -1,0 +1,52 @@
+{
+  "id": "7299",
+  "type": "subject",
+  "slug": "orfordness-lighthouse",
+  "title": "Orfordness Lighthouse",
+  "dek": "The working lighthouse on Orford Ness whose beam is the leading sceptical account of the lights reported over Rendlesham Forest in December 1980.",
+  "kind": "place",
+  "domain": "contact",
+  "status": "explained",
+  "period": [
+    "pre-1950",
+    "1980s",
+    "2010s"
+  ],
+  "evidence": [
+    "documentary-record",
+    "firsthand-account"
+  ],
+  "also_known_as": "Orford Ness lighthouse",
+  "facts": {
+    "country": "United Kingdom",
+    "active": "1792–2013 (light discontinued; structure later demolished)"
+  },
+  "prose": [
+    {
+      "label": "Role in the case",
+      "body": "Ian Ridpath and others argued that Halt's flashing light matches the Orfordness character and bearing. The lighthouse is therefore the named alternative to a craft."
+    }
+  ],
+  "refs": [
+    {
+      "verb": "part_of",
+      "label": "Part of",
+      "slug": "rendlesham-forest",
+      "title": "Rendlesham Forest"
+    }
+  ],
+  "links": [
+    {
+      "label": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Orfordness_Lighthouse"
+    },
+    {
+      "label": "Ian Ridpath on Rendlesham",
+      "url": "https://www.ianridpath.com/ufo/rendlesham.htm"
+    }
+  ],
+  "coords": "52.0839, 1.5742",
+  "landing_url": "https://en.wikipedia.org/wiki/Orfordness_Lighthouse",
+  "image_credit": "Historic photographs of the lighthouse; credit the holding archive when attaching.",
+  "updated_at": "2026-08-02T03:00:00"
+}

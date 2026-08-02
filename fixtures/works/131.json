@@ -9,13 +9,22 @@
   "year": 1997,
   "creator": "Larry Warren and Peter Robbins",
   "external": {
-    "isbn": "9781596057531"
+    "isbn": "9781596057531",
+    "wikipedia": "Rendlesham_Forest_incident"
   },
   "gravity": [
     {
       "subject": "rendlesham-forest",
+      "value": 5
+    },
+    {
+      "subject": "orfordness-lighthouse",
       "value": 4
+    },
+    {
+      "subject": "majestic-12",
+      "value": 2
     }
   ],
-  "updated_at": "2026-07-30T18:54:33"
+  "updated_at": "2026-08-02T03:00:00"
 }

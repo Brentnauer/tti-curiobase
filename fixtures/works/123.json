@@ -11,13 +11,19 @@
   "runtime": "77 min",
   "external": {
     "imdb": "tt0390384",
-    "tmdb": "14337"
+    "tmdb": "14337",
+    "wikipedia": "Primer_(film)",
+    "youtube": "3Uv_dLoe9Pw"
   },
   "gravity": [
     {
       "subject": "causal-loop",
       "value": 5
+    },
+    {
+      "subject": "john-titor",
+      "value": 2
     }
   ],
-  "updated_at": "2026-07-30T18:54:29"
+  "updated_at": "2026-08-02T03:00:00"
 }

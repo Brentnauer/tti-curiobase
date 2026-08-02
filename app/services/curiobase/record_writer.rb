@@ -28,6 +28,7 @@ module Curiobase
       %w[also_known_as coords landing_url image_credit],
       PostRecord::FACTS,
       PostRecord::EXTERNAL,
+      PostRecord::EDGES,
       %w[refs],
       %w[dek],
     ].flatten.freeze
@@ -68,7 +69,11 @@ module Curiobase
     #   better as headed paragraphs than as a definition list, which is how it
     #   rendered before. `full_text` is a recovered document and goes last,
     #   collapsed, so it cannot push the dek out of the search snippet.
-    BODY = %w[prose full_text].freeze
+    # `links` are catalogue outbound URLs (Wikipedia, archives). Too free-form
+    # for fence keys; they become a headed markdown list in the body, same as
+    # prose. Fixtures still carry the array so SubjectCard can render `.cb-links`
+    # on the wrap/fixture path.
+    BODY = %w[prose full_text links].freeze
 
     # ⚠ WHAT CONVERSION WOULD THROW AWAY. Call this BEFORE writing.
     #
@@ -89,7 +94,19 @@ module Curiobase
           out << key
         end
 
-      top + container_losses(record)
+      top + container_losses(record) + ref_losses(record)
+    end
+
+    # Unknown verb inside the refs array — same blind spot as container_losses.
+    def self.ref_losses(record)
+      Array(record["refs"]).filter_map do |entry|
+        next unless entry.is_a?(Hash)
+
+        verb = entry["verb"].presence || PostRecord::RELATED
+        next if PostRecord::EDGE_VERBS.include?(verb)
+
+        "refs.verb:#{verb}"
+      end
     end
 
     # A container is a hash, so an unknown key INSIDE it is invisible to the
@@ -130,6 +147,21 @@ module Curiobase
         out << "[details=\"#{label}\"]\n#{full}\n[/details]"
       end
 
+      link_rows =
+        Array(record["links"]).filter_map do |l|
+          next unless l.is_a?(Hash)
+          url = l["url"].to_s.strip
+          next if url.blank?
+          label = l["label"].presence || url
+          "- [#{label}](#{url})"
+        end
+      if link_rows.any?
+        heading = I18n.t("curiobase.further_reading", default: "Further reading")
+        unless existing.match?(/^\#{2,3}\s*#{Regexp.escape(heading)}\s*$/i)
+          out << "### #{heading}\n\n#{link_rows.join("\n")}"
+        end
+      end
+
       out
     end
 
@@ -142,9 +174,23 @@ module Curiobase
       return record["type"] if key == "type"
       return record.dig("external", key) if PostRecord::EXTERNAL.include?(key)
       return record.dig("facts", key) if PostRecord::FACTS.include?(key)
-      return Array(record["refs"]).map { |r| r["slug"] }.compact if key == "refs"
+
+      if PostRecord::EDGES.include?(key)
+        return edge_slugs(record, key)
+      end
+      if key == "refs"
+        return edge_slugs(record, PostRecord::RELATED)
+      end
 
       record[key]
+    end
+
+    def self.edge_slugs(record, verb)
+      Array(record["refs"])
+        .select { |r| r.is_a?(Hash) && (r["verb"].presence || PostRecord::RELATED) == verb }
+        .map { |r| r["slug"] }
+        .compact
+        .presence
     end
 
     def self.line(key, value)

@@ -52,6 +52,7 @@ en:
     #   begin with an article and the template cannot know.
     read_more: "Read more about %{title}"
     full_text: "The recovered text"
+    further_reading: "Further reading"
     # ⚠ REQUIRED, not a nicety. The FTC requires affiliate relationships to be
     #   disclosed "clearly and conspicuously" and close to the link — and on a
     #   catalogue whose whole value is being trusted about contested things, an
@@ -78,6 +79,13 @@ en:
       other: "%{count} members recommend this"
     # The default label on a ref authored as a bare slug.
     related: "Related"
+    edge:
+      explains: "Explains"
+      contradicts: "Contradicts"
+      precedes: "Precedes"
+      part_of: "Part of"
+      same_as: "Same as"
+      involves: "Involves"
 
     # ⚠ Every one of these names the offending value and the allowed set. An
     #   error that says "invalid record" sends the author back to a document;
@@ -92,7 +100,12 @@ en:
       slug_taken: "Curiobase record: the %{type} slug '%{slug}' is already the file for “%{title}” (%{url}). A slug names exactly one record — rename this one, or merge the two topics."
       year: "Curiobase record: '%{year}' is not a year."
       number: "Curiobase record: %{key} '%{value}' must be a positive whole number."
-      ref: "Curiobase record: there is no subject called '%{slug}' — the ref would link to nothing."
+      ref: "Curiobase record: there is no subject called '%{slug}' — the edge would link to nothing."
+      edges_on_work: "Curiobase record: typed subject edges belong on Subjects, not Works."
+      edge_cap: "Curiobase record: at most %{max} subject edges per record (this has %{count})."
+      edge_self: "Curiobase record: a record cannot link to itself (%{slug})."
+      edge_duplicate: "Curiobase record: duplicate edge to '%{slug}' under the same verb."
+      edge_conflict: "Curiobase record: '%{slug}' is listed under more than one verb (%{verbs}). Pick one."
 
     part_of: "Part of"
     episodes_heading: "Episodes"

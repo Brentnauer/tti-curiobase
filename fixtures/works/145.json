@@ -9,13 +9,18 @@
   "year": 1987,
   "creator": "Timothy Good",
   "external": {
-    "isbn": "9780688078607"
+    "isbn": "9780688078607",
+    "wikipedia": "Majestic_12"
   },
   "gravity": [
     {
       "subject": "majestic-12",
-      "value": 3
+      "value": 5
+    },
+    {
+      "subject": "rendlesham-forest",
+      "value": 2
     }
   ],
-  "updated_at": "2026-07-30T19:18:29"
+  "updated_at": "2026-08-02T03:00:00"
 }

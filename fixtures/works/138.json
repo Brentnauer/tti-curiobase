@@ -10,13 +10,18 @@
   "creator": "Colm A. Kelleher and George Knapp",
   "runtime": "288 pp",
   "external": {
-    "isbn": "9781416505211"
+    "isbn": "9781416505211",
+    "wikipedia": "Skinwalker_Ranch"
   },
   "gravity": [
     {
       "subject": "skinwalker-ranch",
       "value": 5
+    },
+    {
+      "subject": "majestic-12",
+      "value": 3
     }
   ],
-  "updated_at": "2026-07-30T19:18:26"
+  "updated_at": "2026-08-02T03:00:00"
 }

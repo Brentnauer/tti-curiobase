@@ -8,13 +8,18 @@
   "mode": "nonfiction",
   "year": 2025,
   "external": {
-    "imdb": "tt8151794"
+    "imdb": "tt8151794",
+    "wikipedia": "Rendlesham_Forest_incident"
   },
   "gravity": [
     {
       "subject": "rendlesham-forest",
       "value": 4
+    },
+    {
+      "subject": "orfordness-lighthouse",
+      "value": 3
     }
   ],
-  "updated_at": "2026-07-30T18:54:35"
+  "updated_at": "2026-08-02T03:00:00"
 }

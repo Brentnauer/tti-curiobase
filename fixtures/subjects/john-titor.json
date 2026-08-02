@@ -3,7 +3,7 @@
   "type": "subject",
   "slug": "john-titor",
   "title": "John Titor",
-  "dek": "The screen name behind a series of posts made between 2000 and 2001 claiming to be a soldier sent back from 2036 to retrieve an IBM 5100...",
+  "dek": "The screen name behind posts from 2000–01 claiming to be a soldier from 2036 sent back to retrieve an IBM 5100.",
   "kind": "person",
   "domain": "time",
   "status": "hoax-admitted",
@@ -18,17 +18,43 @@
   "facts": {
     "active": "Nov 2000 – Mar 2001",
     "nationality": "American (claimed)",
-    "known_for": "The 2000–01 time traveller posts"
+    "known_for": "The 2000–01 time traveller bulletin-board posts"
   },
-  "prose": [],
+  "prose": [
+    {
+      "label": "The posts",
+      "body": "Between November 2000 and March 2001, a user calling himself John Titor described civil war, time travel, and an IBM 5100 needed in 2036. The account then went silent."
+    },
+    {
+      "label": "Aftermath",
+      "body": "No conclusive identity was proven. Later publicity treated the story as entertainment; the posts remain primary sources for how online folklore builds a person."
+    }
+  ],
   "refs": [
     {
+      "verb": "related",
       "label": "Related",
       "slug": "causal-loop",
       "title": "Causal Loop"
+    },
+    {
+      "verb": "related",
+      "label": "Related",
+      "slug": "philadelphia-experiment",
+      "title": "The Philadelphia Experiment"
     }
   ],
-  "links": [],
+  "links": [
+    {
+      "label": "Time Travel Institute archive",
+      "url": "https://timetravelinstitute.com/titor/"
+    },
+    {
+      "label": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/John_Titor"
+    }
+  ],
   "landing_url": "https://timetravelinstitute.com/titor/",
-  "updated_at": "2026-07-30T19:25:16"
+  "image_credit": "No contemporary photograph of a verified individual.",
+  "updated_at": "2026-08-02T03:00:00"
 }

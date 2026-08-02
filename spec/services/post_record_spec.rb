@@ -64,6 +64,43 @@ RSpec.describe Curiobase::PostRecord do
     expect(r).to be_valid
     expect(r.fields["slug"]).to eq("x")
   end
+
+  it "reads typed subject edges into the shared refs array" do
+    r = described_class.parse(block(<<~REC))
+      type: subject
+      slug: rendlesham-forest
+      kind: incident
+      domain: contact
+      explains: orfordness-lighthouse
+      contradicts: official-denial
+      refs: bentwaters, precedes:halt-memo
+      dek: Three nights in December 1980.
+    REC
+
+    expect(r).to be_valid
+    record = described_class.to_record(r)
+    verbs = record["refs"].map { |e| [e["verb"], e["slug"]] }
+    expect(verbs).to eq(
+      [
+        %w[explains orfordness-lighthouse],
+        %w[contradicts official-denial],
+        %w[related bentwaters],
+        %w[precedes halt-memo],
+      ],
+    )
+  end
+
+  it "reports an unknown edge verb as an unknown key" do
+    r = described_class.parse(block(<<~REC))
+      type: subject
+      slug: x
+      kind: idea
+      domain: time
+      dek: y
+      supports: something
+    REC
+    expect(r.unknown).to include("supports")
+  end
 end
 
 # ⚠ This is what replaces the CMS dropdown. Everything it catches is something
@@ -109,6 +146,44 @@ RSpec.describe Curiobase::RecordValidator do
 
   it "says nothing about a post that carries no record" do
     expect(described_class.errors_for("An ordinary post.")).to be_empty
+  end
+
+  describe "typed edges" do
+    fab!(:tag_a) { Fabricate(:tag, name: "orfordness-lighthouse") }
+    fab!(:tag_b) { Fabricate(:tag, name: "official-denial") }
+    fab!(:group) { Fabricate(:tag_group, name: "Subjects", tags: [tag_a, tag_b]) }
+
+    before do
+      SiteSetting.curiobase_subject_tag_group = "Subjects"
+      Curiobase::Subjects.reset_cache!
+    end
+
+    it "accepts a real edge target" do
+      expect(errors("explains" => "orfordness-lighthouse")).to be_empty
+    end
+
+    it "refuses a missing target" do
+      expect(errors("explains" => "no-such-subject").first).to include("no-such-subject")
+    end
+
+    it "refuses a self-reference" do
+      expect(errors("explains" => "rendlesham-forest").first).to include("itself")
+    end
+
+    it "refuses the same slug under two verbs" do
+      e = errors("explains" => "orfordness-lighthouse", "contradicts" => "orfordness-lighthouse")
+      expect(e.join).to include("more than one verb")
+    end
+
+    it "refuses edges on a Work" do
+      e =
+        errors(
+          "type" => "work",
+          "medium" => "film",
+          "explains" => "orfordness-lighthouse",
+        )
+      expect(e.join).to include("Subjects")
+    end
   end
 end
 
@@ -159,6 +234,27 @@ RSpec.describe Curiobase::RecordWriter do
         "dek" => "One sentence.\nAnd another." },
     )
     expect(Curiobase::PostRecord.parse(fence)).to be_valid
+  end
+
+  it "round-trips typed edges without losing the verb" do
+    record = {
+      "type" => "subject", "slug" => "rendlesham-forest", "kind" => "incident",
+      "domain" => "contact", "status" => "contested", "dek" => "Three nights.",
+      "refs" => [
+        { "verb" => "explains", "slug" => "orfordness-lighthouse", "label" => "Explains", "title" => "Orfordness" },
+        { "verb" => "related", "slug" => "bentwaters", "label" => "Related", "title" => "Bentwaters" },
+      ],
+    }
+
+    fence = described_class.fence(record)
+    expect(fence).to include("explains: orfordness-lighthouse")
+    expect(fence).to include("refs: bentwaters")
+    expect(fence.lines.grep(/explains:/).join).not_to include("bentwaters")
+
+    back = Curiobase::PostRecord.to_record(Curiobase::PostRecord.parse(fence))
+    expect(back["refs"].map { |e| [e["verb"], e["slug"]] }).to eq(
+      [%w[explains orfordness-lighthouse], %w[related bentwaters]],
+    )
   end
 
   it "writes nothing for fields the record does not have" do

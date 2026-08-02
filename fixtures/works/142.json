@@ -8,12 +8,17 @@
   "mode": "fiction",
   "year": 1485,
   "creator": "Thomas Malory",
-  "external": {},
+  "external": {
+    "isbn": "9780199535866",
+    "wikipedia": "Le_Morte_d%27Arthur",
+    "archive_org": "lemortedarthur00malo",
+    "asin": "0199535867"
+  },
   "gravity": [
     {
       "subject": "excalibur",
-      "value": 4
+      "value": 5
     }
   ],
-  "updated_at": "2026-07-30T19:18:27"
+  "updated_at": "2026-08-02T03:00:00"
 }

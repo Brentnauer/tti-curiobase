@@ -160,8 +160,21 @@ RSpec.describe "record conversion loses nothing" do
       expect(Curiobase::RecordWriter.losses(subject_record("mystery_field" => "?"))).to eq(["mystery_field"])
     end
 
-    it "is not fooled by an empty value" do
-      expect(Curiobase::RecordWriter.losses(subject_record("mystery_field" => ""))).to be_empty
+    it "reports an unknown verb inside refs" do
+      record = subject_record.merge(
+        "refs" => [{ "verb" => "supports", "slug" => "x", "label" => "Supports", "title" => "X" }],
+      )
+      expect(Curiobase::RecordWriter.losses(record)).to eq(["refs.verb:supports"])
+    end
+
+    it "is silent on a fully edged subject" do
+      record = subject_record.merge(
+        "refs" => [
+          { "verb" => "explains", "slug" => "a", "label" => "Explains", "title" => "A" },
+          { "verb" => "related", "slug" => "b", "label" => "Related", "title" => "B" },
+        ],
+      )
+      expect(Curiobase::RecordWriter.losses(record)).to be_empty
     end
   end
 

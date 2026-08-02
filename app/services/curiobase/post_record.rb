@@ -46,6 +46,13 @@ module Curiobase
                  imdb tmdb isbn igdb youtube archive_org wikipedia asin google_books].freeze
     LISTS = %w[period evidence refs].freeze
 
+    # Subject→Subject edge verbs. One fence key per verb; `refs` stays the
+    # untyped "related" escape hatch. Work→Work relations are a separate feature.
+    EDGES = %w[explains contradicts precedes part_of same_as involves].freeze
+    RELATED = "related"
+    EDGE_CAP = 12
+    EDGE_VERBS = (EDGES + [RELATED]).freeze
+
     # ⚠ FACTS ARE FLAT, and that is the concession the fenced block makes.
     #
     #   ACF nests these in a group and shows an `idea` a different set from a
@@ -96,7 +103,7 @@ module Curiobase
     #   go and find one for 34 records before the buttons work.
     EXTERNAL = %w[imdb tmdb isbn igdb youtube archive_org wikipedia asin google_books].freeze
 
-    KEYS = (SCALARS + LISTS + FACTS).freeze
+    KEYS = (SCALARS + LISTS + EDGES + FACTS).freeze
 
     REQUIRED = { "subject" => %w[slug kind domain dek], "work" => %w[slug medium dek] }.freeze
 
@@ -131,7 +138,12 @@ module Curiobase
         next unknown << key unless KEYS.include?(key)
         next if value.empty?
 
-        fields[key] = LISTS.include?(key) ? value.split(",").map(&:strip).reject(&:empty?) : value
+        fields[key] =
+          if LISTS.include?(key) || EDGES.include?(key)
+            value.split(",").map(&:strip).reject(&:empty?)
+          else
+            value
+          end
       end
 
       fields["type"] ||= "subject"
@@ -179,14 +191,11 @@ module Curiobase
       facts = FACTS.each_with_object({}) { |k, h| h[k] = fields[k] if fields[k].present? }
       out["facts"] = facts if facts.any?
 
-      # A ref is a pointer to another Subject. The renderer wants a label and a
-      # title; a slug is enough to build both, and asking an author to type the
-      # title again is asking for the two to drift.
-      if fields["refs"].present?
-        out["refs"] = Array(fields["refs"]).map do |slug|
-          { "label" => I18n.t("curiobase.related"), "slug" => slug, "title" => titleize(slug) }
-        end
-      end
+      # Subject→Subject edges. Typed verbs + untyped `refs` collapse into one
+      # `refs` array with a `verb` key — SubjectCard / fixtures / Source already
+      # read that shape. A hash with no verb (legacy fixtures) means related.
+      refs = build_refs(fields)
+      out["refs"] = refs if refs.any?
 
       # The topic title IS the record's title — see DECISIONS D-032. A `title:`
       # in the block still wins, as the escape hatch for a topic whose title
@@ -196,9 +205,64 @@ module Curiobase
       out
     end
 
+    # Bare slug → related. Qualified token `explains:slug` → that verb (parse-only
+    # fallback inside `refs:`). Writer always expands back to verb keys.
+    def self.parse_ref_token(token)
+      token = token.to_s.strip
+      return [RELATED, ""] if token.blank?
+
+      if token.include?(":")
+        verb, _, rest = token.partition(":")
+        verb = verb.strip.downcase
+        rest = rest.strip
+        return [verb, rest] if EDGES.include?(verb) && rest.present?
+      end
+
+      [RELATED, token]
+    end
+
+    def self.build_refs(fields)
+      out = []
+      EDGES.each do |verb|
+        Array(fields[verb]).each { |slug| out << edge_entry(verb, slug) }
+      end
+      Array(fields["refs"]).each do |token|
+        verb, slug = parse_ref_token(token)
+        next if slug.blank?
+        out << edge_entry(verb, slug)
+      end
+      out
+    end
+
+    def self.edge_entry(verb, slug)
+      slug = slug.to_s.strip
+      {
+        "verb" => verb,
+        "label" => edge_label(verb),
+        "slug" => slug,
+        "title" => titleize(slug),
+      }
+    end
+
+    def self.edge_label(verb)
+      return I18n.t("curiobase.related") if verb == RELATED
+
+      I18n.t("curiobase.edge.#{verb}", default: verb.to_s.tr("_", " ").capitalize)
+    end
+
+    # Edge display title. Never load the target through Source.subject — that
+    # re-enters to_record → build_refs → titleize and loops on mutual edges
+    # (rendlesham ↔ orfordness, majestic ↔ philadelphia, …).
     def self.titleize(slug)
-      resolved = Source.subject(slug)
-      return resolved["title"] if resolved && resolved["title"].present?
+      topic_id = RecordTopic.find(slug, type: :subject)
+      if topic_id
+        title = Topic.where(id: topic_id).pick(:title)
+        return title if title.present?
+      end
+
+      fixture = Source.fixture.subject(slug)
+      return fixture["title"] if fixture && fixture["title"].present?
+
       slug.to_s.tr("-", " ").split.map(&:capitalize).join(" ")
     rescue StandardError
       slug.to_s.tr("-", " ")

@@ -294,6 +294,57 @@ module Curiobase
       if (geo = geo_of(record["coords"]))
         base["geo"] = geo
       end
+
+      apply_subject_edges(base, record)
+    end
+
+    # Only schema.org properties that mean what we mean. explains/contradicts
+    # stay card-only — inventing ClaimReview here is worse than silence.
+    def self.apply_subject_edges(base, record)
+      edges = Array(record["refs"]).select { |e| e.is_a?(Hash) && e["slug"].present? }
+      return if edges.empty?
+
+      part =
+        edges
+          .select { |e| e["verb"] == "part_of" }
+          .filter_map { |e| edge_entity(e) }
+      base["isPartOf"] = part.size == 1 ? part.first : part if part.any?
+
+      same =
+        edges
+          .select { |e| e["verb"] == "same_as" }
+          .filter_map { |e| edge_entity_url(e) }
+      return if same.empty?
+
+      existing = Array(base["sameAs"])
+      base["sameAs"] = (existing + same).uniq
+    end
+
+    def self.edge_entity(edge)
+      url = edge_entity_url(edge)
+      entity = {
+        "@type" => "Thing",
+        "name" => edge["title"].presence || edge["slug"].to_s.tr("-", " "),
+      }
+      entity["url"] = url if url
+      entity
+    end
+
+    def self.edge_entity_url(edge)
+      slug = edge["slug"].to_s
+      return nil if slug.blank?
+
+      if (file = RecordTopic.find(slug, type: :subject))
+        t = Topic.select(:id, :slug).find_by(id: file)
+        return "#{Discourse.base_url}#{t.relative_url}" if t
+      end
+
+      tag = ::Tag.where(name: slug).first
+      return nil unless tag
+
+      "#{Discourse.base_url}/tag/#{tag.name}"
+    rescue StandardError
+      nil
     end
 
     # ══════════════════════════════════════════════════════════════════════════

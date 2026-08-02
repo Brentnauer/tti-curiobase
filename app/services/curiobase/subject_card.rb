@@ -184,21 +184,30 @@ module Curiobase
       dl.children.any? ? dl : nil
     end
 
-    # References to other Subjects. A claim's claimant is a Subject, not a
-    # string — printing the slug at a reader was the tell.
+    # References to other Subjects — typed edges + related.
+    # One <dt> per verb; missing verb (legacy fixtures) reads as related.
     def refs
-      list = @r["refs"]
-      return nil unless list.is_a?(Array) && list.any?
+      list = Array(@r["refs"]).select { |ref| ref.is_a?(Hash) && ref["slug"].present? }
+      return nil if list.empty?
+
+      grouped =
+        list.group_by { |ref| (ref["verb"].presence || PostRecord::RELATED) }
+
       dl = node("dl", class: "cb-facts cb-refs")
-      list.each do |ref|
-        next if ref["slug"].blank?
-        dt = node("dt"); dt.content = ref["label"].to_s
-        dd = node("dd")
-        a = node("a", href: ref_href(ref["slug"]))
-        a.content = ref["title"].presence || ref["slug"]
-        dd.add_child(a)
+      PostRecord::EDGE_VERBS.each do |verb|
+        rows = grouped[verb]
+        next if rows.blank?
+
+        dt = node("dt", "data-verb": verb, class: "cb-refs-verb")
+        dt.content = rows.first["label"].presence || PostRecord.edge_label(verb)
         dl.add_child(dt)
-        dl.add_child(dd)
+        rows.each do |ref|
+          dd = node("dd", "data-verb": verb)
+          a = node("a", href: ref_href(ref["slug"]))
+          a.content = ref["title"].presence || ref["slug"]
+          dd.add_child(a)
+          dl.add_child(dd)
+        end
       end
       dl.children.any? ? dl : nil
     end

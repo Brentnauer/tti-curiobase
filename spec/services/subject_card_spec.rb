@@ -158,6 +158,49 @@ RSpec.describe Curiobase::SubjectCard do
     end
   end
 
+  describe "typed edges" do
+    it "groups verbs under one dt each" do
+      html =
+        described_class.new(
+          {
+            "slug" => "rendlesham-forest",
+            "title" => "Rendlesham Forest",
+            "dek" => "Three nights.",
+            "kind" => "incident",
+            "domain" => "contact",
+            "status" => "contested",
+            "refs" => [
+              { "verb" => "explains", "label" => "Explains", "slug" => "orfordness-lighthouse", "title" => "Orfordness Lighthouse" },
+              { "verb" => "explains", "label" => "Explains", "slug" => "other-account", "title" => "Other" },
+              { "verb" => "related", "label" => "Related", "slug" => "bentwaters", "title" => "Bentwaters" },
+            ],
+          },
+        ).to_html
+
+      frag = Nokogiri::HTML5.fragment(html)
+      expect(frag.at_css(".cb-dek")).to be_present
+      expect(frag.to_html.index("cb-dek")).to be < frag.to_html.index("cb-refs")
+      expect(frag.css('dt[data-verb="explains"]').size).to eq(1)
+      expect(frag.css('dd[data-verb="explains"]').size).to eq(2)
+      expect(frag.css('dt[data-verb="related"]').size).to eq(1)
+    end
+
+    it "omits edges from the banner" do
+      record = {
+        "slug" => "rendlesham-forest",
+        "title" => "Rendlesham Forest",
+        "dek" => "Three nights.",
+        "kind" => "incident",
+        "domain" => "contact",
+        "refs" => [
+          { "verb" => "explains", "label" => "Explains", "slug" => "orfordness-lighthouse", "title" => "Orfordness" },
+        ],
+      }
+      expect(described_class.new(record, variant: :banner).to_html).not_to include("cb-refs")
+      expect(described_class.new(record, variant: :full).to_html).to include("cb-refs")
+    end
+  end
+
   describe "computed disagreement" do
     fab!(:work_topic) { Fabricate(:topic, title: "Primer (2004) — the garage film") }
     fab!(:work_post) { Fabricate(:post, topic: work_topic, raw: "[wrap=work id=123]\n[/wrap]") }

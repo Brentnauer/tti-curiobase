@@ -3,22 +3,53 @@
   "type": "subject",
   "slug": "voynich-manuscript",
   "title": "The Voynich Manuscript",
-  "dek": "A 15th-century codex in an unknown script with botanical illustrations of no known plants, held at Yale and unread despite a century of professional and amateur attempts.",
+  "dek": "A 15th-century codex in an unknown script with botanical drawings of no known plants, held at Yale and unread despite a century of attempts.",
   "kind": "document",
   "domain": "esoterica",
   "status": "open",
   "period": [
-    "ancient"
+    "ancient",
+    "pre-1950"
   ],
   "evidence": [
-    "primary-source"
+    "primary-source",
+    "physical-trace",
+    "documentary-record"
   ],
   "also_known_as": "Beinecke MS 408",
-  "facts": {},
-  "prose": [],
-  "refs": [],
-  "links": [],
+  "facts": {
+    "source_site": "Beinecke Rare Book & Manuscript Library, Yale University",
+    "section": "MS 408",
+    "transmitted": "Acquired by Wilfrid Voynich in 1912; earlier ownership chain disputed",
+    "captured": "Carbon-dated to the early 15th century",
+    "operator": "Unknown author(s) and script tradition"
+  },
+  "prose": [
+    {
+      "label": "The text",
+      "body": "Roughly 240 vellum folios in an undeciphered script, with herbal, astronomical, and balneological sections. No demonstrated translation has held under peer scrutiny."
+    }
+  ],
+  "refs": [
+    {
+      "verb": "related",
+      "label": "Related",
+      "slug": "excalibur",
+      "title": "Excalibur"
+    }
+  ],
+  "links": [
+    {
+      "label": "Beinecke digital",
+      "url": "https://collections.library.yale.edu/catalog/2002046"
+    },
+    {
+      "label": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Voynich_manuscript"
+    }
+  ],
   "full_text": "Folio 1r, opening lines, in the Extensible Voynich Alphabet — the\ntransliteration scheme researchers use to quote a text nobody can read.\nThe glyphs are transcribed; the words are not translated, because no\ntranslation has ever been demonstrated.\n\nfachys ykal ar ataiin shol shory cth res y kor sholdy\nsory ckhar or y kair chtaiin shar are cthar cthar dan\nsyaiir sheky or ykaiin shod cthoary cthes daraiin sa\nooiin oteey oteos roloty cthar daiin okaiin or okan\ndair y chear cthaiin cphar cfhaiin\nydaraishy\n",
   "landing_url": "https://collections.library.yale.edu/catalog/2002046",
-  "updated_at": "2026-07-30T19:25:17"
+  "image_credit": "Yale Beinecke MS 408; public-domain digitisation when attached.",
+  "updated_at": "2026-08-02T03:00:00"
 }

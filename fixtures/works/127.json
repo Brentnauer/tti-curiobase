@@ -10,7 +10,8 @@
   "creator": "5pb. and Nitroplus",
   "runtime": "~30 h",
   "external": {
-    "igdb": "steins-gate"
+    "igdb": "steins-gate",
+    "wikipedia": "Steins;Gate"
   },
   "gravity": [
     {
@@ -19,8 +20,8 @@
     },
     {
       "subject": "john-titor",
-      "value": 4
+      "value": 5
     }
   ],
-  "updated_at": "2026-07-30T18:54:31"
+  "updated_at": "2026-08-02T03:00:00"
 }

@@ -3,7 +3,7 @@
   "type": "subject",
   "slug": "skinwalker-ranch",
   "title": "Skinwalker Ranch",
-  "dek": "A 512-acre property in Utah's Uintah Basin bought in 1996 specifically to study the phenomena reported there, and studied under private and then federal contract for more than two decades.",
+  "dek": "A 512-acre property in Utah's Uintah Basin bought in 1996 to study the phenomena reported there, and studied under private then federal contract for more than two decades.",
   "kind": "place",
   "domain": "phenomena",
   "status": "open",
@@ -22,9 +22,34 @@
     "active": "1994 – present",
     "country": "United States"
   },
-  "prose": [],
-  "refs": [],
-  "links": [],
+  "prose": [
+    {
+      "label": "Research history",
+      "body": "Robert Bigelow's NIDS leased the ranch after the Sherman family sold; later AAWSAP / BAASS work and the History Channel series kept the site in public view without a settled explanation."
+    }
+  ],
+  "refs": [
+    {
+      "verb": "involves",
+      "label": "Involves",
+      "slug": "majestic-12",
+      "title": "Majestic 12"
+    },
+    {
+      "verb": "related",
+      "label": "Related",
+      "slug": "rendlesham-forest",
+      "title": "Rendlesham Forest"
+    }
+  ],
+  "links": [
+    {
+      "label": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Skinwalker_Ranch"
+    }
+  ],
   "coords": "40.2586, -109.8890",
-  "updated_at": "2026-07-30T19:18:23"
+  "landing_url": "https://en.wikipedia.org/wiki/Skinwalker_Ranch",
+  "image_credit": "Property aerials are typically rights-restricted; attach only cleared plates.",
+  "updated_at": "2026-08-02T03:00:00"
 }

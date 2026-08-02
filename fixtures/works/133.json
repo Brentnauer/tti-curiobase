@@ -9,13 +9,18 @@
   "year": 2014,
   "creator": "Daniel Simpson",
   "external": {
-    "imdb": "tt3245656"
+    "imdb": "tt3245656",
+    "wikipedia": "Hangar_10"
   },
   "gravity": [
     {
       "subject": "rendlesham-forest",
       "value": 5
+    },
+    {
+      "subject": "orfordness-lighthouse",
+      "value": 3
     }
   ],
-  "updated_at": "2026-07-30T18:54:34"
+  "updated_at": "2026-08-02T03:00:00"
 }

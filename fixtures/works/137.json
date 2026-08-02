@@ -8,13 +8,18 @@
   "mode": "nonfiction",
   "year": 2020,
   "external": {
-    "imdb": "tt12501768"
+    "imdb": "tt12501768",
+    "wikipedia": "Philadelphia_Experiment"
   },
   "gravity": [
     {
       "subject": "philadelphia-experiment",
       "value": 4
+    },
+    {
+      "subject": "majestic-12",
+      "value": 3
     }
   ],
-  "updated_at": "2026-07-30T19:18:25"
+  "updated_at": "2026-08-02T03:00:00"
 }

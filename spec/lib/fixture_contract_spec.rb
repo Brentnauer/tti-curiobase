@@ -173,5 +173,21 @@ RSpec.describe "Curiobase fixtures" do
                                            "#{f}: kind #{s["kind"].inspect} has no schema.org mapping"
       end
     end
+
+    it "keeps subject edges on the closed verb set with real targets" do
+      known = Dir[File.join(root, "subjects", "*.json")].map { |f| File.basename(f, ".json") }
+      Dir[File.join(root, "subjects", "*.json")].each do |f|
+        label = File.basename(f)
+        Array(JSON.parse(File.read(f))["refs"]).each do |edge|
+          expect(edge).to be_a(Hash), "#{label}: refs entries must be hashes"
+          verb = edge["verb"].presence || Curiobase::PostRecord::RELATED
+          expect(Curiobase::PostRecord::EDGE_VERBS).to include(verb),
+                                                       "#{label}: unknown edge verb #{verb.inspect}"
+          expect(edge["slug"]).to be_present, "#{label}: edge without slug"
+          expect(known).to include(edge["slug"]),
+                           "#{label}: edge → #{edge["slug"].inspect} has no subject fixture"
+        end
+      end
+    end
   end
 end

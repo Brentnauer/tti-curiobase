@@ -8,12 +8,19 @@
   "mode": "fiction",
   "year": 2000,
   "creator": "Ion Storm",
-  "external": {},
+  "external": {
+    "igdb": "deus-ex",
+    "wikipedia": "Deus_Ex_(video_game)"
+  },
   "gravity": [
     {
       "subject": "majestic-12",
       "value": 4
+    },
+    {
+      "subject": "philadelphia-experiment",
+      "value": 2
     }
   ],
-  "updated_at": "2026-07-30T19:18:29"
+  "updated_at": "2026-08-02T03:00:00"
 }

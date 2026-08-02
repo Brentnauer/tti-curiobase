@@ -3,7 +3,7 @@
   "type": "subject",
   "slug": "rendlesham-forest",
   "title": "Rendlesham Forest",
-  "dek": "Over three nights in December 1980, airmen from two adjacent USAF bases in Suffolk reported lights in the forest, and a deputy base commander recorded his own account on a handheld tape.",
+  "dek": "Over three nights in December 1980, airmen from two adjacent USAF bases in Suffolk reported lights in the forest, and a deputy base commander recorded his own account on tape.",
   "kind": "incident",
   "domain": "contact",
   "status": "contested",
@@ -23,8 +23,48 @@
     "witnesses": "USAF personnel from Bentwaters and Woodbridge",
     "outcome": "The Halt memo was released in 1983; the MoD closed its file without a determination."
   },
-  "prose": [],
-  "refs": [],
-  "links": [],
-  "updated_at": "2026-07-29T00:35:42"
+  "prose": [
+    {
+      "label": "What happened",
+      "body": "Security patrols investigated lights descending into the forest. On a later night, Lt Col Halt led a party with a cassette recorder; the tape and his memo became the public face of the case."
+    },
+    {
+      "label": "The lighthouse account",
+      "body": "Sceptics identify the flashing beam of Orfordness Lighthouse with the lights Halt described. Believers argue the geometry and timing do not close the case."
+    }
+  ],
+  "refs": [
+    {
+      "verb": "explains",
+      "label": "Explains",
+      "slug": "orfordness-lighthouse",
+      "title": "Orfordness Lighthouse"
+    },
+    {
+      "verb": "related",
+      "label": "Related",
+      "slug": "majestic-12",
+      "title": "Majestic 12"
+    },
+    {
+      "verb": "related",
+      "label": "Related",
+      "slug": "skinwalker-ranch",
+      "title": "Skinwalker Ranch"
+    }
+  ],
+  "links": [
+    {
+      "label": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Rendlesham_Forest_incident"
+    },
+    {
+      "label": "Ian Ridpath on Rendlesham",
+      "url": "https://www.ianridpath.com/ufo/rendlesham.htm"
+    }
+  ],
+  "coords": "52.0940, 1.4540",
+  "landing_url": "https://en.wikipedia.org/wiki/Rendlesham_Forest_incident",
+  "image_credit": "Forest approaches; attach a cleared first-post plate when seeding.",
+  "updated_at": "2026-08-02T03:00:00"
 }

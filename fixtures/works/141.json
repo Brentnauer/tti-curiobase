@@ -10,7 +10,10 @@
   "creator": "John Boorman",
   "runtime": "140 min",
   "external": {
-    "imdb": "tt0082348"
+    "imdb": "tt0082348",
+    "tmdb": "11622",
+    "wikipedia": "Excalibur_(film)",
+    "youtube": "8VZdkJ8Iz4E"
   },
   "gravity": [
     {
@@ -18,5 +21,5 @@
       "value": 5
     }
   ],
-  "updated_at": "2026-07-30T19:18:27"
+  "updated_at": "2026-08-02T03:00:00"
 }

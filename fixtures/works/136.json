@@ -10,13 +10,19 @@
   "creator": "Stewart Raffill",
   "runtime": "102 min",
   "external": {
-    "imdb": "tt0087910"
+    "imdb": "tt0087910",
+    "tmdb": "11846",
+    "wikipedia": "The_Philadelphia_Experiment_(film)"
   },
   "gravity": [
     {
       "subject": "philadelphia-experiment",
       "value": 5
+    },
+    {
+      "subject": "causal-loop",
+      "value": 3
     }
   ],
-  "updated_at": "2026-07-30T19:18:25"
+  "updated_at": "2026-08-02T03:00:00"
 }

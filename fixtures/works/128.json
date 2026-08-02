@@ -16,7 +16,11 @@
     {
       "subject": "john-titor",
       "value": 5
+    },
+    {
+      "subject": "causal-loop",
+      "value": 3
     }
   ],
-  "updated_at": "2026-07-30T18:54:32"
+  "updated_at": "2026-08-02T03:00:00"
 }

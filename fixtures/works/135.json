@@ -9,13 +9,22 @@
   "year": 1979,
   "creator": "Charles Berlitz and William L. Moore",
   "external": {
-    "isbn": "9780449007464"
+    "isbn": "9780449007464",
+    "wikipedia": "Philadelphia_Experiment"
   },
   "gravity": [
     {
       "subject": "philadelphia-experiment",
       "value": 5
+    },
+    {
+      "subject": "causal-loop",
+      "value": 2
+    },
+    {
+      "subject": "majestic-12",
+      "value": 2
     }
   ],
-  "updated_at": "2026-07-30T19:18:24"
+  "updated_at": "2026-08-02T03:00:00"
 }

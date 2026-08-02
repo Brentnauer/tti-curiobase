@@ -186,6 +186,29 @@ RSpec.describe Curiobase::JsonLd do
       expect(ld(event)["location"]).to eq("@type" => "Place", "name" => "Rendlesham Forest, Suffolk")
     end
 
+    it "emits isPartOf for part_of edges and invents nothing for explains" do
+      lighthouse = Fabricate(:tag, name: "orfordness-lighthouse")
+      TagGroupMembership.create!(tag: lighthouse, tag_group: group)
+      Curiobase::Subjects.reset_cache!
+
+      event = record!("Rendlesham Forest, the three nights", <<~R.strip)
+        type: subject
+        slug: rendlesham-forest
+        kind: incident
+        domain: contact
+        part_of: majestic-12
+        explains: orfordness-lighthouse
+        dek: Three nights of lights near two USAF bases in December 1980.
+      R
+
+      blob = ld(event)
+      part = blob["isPartOf"]
+      part = part.first if part.is_a?(Array)
+      expect(part["@type"]).to eq("Thing")
+      expect(part["name"].to_s.downcase).to include("majestic")
+      expect(blob.to_json).not_to include("orfordness")
+    end
+
     # ══════════════════════════════════════════════════════════════════════════
     # PROSE IN A DATE FIELD IS OMITTED, NOT PASSED THROUGH.
     # ══════════════════════════════════════════════════════════════════════════

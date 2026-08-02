@@ -297,7 +297,31 @@ about search snippets: the dek leads the cooked HTML so it wins Discourse’s me
 | `runtime` | Free text (e.g. `77 min`, `3 seasons`) |
 | `series` | Hub Work slug (episode → parent) |
 | `season` / `episode` | Integers |
-| `refs` | List of Subject slugs that must exist in the vocabulary |
+
+### Subject→Subject edges
+
+Typed pointers between Subjects. One fence key per verb; comma-separated slugs.
+Targets must exist in the Subject vocabulary. Flat `refs:` stays the untyped escape hatch.
+
+```curiobase
+explains: orfordness-lighthouse
+contradicts: official-denial
+precedes: halt-memo
+involves: charles-halt
+refs: bentwaters
+```
+
+| Key | Meaning |
+|---|---|
+| `explains` | Competing / sceptical account of this file |
+| `contradicts` | Evidence or account that cuts against it |
+| `precedes` | Earlier event in a chain (forward only) |
+| `part_of` | Mereology (incident inside a flap, …) |
+| `same_as` | Alias / near-duplicate identity |
+| `involves` | Person, org, or object that participates |
+| `refs` | Related (untyped) |
+
+Outbound only — writing A→B does not auto-edit B. Cap 12 edges per record. Work→Work relations are not these keys.
 
 ### Subject facts by kind
 

@@ -10,13 +10,19 @@
   "creator": "Tim Powers",
   "runtime": "387 pp",
   "external": {
-    "isbn": "9780441004010"
+    "isbn": "9780441004010",
+    "wikipedia": "The_Anubis_Gates",
+    "asin": "0441004016"
   },
   "gravity": [
     {
       "subject": "causal-loop",
-      "value": 3
+      "value": 4
+    },
+    {
+      "subject": "john-titor",
+      "value": 2
     }
   ],
-  "updated_at": "2026-07-30T18:54:32"
+  "updated_at": "2026-08-02T03:00:00"
 }

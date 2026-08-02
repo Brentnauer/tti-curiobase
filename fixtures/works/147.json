@@ -9,13 +9,19 @@
   "year": 2016,
   "creator": "Raymond Clemens, editor",
   "external": {
-    "isbn": "9780300217230"
+    "isbn": "9780300217230",
+    "wikipedia": "Voynich_manuscript",
+    "asin": "0300217239"
   },
   "gravity": [
     {
       "subject": "voynich-manuscript",
       "value": 5
+    },
+    {
+      "subject": "excalibur",
+      "value": 1
     }
   ],
-  "updated_at": "2026-07-30T19:18:29"
+  "updated_at": "2026-08-02T03:00:00"
 }

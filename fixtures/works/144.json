@@ -9,13 +9,18 @@
   "year": 1996,
   "creator": "Stanton T. Friedman",
   "external": {
-    "isbn": "9781569248300"
+    "isbn": "9781569248300",
+    "wikipedia": "Majestic_12"
   },
   "gravity": [
     {
       "subject": "majestic-12",
       "value": 5
+    },
+    {
+      "subject": "philadelphia-experiment",
+      "value": 2
     }
   ],
-  "updated_at": "2026-07-30T19:18:28"
+  "updated_at": "2026-08-02T03:00:00"
 }

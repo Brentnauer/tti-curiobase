@@ -8,13 +8,14 @@
   "mode": "nonfiction",
   "year": 2022,
   "external": {
-    "imdb": "tt19711954"
+    "imdb": "tt19711954",
+    "wikipedia": "Voynich_manuscript"
   },
   "gravity": [
     {
       "subject": "voynich-manuscript",
-      "value": 5
+      "value": 4
     }
   ],
-  "updated_at": "2026-07-30T19:18:30"
+  "updated_at": "2026-08-02T03:00:00"
 }

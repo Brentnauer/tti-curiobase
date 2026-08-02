@@ -3,7 +3,7 @@
   "type": "subject",
   "slug": "excalibur",
   "title": "Excalibur",
-  "dek": "The sword of Arthurian legend, whose earliest names predate the stone-in-the-anvil story by centuries and whose supposed grave was found at Glastonbury in 1191, just as the abbey needed funds.",
+  "dek": "The sword of Arthurian legend, whose earliest names predate the stone-in-the-anvil story by centuries and whose supposed grave was found at Glastonbury in 1191.",
   "kind": "object",
   "domain": "esoterica",
   "status": "unfalsifiable",
@@ -12,7 +12,8 @@
     "pre-1950"
   ],
   "evidence": [
-    "documentary-record"
+    "documentary-record",
+    "no-evidence"
   ],
   "also_known_as": "Caledfwlch, Caliburnus, Caliburn",
   "facts": {
@@ -20,8 +21,27 @@
     "provenance": "Named in Culhwch and Olwen (c. 1100) as Caledfwlch; Latinised by Geoffrey of Monmouth (1136).",
     "whereabouts": "Never recovered. The 1191 Glastonbury exhumation produced a cross, not a blade."
   },
-  "prose": [],
-  "refs": [],
-  "links": [],
-  "updated_at": "2026-07-30T19:18:23"
+  "prose": [
+    {
+      "label": "Names and stories",
+      "body": "Welsh tradition gives Caledfwlch; French romance splits sword-from-stone and lake-gift traditions. Malory fused them for English readers."
+    }
+  ],
+  "refs": [
+    {
+      "verb": "related",
+      "label": "Related",
+      "slug": "voynich-manuscript",
+      "title": "The Voynich Manuscript"
+    }
+  ],
+  "links": [
+    {
+      "label": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Excalibur"
+    }
+  ],
+  "landing_url": "https://en.wikipedia.org/wiki/Excalibur",
+  "image_credit": "Manuscript illuminations; credit the holding library when attaching.",
+  "updated_at": "2026-08-02T03:00:00"
 }

@@ -17,6 +17,7 @@ Discourse catalogue plugin. Full agent memory: **`AGENTS.md`**. Product docs: **
 - Empty series hub: no `add_child(nil)`.
 - Gravity: one eligible vote weighs 1 — no supporter group / TL ladder.
 - No auto-seeded community wiki post; use Discourse first-post wiki + groups.
+- Subject edges: closed verbs + `refs`; no inverse rebake fanout.
 
 ## Scratch
 

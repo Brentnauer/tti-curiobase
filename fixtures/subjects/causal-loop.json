@@ -6,11 +6,49 @@
   "dek": "An event that is its own cause — no beginning, no author, no first time around.",
   "kind": "idea",
   "domain": "time",
-  "period": [],
-  "evidence": [],
+  "status": "open",
+  "period": [
+    "pre-1950",
+    "2000s",
+    "2010s"
+  ],
+  "evidence": [
+    "documentary-record",
+    "no-evidence"
+  ],
+  "also_known_as": "Bootstrap paradox, ontological paradox, closed timelike curve",
   "facts": {},
-  "prose": [],
-  "refs": [],
-  "links": [],
-  "updated_at": "2026-07-29T00:35:41"
+  "prose": [
+    {
+      "label": "The idea",
+      "body": "Information or matter travels back in time and becomes the cause of its own existence. There is no origin outside the loop — only consistency."
+    },
+    {
+      "label": "In fiction",
+      "body": "Primer, Dark, and Steins;Gate stage loops where the attempt to escape is what closes the circle. John Titor's story is a folk version of the same geometry."
+    }
+  ],
+  "refs": [
+    {
+      "verb": "related",
+      "label": "Related",
+      "slug": "john-titor",
+      "title": "John Titor"
+    },
+    {
+      "verb": "related",
+      "label": "Related",
+      "slug": "philadelphia-experiment",
+      "title": "The Philadelphia Experiment"
+    }
+  ],
+  "links": [
+    {
+      "label": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Causal_loop"
+    }
+  ],
+  "landing_url": "https://en.wikipedia.org/wiki/Causal_loop",
+  "image_credit": "Diagrammatic; attach a first-post plate when seeding.",
+  "updated_at": "2026-08-02T03:00:00"
 }
