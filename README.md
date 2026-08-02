@@ -7,46 +7,135 @@ Some topics are about a *thing* — a film, a book, a recovered document — and
 members rate how strongly each one pulls on the other.
 
 Records are written in the post itself, rendered into the page, and readable by search engines
-without JavaScript. Nothing is moved: a topic keeps its replies, its links and its history.
+without JavaScript. Nothing is moved: a topic keeps its replies, its links, and its history.
 
 **Facts vs views:** pairings and votes are the truth; cards, lists, and structured data are derived
 views. Gravity is always about a Work↔Subject *pair*, never a single collapsed “score for this
 Work.”
 
+| | |
+|---|---|
+| **Repo** | https://github.com/Brentnauer/tti-curiobase |
+| **Version** | 0.1.0 |
+| **License** | MIT |
+| **Discourse** | `latest` / `tests-passed` (developed against `2026.8.x`); plugin header requires 3.2.0+ |
+
+---
+
+## Contents
+
+1. [Concepts](#concepts)
+2. [What it adds](#what-it-adds)
+3. [How it works](#how-it-works)
+4. [Requirements](#requirements)
+5. [Install (production)](#install-production)
+6. [Settings](#settings)
+7. [Editorial workflow](#editorial-workflow)
+8. [Writing a record](#writing-a-record)
+9. [Connecting Work ↔ Subject](#connecting-work--subject)
+10. [Gravity](#gravity)
+11. [Media and embeds](#media-and-embeds)
+12. [Series and episodes](#series-and-episodes)
+13. [Association lists and filters](#association-lists-and-filters)
+14. [Find a copy](#find-a-copy)
+15. [Structured data](#structured-data)
+16. [Community wiki](#community-wiki)
+17. [Tag pages](#tag-pages)
+18. [HTTP API](#http-api)
+19. [Rake tasks](#rake-tasks)
+20. [Development](#development)
+21. [Operations and troubleshooting](#operations-and-troubleshooting)
+22. [Further reading](#further-reading)
+
+---
+
+## Concepts
+
+| Concept | Meaning |
+|---|---|
+| **Work** | Something you can read, watch, or play — film, series, book, game, video, document |
+| **Subject** | What works circle — idea, incident, claim, person, place, object, org, or document |
+| **Pairing** | Created only by tagging a Work topic with a Subject slug from the Subject tag group |
+| **Gravity** | 1–5 *centrality* (“how hard does this work pull on this idea”), **not** quality |
+| **File** | The Subject’s own record topic is canonical; the tag page is navigation |
+| **Bake** | Cards and scores live in `posts.cooked` so crawlers and no-JS readers see the same facts |
+| **Slug** | Stable id for a record (`primer-2004`). One slug → one file, scoped across Work *and* Subject |
+
+**Non-goals for v1:** a separate CMS, quality/review scores marketed as stars, an institute-only score outside the vote, or schema that blocks Discourse rebuilds without need.
+
 ---
 
 ## What it adds
 
-**Work and Subject records.** A Work is something you can read, watch or play. A Subject is what
-works circle — an idea, incident, claim, person, place, object or organisation. Each gets a card at
-the top of its own topic.
+**Work and Subject cards.** A fenced `curiobase` block in the first post becomes a card at the top
+of the topic: dek, badges, facts, poster/plate, external links, gravity, and (when relevant)
+embeds, episodes, and “Find a copy.”
 
-**Gravity.** Members rate 1–5 how central a Subject is to a Work. This is not a quality score, and
-the published anchors say so: *mentions it · set dressing · takes it seriously · builds on it ·
-cannot exist without it.*
+**Gravity.** Members rate 1–5 how central a Subject is to a Work. Published anchors say what each
+number means (fiction, nonfiction, or neutral wording — same scale).
 
-**Association lists.** A Subject's topic shows the works that engage it, ranked, with filter chips
-per medium. The chips are real links, so a crawler follows them to a complete filtered page.
+**Association lists.** A Subject’s file shows the works that engage it, ranked by gravity, with
+filter chips per medium. Chips are real links; a crawler that follows one gets a complete filtered
+page. Scores refresh live for humans without waiting on rebake.
 
-**A community wiki** as post 2 of every record (when enabled), so corrections live beside the file.
+**Series hubs.** A Work with `medium: series` lists episode Works linked by `series: hub-slug`,
+with season chips (when needed) and Air order / Most recommended sort.
 
-**"Find a copy."** Free sources first — Internet Archive, libraries, Steam, streaming lookups —
-then affiliate links, marked as paid. If a work is freely available, the shops are not shown.
+**Community wiki.** Optional post 2 on every record topic for corrections beside the file.
 
-**Structured data.** Works are emitted as `Movie`, `Book`, `VideoGame`, `TVSeries`, `VideoObject`
-or `CreativeWork`; Subjects as `Person`, `Organization`, `Event`, `Place`, `Claim` and others, with
-`sameAs`, `image`, ISBNs, credits, dates and coordinates where the record has them. Optional
-`AggregateRating` stars are **off by default** (see settings) — entity markup stays either way.
+**Find a copy.** Free sources first (Archive, libraries, Steam, streaming lookups), then affiliate
+shops when configured. If a work is freely *held* (Archive/YouTube-as-the-work), shops are hidden.
+
+**Structured data.** Works emit as `Movie`, `Book`, `VideoGame`, `TVSeries`, `VideoObject`, or
+`CreativeWork`; Subjects as `Person`, `Organization`, `Event`, `Place`, `Claim`, and others, with
+`sameAs`, image, ISBNs, credits, dates, and coordinates where present. Optional `AggregateRating`
+is **off by default**.
+
+---
+
+## How it works
+
+```
+Author writes ```curiobase in first post
+        │
+        ├─► RecordValidator (composer) — refuse bad facets / slug collisions
+        │
+        ▼
+post_process_cooked → CardRenderer
+        │
+        ├─► cooked HTML (dek, media, gravity, associations…)
+        ├─► topic custom fields (kind, slug claim, poster URL, series parent)
+        ├─► tag.description ← dek (Subject)
+        └─► maybe_ensure_annotation! (if setting on)
+
+Subject tag on Work ──► pairing exists
+        │
+        ├─► gravity UI → POST /curiobase/gravity → PluginStore
+        ├─► Subject association list (ranked) + ?curiobase= on tag page
+        └─► live readings via GET /curiobase/readings (+ MessageBus)
+
+Crawler head → JsonLd (entity markup + optional AggregateRating)
+```
+
+**Authoring rule:** fenced `curiobase` is production. Legacy `[wrap=…]` remains *readable* until
+converted; do not author new wraps. Fixtures support specs and legacy resolution only.
+
+**Failure philosophy:** refuse loud in the composer; degrade quietly at render (log the reason);
+`curiobase:doctor` for silence.
 
 ---
 
 ## Requirements
 
-Discourse **latest** / `tests-passed` (developed against `2026.8.x`). Plugin header requires 3.2.0+.
+- Discourse **latest** / `tests-passed` (developed against `2026.8.x`)
+- Plugin `required_version: 3.2.0+`
+- A tag group for the Subject vocabulary (default name `Subjects`)
 
-Votes live in `PluginStore` for v1 (no migration required to install). Topic custom fields cache
-kind, slug claim, and poster URL. A SQL vote table is a planned later durability step — same
-`(work, subject, user)` shape.
+**Storage (v1):** votes live in `PluginStore` under plugin name `curiobase` — no migration required
+to install. Topic custom fields cache kind, slug claim, poster URL, and series parent. A SQL vote
+table is a planned later durability step with the same `(work, subject, user)` shape.
+
+---
 
 ## Install (production)
 
@@ -65,52 +154,83 @@ hooks:
 cd /var/discourse && ./launcher rebuild app
 ```
 
-Create the Subject tag group, then enable `curiobase_enabled` in **Admin → Settings → Curiobase**.
-See [`docs/V1-PRODUCTION-PLAN.md`](docs/V1-PRODUCTION-PLAN.md) for staged rollout.
+Then:
+
+1. Create the Subject tag group (name must match `curiobase_subject_tag_group`).
+2. Add Subject tags (slug = record slug).
+3. Enable `curiobase_enabled` in **Admin → Settings → Curiobase** (last).
+
+See [`docs/V1-PRODUCTION-PLAN.md`](docs/V1-PRODUCTION-PLAN.md) for staged rollout, P0 checklist, and
+rollback notes.
+
+**Rollback:** set `curiobase_enabled` false. Cooked HTML may still contain old cards until rebake;
+votes remain in PluginStore. Disabling does not delete content.
 
 ---
 
 ## Settings
 
-All under **Curiobase** in `/admin/site_settings`.
+All under **Curiobase** in `/admin/site_settings`. Defaults are intentional: safe dark, loud
+features opt-in.
 
-| Setting | Default | |
-|---|---|---|
-| `curiobase_enabled` | off | Master switch. |
-| `curiobase_subject_tag_group` | `Subjects` | The tag group holding the Subject vocabulary. A tag outside it is an ordinary tag. |
-| `curiobase_min_trust_level` | `1` | Minimum trust level to rate. |
-| `curiobase_member_voting_enabled` | on | Gravity *is* the vote. Off means no score at all, not a fallback. |
-| `curiobase_supporter_group` | — | Group picker. Members get +1 vote weight, capped at 5. |
-| `curiobase_annotation_enabled` | off | Community wiki at post 2. **New** records auto-seed when on; run `curiobase:annotate` once to backfill history. Set Discourse `edit_wiki_post_allowed_groups` before enabling. |
-| `curiobase_structured_ratings` | off | Emit `AggregateRating` on Work pages (SEO experiment). Off = entity markup only. |
-| `curiobase_structured_ratings_min_voters` | `5` | Minimum voters on the primary pairing before stars are emitted. |
-| `curiobase_buy_links_enabled` | off | The "Find a copy" line. |
-| `curiobase_amazon_tag` | — | Amazon Associates tag. Covers Amazon and AbeBooks. |
-| `curiobase_ebay_campaign` | — | eBay Partner Network campaign id. |
-| `curiobase_gog_tracking_prefix` | — | GOG affiliate tracking prefix — a full URL, not an id. |
+| Setting | Default | Client | Role |
+|---|---|---|---|
+| `curiobase_enabled` | off | yes | Master switch. Enable last, after vocabulary + a few records exist. |
+| `curiobase_subject_tag_group` | `Subjects` | no | Which tags create pairings. Rename carefully. |
+| `curiobase_min_trust_level` | `1` | yes | Minimum trust level to rate. |
+| `curiobase_member_voting_enabled` | on | yes | Gravity *is* the vote. Off = no scores at all (no editorial fallback). |
+| `curiobase_supporter_group` | — | no | Group **picker**. Members get +1 vote weight, capped at 5. |
+| `curiobase_annotation_enabled` | off | no | Community wiki at post 2. New records auto-seed when on; run `curiobase:annotate` once for history. |
+| `curiobase_structured_ratings` | off | no | Emit `AggregateRating` on Work pages (SEO experiment). Entity markup still emits either way. |
+| `curiobase_structured_ratings_min_voters` | `5` | no | Floor on the primary pairing before stars emit. |
+| `curiobase_buy_links_enabled` | off | no | “Find a copy” line. |
+| `curiobase_amazon_tag` | — | no | Amazon Associates tag (also AbeBooks). Blank = hidden. |
+| `curiobase_ebay_campaign` | — | no | eBay Partner Network campaign id. Blank = hidden. |
+| `curiobase_gog_tracking_prefix` | — | no | Full Adtraction URL prefix (not an id). Blank = hidden. |
 
-Each shop stays hidden until its id is set. The free half of "Find a copy" needs no configuration.
+Each shop stays hidden until its id is set. The free half of “Find a copy” needs no configuration.
+
+**Not plugin settings, but required ops:**
+
+| Discourse setting / object | Why |
+|---|---|
+| Tag group matching `curiobase_subject_tag_group` | Subject vocabulary |
+| `edit_wiki_post_allowed_groups` | Who edits annotation wikis (tighten before enabling annotations) |
+| Staff / TL ladder | Gravity weights |
+| `allowed_iframes` / CSP | YouTube embeds (plugin also registers youtube embed prefixes) |
 
 When structured ratings are on, Google sees **one** `AggregateRating` per Work URL from the pairing
 with the most voters (not an average across all Subject tags). Likes/recommends are never exported
 as ratings.
 
-### Vote weight
+---
 
-Trust levels 1–4 count 1–4. Staff count 5. Supporters get +1, capped at 5. Trust level 0 can hold a
-vote on record but it counts nothing. Weight is read at display time, so it follows a member's
-current standing rather than freezing at the moment they voted.
+## Editorial workflow
+
+1. Create a Subject tag in the Subject group (slug = record slug).
+2. Create the Subject topic: fenced block + optional plate image; title = display name.
+3. Create Work topics: fenced block + optional poster; tag with Subject slugs.
+4. Rate the pairing (staff weighs 5) so the list isn’t empty.
+5. Optionally fill the community wiki after annotation is on.
+6. Run `curiobase:doctor` after any bulk change.
+
+**Teach members:** tagging *is* the link. No Subject tag → no gravity row, no association membership.
 
 ---
 
 ## Writing a record
 
-Put a fenced `curiobase` block at the top of the first post. The topic title is the record's title.
+Put a fenced `curiobase` block at the top of the first post. The topic title is the record’s
+display title.
 
 **This is the only production authoring format.** Legacy `[wrap=…]` markers remain readable until
-converted; do not add new wraps.
+converted; do not add new wraps. A fence that fails to render still shows as a visible code block —
+the data stays on the page. A wrap that fails renders as nothing.
 
-A Work:
+Unknown keys and values outside the allowlists are rejected in the composer, with the offending
+value and the allowed set named in the error.
+
+### Work example
 
 ````markdown
 ```curiobase
@@ -127,7 +247,7 @@ dek: Two engineers building something in a garage discover their device leaves
 ```
 ````
 
-A Subject:
+### Subject example
 
 ````markdown
 ```curiobase
@@ -144,26 +264,24 @@ dek: Three nights of lights near two USAF bases in December 1980.
 ```
 ````
 
-Drag an image into the post and it becomes the poster (Works, 2:3) or the plate (Subjects, 3:2).
+Drag an image into the post: it becomes the **poster** (Works, 2:3) or the **plate** (Subjects,
+3:2). Subjects may set `image_credit` for the plate caption.
 
-**Embeds (baked when we know they work):**
+### Required fields
 
-| Medium | Hero | Secondary |
-|--------|------|-----------|
-| `film` / `series` / `game` | Compact poster | YouTube **link card** (thumb → watch) — not a full player |
-| `video` (episodes too) | YouTube **iframe** | — (no poster column) |
-| `book` | Google Books **link card** (cover → books.google.com) | — |
-| `document` | Archive.org **link card** (thumb → details) | — |
+| Type | Required |
+|---|---|
+| Work | `slug`, `medium`, `dek` |
+| Subject | `slug`, `kind`, `domain`, `dek` |
 
-Google Books iframes are blocked (`X-Frame-Options: SAMEORIGIN`); Archive collection embeds paint donation shells. Link cards are intentional — a working exit beats a dead rectangle.
+`slug` must match `[a-z0-9][a-z0-9-]*`. Slugs are unique across Work *and* Subject — one namespace.
 
-If YouTube iframes are blocked by the site CSP / `allowed_iframes`, add `https://www.youtube-nocookie.com/embed/`.
-
-**Series / episodes:** rate at episode level; link the family with `series: hub-slug` plus optional `season:` / `episode:`. The hub Work (`medium: series`) lists children. Subject association rows show `Series · S1E12` as the eyebrow.
+`dek` max length is **200** characters (composer-enforced). Keep it near **~155** when you care
+about search snippets: the dek leads the cooked HTML so it wins Discourse’s meta description.
 
 ### Vocabulary
 
-| | |
+| Field | Allowed values |
 |---|---|
 | `type` | `work` · `subject` |
 | `medium` | `film` `series` `book` `game` `video` `document` |
@@ -171,43 +289,287 @@ If YouTube iframes are blocked by the site CSP / `allowed_iframes`, add `https:/
 | `kind` | `idea` `incident` `claim` `person` `place` `object` `org` `document` |
 | `domain` | `time` `reality` `consciousness` `contact` `phenomena` `hidden-history` `esoterica` `science` `control` `futures` |
 | `status` | `open` `contested` `explained` `debunked` `hoax-admitted` `unfalsifiable` |
-| `period` | `ancient` `pre-1950` `1950s` … `2020s` |
-| `evidence` | `primary-source` `firsthand-account` `secondhand-account` `physical-trace` `documentary-record` `no-evidence` |
-| identifiers | `imdb` `tmdb` `isbn` `igdb` `youtube` `archive_org` `wikipedia` `asin` `google_books` |
-| series link | `series` (hub slug) `season` `episode` |
+| `period` | `ancient` `pre-1950` `1950s` … `2020s` (list; comma-separated) |
+| `evidence` | `primary-source` `firsthand-account` `secondhand-account` `physical-trace` `documentary-record` `no-evidence` (list) |
 
-Required: a Work needs `slug`, `medium`, `dek`. A Subject needs `slug`, `kind`, `domain`, `dek`.
+### Work fields
 
-Per-kind facts: **incident** `began ended where witnesses outcome` · **claim** `asserted claimant` ·
-**person** `born died active nationality known_for` · **place** `country active` · **object**
-`object_kind provenance whereabouts` · **org** `founded dissolved org_kind jurisdiction` ·
-**document** `source_site section transmitted captured operator`
+| Field | Notes |
+|---|---|
+| `year` | 3–4 digits |
+| `creator` | Free text |
+| `runtime` | Free text (e.g. `77 min`, `3 seasons`) |
+| `series` | Hub Work slug (episode → parent) |
+| `season` / `episode` | Integers |
+| `refs` | List of Subject slugs that must exist in the vocabulary |
 
-Unknown keys and values outside these lists are rejected in the composer, with the offending value
-and the allowed set named in the error. Keep the `dek` under about 155 characters — it becomes the
-page's meta description.
+### Subject facts by kind
 
-### Connecting a Work to a Subject
+Facts are flat key-value lines (no nested groups). Use the ones that fit the kind:
 
-Tag the Work's topic with the Subject's slug. That tag *is* the pairing, and it is what makes the
-Work appear in the Subject's association list and become rateable. Adding or removing a Subject tag
-rebakes the card (throttled).
+| Kind | Facts |
+|---|---|
+| `idea` | — |
+| `incident` | `began` `ended` `where` `witnesses` `outcome` |
+| `claim` | `asserted` `claimant` |
+| `person` | `born` `died` `active` `nationality` `known_for` |
+| `place` | `country` `active` |
+| `object` | `object_kind` `provenance` `whereabouts` |
+| `org` | `founded` `dissolved` `org_kind` `jurisdiction` |
+| `document` | `source_site` `section` `transmitted` `captured` `operator` |
+
+Also useful on Subjects: `also_known_as`, `coords`, `landing_url`, `image_credit`.
+
+### Identifiers (external)
+
+Written as flat keys on the fence; stored under `external` at render time.
+
+| Key | Used for |
+|---|---|
+| `imdb` | Link + `sameAs` |
+| `tmdb` | Link + `sameAs` |
+| `isbn` | Open Library link, WorldCat, Google Books probe + `sameAs` |
+| `igdb` | Link + `sameAs` |
+| `youtube` | Embed / watch link + `sameAs` |
+| `archive_org` | Archive link card / free hold + `sameAs` |
+| `wikipedia` | Link + `sameAs` (strongest reconciliation signal) |
+| `google_books` | Explicit volume id (optional; ISBN probe can find one) |
+| `asin` | Affiliate “Find a copy” only — **never** in `sameAs` |
+
+Body text below the fence is ordinary Discourse markdown (synopsis, discussion, etc.).
+
+---
+
+## Connecting Work ↔ Subject
+
+Tag the Work’s topic with the Subject’s slug (must be in the Subject tag group). That tag *is* the
+pairing: it creates the gravity row, association membership, and rateability.
+
+- Adding or removing a Subject tag schedules a throttled rebake of the Work card and the Subject
+  file (about one rebake per topic per minute).
+- Ordinary tags outside the Subject group create no rating row.
+- Prefer tagging via the topic UI; tag changes without editing the first post still schedule rebake.
+
+---
+
+## Gravity
+
+Gravity answers: *how central is this Subject to this Work?* It is not a quality score.
+
+### Anchors (1–5)
+
+Three label sets, one scale — a 5 is a 5 in any of them; mixed association lists still rank.
+
+| | Fiction | Nonfiction | Neutral (mixed lists) |
+|---|---|---|---|
+| 1 | mentions it | mentions it | mentions it |
+| 2 | set dressing | touches on it | in passing |
+| 3 | takes it seriously | covers it | engages it |
+| 4 | builds on it | focuses on it | central to it |
+| 5 | cannot exist without it | is entirely about it | defined by it |
+
+A Work card uses its own `mode`. A Subject association list uses fiction or nonfiction only when
+every listed Work agrees; otherwise neutral.
+
+### Vote weight
+
+| Standing | Weight |
+|---|---|
+| TL0 | 0 (vote is stored; starts counting at TL1) |
+| TL1–TL4 | 1–4 |
+| Staff | 5 |
+| Supporter group | +1, capped at 5 |
+
+Weight is applied **on read**, never frozen at cast time — standing changes follow the member.
+Suspended users stop counting. Deleting a user removes their PluginStore votes.
+
+### Client behaviour
+
+- Marks mount on baked gravity rows; “Your take” / unrated chrome appears after the live fetch.
+- Clicking your own mark again retracts the vote.
+- After a vote, Subject association rows update scores and reorder Works live (discussions stay
+  after Works). Baked HTML remains the crawler path; a throttled rebake follows.
+
+### Limits
+
+- Rate limit: 30 casts per user per hour (retract is not limited).
+- Trust check applies on cast, not on retract.
+
+---
+
+## Media and embeds
+
+Every playable / linkable embed lands in `.cb-stage` below the identity head (poster + dek +
+badges), above gravity — Discord-style: identity, then media, then the rest.
+
+| Medium | Poster column | Stage |
+|---|---|---|
+| `film` / `series` / `game` | Yes (authored art, or thumb from trailer) | YouTube **iframe** trailer when `youtube:` is set |
+| `video` | No (text head) | YouTube **iframe** (the work itself), else Archive link card |
+| `book` | Cover from Books / authored | Google Books **link card** (cover → books.google.com); Archive fallback |
+| `document` | Archive thumb / authored | Archive.org **link card** |
+
+**Why link cards for Books / Archive:** Google Books iframes are blocked (`X-Frame-Options:
+SAMEORIGIN`); Archive collection embeds often paint donation shells. A working exit beats a dead
+rectangle. YouTube is allowed via the plugin’s `pretty_text_allowed_iframes` modifier
+(`youtube.com/embed` and `youtube-nocookie.com/embed`). If your theme CSP still strips players,
+add those prefixes site-wide.
+
+Google Books volume ids: set `google_books:` explicitly, or let an ISBN probe fill a topic cache
+(`curiobase_gbooks`). Probe failures never abort a bake.
+
+---
+
+## Series and episodes
+
+1. Create a hub Work with `medium: series` and its own `slug`.
+2. Create episode Works (`medium: video` typically) with `series: hub-slug` plus optional
+   `season:` / `episode:`.
+3. Rebake the hub (automatic on episode bake / scheduled rebake). The hub lists children ordered by
+   season → episode → title.
+
+**Hub tools (client):**
+
+- Season chips when more than one season is present (`All` + each season)
+- Sort: **Air order** (default) or **Most recommended** (likes)
+- Chip `href`s point at `#cb-episodes-{slug}` so no-JS clicks stay put
+
+Association rows for episodes show an eyebrow like `Series · S1E12`. Rate gravity on the episode
+(or the hub) by tagging Subjects as usual — gravity is always Work↔Subject.
+
+An empty series hub still bakes a full card; the episodes section appears only when children exist.
+
+---
+
+## Association lists and filters
+
+On a Subject **file** (full card):
+
+- Works ranked by gravity (then secondary keys)
+- Filter chips: all media in vocabulary + `discussion`
+- Chips link to `?curiobase=<medium>` on the tag page (and highlight in-card with JS)
+- Live score refresh via `GET /curiobase/readings?subject=…&works=…`
+- After votes, MessageBus + assoc-live JS update scores and Work order without full page reload
+
+On the **tag page**:
+
+- Banner HTML travels with the topic-list payload (no flash of empty list)
+- `?curiobase=` filters Discourse’s own topic list in SQL (`film`, `book`, …, `discussion`)
+- Only tags in the Subject vocabulary get catalogue behaviour
+
+---
+
+## Find a copy
+
+Gate: `curiobase_buy_links_enabled`. Free sources need no affiliate config.
+
+**Free first** (examples; medium-scoped):
+
+- Internet Archive when `archive_org` is set — *holds* the work → hides shops
+- Watch on YouTube when `medium: video` and `youtube` is set — *holds* → hides shops
+- WorldCat / library lookups for books and documents
+- Steam / streaming search helpers where relevant
+
+**Shops** (only with ids configured; `rel=nofollow sponsored` + disclosure):
+
+- Amazon / AbeBooks (`curiobase_amazon_tag`; ASIN or title search)
+- eBay search (`curiobase_ebay_campaign`) — searches, never listings
+- GOG (`curiobase_gog_tracking_prefix` — full Adtraction prefix)
+
+`document` is never offered for sale. A film’s YouTube trailer does **not** suppress shops (trailer
+≠ the work).
+
+---
+
+## Structured data
+
+Emitted into the crawler head via `server:before-head-close-crawler`.
+
+- Work types from `medium`; Subject types from `kind`
+- `sameAs` from the identifiers registry (not `asin`)
+- Subjects appear as `about` on Work pages where tagged
+- Optional `AggregateRating`: off by default; when on, **one** primary pairing (most voters) and
+  only if voter count ≥ `curiobase_structured_ratings_min_voters`
+
+Smoke with Googlebot UA or `bin/smoke-googlebot.py`.
+
+---
+
+## Community wiki
+
+When `curiobase_annotation_enabled` is on:
+
+- Valid **new** records auto-seed post 2 as a wiki with seeded headings
+- Run `curiobase:annotate` once to backfill existing records
+- Refuses if post 2 already exists and is not an annotation (won’t append at post 47)
+- Who may edit is Discourse’s `edit_wiki_post_allowed_groups` — set it before enabling
+- Card links to the notes when present
+
+---
+
+## Tag pages
+
+| Surface | Behaviour |
+|---|---|
+| Banner | Subject dek + chips + link to the file topic |
+| Topic list | Optional `?curiobase=` medium / discussion filter |
+| Scores | Live where the list serializer carries them |
+
+The Subject **file** topic (slug claim) is canonical. The tag page is how you browse the pairing
+space.
+
+---
+
+## HTTP API
+
+Routes append into Discourse’s own route set (not a mounted engine).
+
+### Gravity
+
+| Method | Path | Body / query | Notes |
+|---|---|---|---|
+| `GET` | `/curiobase/gravity.json` | `topic_id`, `subject` | Returns `{ mine }` for the current user |
+| `POST` | `/curiobase/gravity.json` | `topic_id`, `subject`, `value` (1–5) | Cast / change |
+| `DELETE` | `/curiobase/gravity.json` | `topic_id`, `subject` | Retract |
+
+The client does not name the Work id — the server reads it from the topic’s record and verifies the
+Subject tag is on the topic and in the vocabulary. Requires login; plugin + voting must be enabled.
+
+### Readings (live association scores)
+
+```
+GET /curiobase/readings.json?subject=john-titor&works=primer-2004,timecrimes-2007
+→ { "subject": "…", "readings": { "primer-2004": { "display": 3.0, "voter_count": 1 }, … } }
+```
+
+Comma-separated `works` (repeated `works=` is unreliable under Rack). Cap matches the association
+list size. Public; used to refresh baked Subject lists without re-ranking.
 
 ---
 
 ## Rake tasks
 
-| | |
-|---|---|
-| `curiobase:doctor` | Health check — stale claims, slug collisions, records missing a medium or a cached kind. |
-| `curiobase:rebake` | Re-render every record. No revisions, no bumps. |
-| `curiobase:annotate` | Backfill community wikis for existing records (setting must be on). |
-| `curiobase:convert` | Move a legacy `[wrap]` into a fenced block. Refuses rather than dropping a field. |
-| `curiobase:repair[write]` | Restore anything an earlier conversion dropped. |
-| `curiobase:unclaim` | Release stale slug claims. |
-| `curiobase:seed` | Local demo topics (fenced blocks). |
+Run inside the Discourse app with plugins loaded, e.g.:
 
-Run `curiobase:doctor` after any bulk change.
+```bash
+cd /var/discourse && ./launcher enter app
+LOAD_PLUGINS=1 bundle exec rake curiobase:doctor
+```
+
+| Task | Purpose |
+|---|---|
+| `curiobase:doctor` | Health check — stale claims, slug collisions, missing medium/kind cache, quiet breakage |
+| `curiobase:rebake` | Re-render every record. No revisions, no bumps. Uses the full cook path. |
+| `curiobase:annotate` | Backfill community wikis (setting must be on) |
+| `curiobase:convert[only]` | Move a legacy `[wrap]` into a fenced block. Refuses rather than dropping a field |
+| `curiobase:repair[write]` | Restore fields an earlier conversion dropped (`write` to persist) |
+| `curiobase:unclaim` | Release stale slug claims |
+| `curiobase:repoint` | Rewrite numeric work wraps to slugs (legacy) |
+| `curiobase:seed` | Local demo topics (fenced blocks); idempotent |
+
+Run `curiobase:doctor` after any bulk change. Outside a request, always prefer `Curiobase.rebake_now!`
+over bare `post.rebake!` — plain `rebake!` cooks markdown then enqueues ProcessPost; if the process
+exits first, cards are stripped and never put back.
 
 ---
 
@@ -216,11 +578,11 @@ Run `curiobase:doctor` after any bulk change.
 Local Discourse docker-dev should track **`tests-passed`** (prod `latest`). From WSL:
 
 ```bash
-~/sync-discourse-latest   # or: bin/sync-discourse-latest
+bin/sync-discourse-latest   # or ~/sync-discourse-latest
 ```
 
-That pulls Discourse, remounts this plugin from
-`Documents/GitHub/tti-curiobase`, migrates, and starts `bin/dev`.
+That pulls Discourse, remounts this plugin from your checkout, migrates, and starts `bin/dev`.
+Ports: app `:3000`, MailHog `:8025`, etc. (see the script).
 
 ```bash
 # inside the Discourse container / via d/rspec
@@ -231,11 +593,60 @@ bin/qunit --standalone --target tti-curiobase   # needs a browser in the contain
 python3 bin/smoke-googlebot.py http://127.0.0.1:3000
 ```
 
-Records render through `post_process_cooked` into `posts.cooked`, so **a change to the renderer
-needs a rebake before it is visible**. Ruby under `lib/` and `config/settings.yml` need a server
-restart; `app/` reloads. SCSS changes recompile with the asset pipeline — hard-refresh the browser.
+### Reload expectations
 
-Planning / rollout: [`docs/V1-PRODUCTION-PLAN.md`](docs/V1-PRODUCTION-PLAN.md).
+| Change | What to do |
+|---|---|
+| Renderer / services under `app/` | Usually hot-reload; **rebake** topics to see cooked HTML |
+| `lib/` required from `plugin.rb`, `config/settings.yml` | Restart the server |
+| SCSS | Asset pipeline recompile + hard-refresh (stylesheet hash can stick) |
+| Client JS under `api-initializers/` | Refresh; some paths need a full rebuild in production |
+
+### Layout (where things live)
+
+| Path | Role |
+|---|---|
+| `plugin.rb` | Boot: hooks, routes, iframe allowlist, serializers |
+| `app/services/curiobase/` | CardRenderer, SubjectCard, Gravity, Embeds, BuyLinks, JsonLd, … |
+| `app/controllers/curiobase/` | Gravity + Readings API |
+| `lib/curiobase/` | Source, VoteStore, Standing, RecordTopic, rebake helpers, Markup |
+| `assets/javascripts/.../api-initializers/` | Gravity UI, filters, embeds, assoc-live, episodes |
+| `assets/stylesheets/curiobase.scss` | Card chrome |
+| `config/settings.yml` | Site settings |
+| `lib/tasks/curiobase.rake` | Ops tasks |
+| `fixtures/` | Spec / legacy resolution data |
+| `spec/` | RSpec (plugin suite) |
+| `test/javascripts/` | QUnit acceptance |
+
+---
+
+## Operations and troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| Empty wrap / no card | Render exception (logged as `[curiobase] render failed`) | Check logs; fix data; `rebake_now!` |
+| Fence visible as code | Plugin off, or record invalid / not first post | Enable plugin; fix fence; ensure first post |
+| No gravity row | Subject tag missing or outside tag group | Tag with vocabulary slug |
+| Scores stale after vote | Throttle / Sidekiq | Wait ≤60s; check `Jobs::CuriobaseRebake`; live UI should still update |
+| Trailer missing | `youtube` id bad, or iframe stripped | Valid id; allowlist / CSP |
+| Books stage empty | No ISBN / volume; probe failed | Set `isbn` or `google_books` |
+| Wrong search snippet | Badges before dek in DOM | Must not regress — dek first; badges use CSS `order` |
+| Routes 404 | Routes not reloaded after boot change | Restart; `reload_routes!` is in `plugin.rb` |
+| Doctor noise after convert | Stale claims / wraps | `unclaim` / `convert` / `repair` |
+
+**Monitor:** log lines tagged `[curiobase]`; Sidekiq failures on `curiobase_rebake`.
+
+**Backup:** PluginStore rows for plugin `curiobase` (votes); topic custom fields for claims/posters;
+record truth is the fenced block in `posts.raw`.
+
+---
+
+## Further reading
+
+- [`docs/V1-PRODUCTION-PLAN.md`](docs/V1-PRODUCTION-PLAN.md) — rollout phases, acceptance checklist,
+  durability plan, open product questions
+- Discourse Admin → Settings → Curiobase — live setting descriptions (from
+  `config/locales/server.en.yml`)
 
 ## License
 
