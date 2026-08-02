@@ -205,6 +205,49 @@ RSpec.describe Curiobase::SubjectCard do
       expect(described_class.new(record, variant: :banner).to_html).not_to include("cb-refs")
       expect(described_class.new(record, variant: :full).to_html).to include("cb-refs")
     end
+
+    it "attributes inbound explains without mirror verbs" do
+      orford = Fabricate(:tag, name: "orfordness-lighthouse")
+      TagGroupMembership.create!(tag: orford, tag_group: TagGroup.find_by(name: "Subjects"))
+      Curiobase::Subjects.reset_cache!
+
+      fab_topic = Fabricate(:topic, title: "Orfordness Lighthouse", tags: [orford])
+      Fabricate(
+        :post,
+        topic: fab_topic,
+        raw: <<~RAW.strip,
+          ```curiobase
+          type: subject
+          slug: orfordness-lighthouse
+          kind: place
+          domain: contact
+          dek: The lighthouse on Orford Ness.
+          ```
+        RAW
+      )
+      Curiobase.rebake_now!(fab_topic.first_post)
+      Curiobase::SubjectEdges.replace!(
+        fab_topic,
+        [{ "verb" => "explains", "slug" => "rendlesham-forest" }],
+      )
+
+      html =
+        described_class.new(
+          {
+            "slug" => "rendlesham-forest",
+            "title" => "Rendlesham Forest",
+            "dek" => "Three nights.",
+            "kind" => "incident",
+            "domain" => "contact",
+          },
+        ).to_html
+
+      expect(html).to include("cb-inbound")
+      expect(html).to include("Other files point here")
+      expect(html).to include("explains this")
+      expect(html).not_to include("Explained by")
+      expect(html).to include("Orfordness Lighthouse")
+    end
   end
 
   describe "computed disagreement" do

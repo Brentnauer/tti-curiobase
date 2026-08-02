@@ -120,6 +120,7 @@ module Curiobase
     def build_full(card)
       card.add_child(facts) if facts
       card.add_child(refs) if refs
+      card.add_child(inbound_refs) if inbound_refs
       card.add_child(prose) if prose
       card.add_child(links) if links
       card.add_child(facets) if facets
@@ -188,6 +189,9 @@ module Curiobase
     # One <dt> per verb; missing verb (legacy fixtures) reads as related.
     def refs
       list = Array(@r["refs"]).select { |ref| ref.is_a?(Hash) && ref["slug"].present? }
+      # same_as is refused at validate — never render if a legacy fence still has it.
+      list =
+        list.reject { |ref| (ref["verb"].presence || PostRecord::RELATED) == "same_as" }
       return nil if list.empty?
 
       grouped =
@@ -222,6 +226,48 @@ module Curiobase
     #   tag URL unconditionally, which made refs the one link type that ignored
     #   "the file is canonical, the tag page is navigation".
     def ref_href(ref_slug) = RecordTopic.href(ref_slug, tag: tag_for(ref_slug))
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # INBOUND — OTHER FILES POINT HERE. NOT A MIRROR VERB.
+    # ══════════════════════════════════════════════════════════════════════════
+    #
+    # Authorship is one-way. Rendering "Contains A" on B would make B assert
+    # something it never wrote. The block names the source and attributes the
+    # verb: "Orfordness Lighthouse — explains this."
+    #
+    # Explains and contradicts only (v1) — those are the two that carry weight
+    # when a reader arrives on the claim rather than the explanation.
+    def inbound_refs
+      return @inbound_refs if defined?(@inbound_refs)
+
+      rows = SubjectEdges.inbound(slug)
+      if rows.empty?
+        @inbound_refs = nil
+        return nil
+      end
+
+      sec = node("div", class: "cb-inbound")
+      head = node("p", class: "cb-inbound-head")
+      head.content = I18n.t("curiobase.inbound.heading")
+      sec.add_child(head)
+
+      list = node("ul", class: "cb-inbound-list")
+      rows
+        .sort_by { |r| [SubjectEdges::INBOUND_VERBS.index(r.verb) || 99, r.from_title.to_s] }
+        .each do |row|
+          li = node("li", class: "cb-inbound-row", "data-verb": row.verb)
+          a = node("a", href: ref_href(row.from_slug))
+          a.content = row.from_title.presence || row.from_slug
+          li.add_child(a)
+          li.add_child(text(" — "))
+          verb = node("span", class: "cb-inbound-verb")
+          verb.content = I18n.t("curiobase.inbound.#{row.verb}", default: "#{row.verb} this")
+          li.add_child(verb)
+          list.add_child(li)
+        end
+      sec.add_child(list)
+      @inbound_refs = sec
+    end
 
     # ⚠ `supports` and `contradicts` are the reason the claim kind exists. The
     #   schema makes you state BOTH so neither a drafting model nor a

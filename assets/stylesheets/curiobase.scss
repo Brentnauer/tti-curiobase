@@ -872,6 +872,33 @@
   }
 }
 
+// Inbound attribution — quieter than outbound; authorship stays on the source.
+.cb-inbound {
+  margin: 0.9em 0 0;
+  font-size: var(--font-down-1);
+}
+
+.cb-inbound-head {
+  @extend %cb-eyebrow;
+  margin: 0 0 0.35em !important;
+}
+
+.cb-inbound-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cb-inbound-row {
+  margin: 0.15em 0;
+
+  a { font-weight: 600; }
+}
+
+.cb-inbound-verb {
+  color: var(--primary-medium);
+}
+
 .cb-links {
   margin: 0.7em 0 0;
   font-size: var(--font-down-1);

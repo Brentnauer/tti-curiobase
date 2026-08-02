@@ -125,6 +125,15 @@ module Curiobase
       by_target = Hash.new { |h, k| h[k] = [] }
 
       entries.each do |verb, slug|
+        if verb == "same_as"
+          out << I18n.t(
+            "curiobase.invalid.same_as",
+            default:
+              "Curiobase record: `same_as` is not an edge — merge the topics, " \
+              "or put the alias in `also_known_as`.",
+          )
+          next
+        end
         if slug.blank? || !slug.match?(/\A[a-z0-9][a-z0-9-]*\z/)
           out << I18n.t("curiobase.invalid.slug", slug: slug)
           next

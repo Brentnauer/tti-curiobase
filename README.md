@@ -317,11 +317,15 @@ refs: bentwaters
 | `contradicts` | Evidence or account that cuts against it |
 | `precedes` | Earlier event in a chain (forward only) |
 | `part_of` | Mereology (incident inside a flap, …) |
-| `same_as` | Alias / near-duplicate identity |
 | `involves` | Person, org, or object that participates |
 | `refs` | Related (untyped) |
 
-Outbound only — writing A→B does not auto-edit B. Cap 12 edges per record. Work→Work relations are not these keys.
+Authorship is outbound only — writing A→B does not edit B's fence. At bake, each
+edge is stored as a `curiobase_edge` custom-field row on A (`verb:slug`). B's
+full card shows an inbound attribution block ("Other files point here") for
+`explains` / `contradicts`, phrased as "A — explains this." Cap 12 edges per
+record. Do not use `same_as` — merge topics or put aliases in `also_known_as`.
+Work→Work relations are not these keys.
 
 ### Subject facts by kind
 

@@ -298,11 +298,12 @@ module Curiobase
       apply_subject_edges(base, record)
     end
 
-    # Only schema.org properties that mean what we mean. explains/contradicts
-    # stay card-only — inventing ClaimReview here is worse than silence.
+    # Outbound: only schema.org properties that mean what we mean.
+    # Inbound explains → isBasedOn (the explaining entity underwrites the reading).
+    # Contradicts stays card-only — inventing ClaimReview is worse than silence.
+    # same_as is refused at authoring; also_known_as / merge covers aliases.
     def self.apply_subject_edges(base, record)
       edges = Array(record["refs"]).select { |e| e.is_a?(Hash) && e["slug"].present? }
-      return if edges.empty?
 
       part =
         edges
@@ -310,14 +311,20 @@ module Curiobase
           .filter_map { |e| edge_entity(e) }
       base["isPartOf"] = part.size == 1 ? part.first : part if part.any?
 
-      same =
-        edges
-          .select { |e| e["verb"] == "same_as" }
-          .filter_map { |e| edge_entity_url(e) }
-      return if same.empty?
+      explained_by =
+        SubjectEdges
+          .inbound(record["slug"].to_s, verbs: %w[explains])
+          .filter_map { |row| inbound_entity(row) }
+      if explained_by.any?
+        base["isBasedOn"] = explained_by.size == 1 ? explained_by.first : explained_by
+      end
+    end
 
-      existing = Array(base["sameAs"])
-      base["sameAs"] = (existing + same).uniq
+    def self.inbound_entity(row)
+      edge_entity(
+        "slug" => row.from_slug,
+        "title" => row.from_title,
+      )
     end
 
     def self.edge_entity(edge)

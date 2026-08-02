@@ -76,12 +76,14 @@ module Curiobase
       if kind == "subject"
         card = Nokogiri::HTML5.fragment(SubjectCard.new(record).to_html)
         wrap.replace(card.to_html)
-        return
+      else
+        card = node("div", class: "#{MARKER} #{MARKER}--#{kind}", "data-id": id)
+        build_work(card, record)
+        wrap.replace(card)
       end
 
-      card = node("div", class: "#{MARKER} #{MARKER}--#{kind}", "data-id": id)
-      build_work(card, record)
-      wrap.replace(card)
+      # Last — after any poster/kind custom-field saves inside build_work.
+      remember_edges(kind, record)
     end
 
     # The post IS the record. Returns true when it handled the post.
@@ -125,6 +127,9 @@ module Curiobase
         build_work(card, record)
         container.replace(card)
       end
+
+      # Last — after media(:plate) / build_work may have save_custom_fields'd.
+      remember_edges(kind, record)
 
       true
     end
@@ -170,6 +175,31 @@ module Curiobase
       return if @topic.custom_fields[TopicKind::FIELD] == value
       @topic.custom_fields[TopicKind::FIELD] = value
       @topic.save_custom_fields
+    end
+
+    # Outbound edges → `curiobase_edge` rows on this topic; fan-out rebakes
+    # targets so their inbound block / JSON-LD stay honest. Debounced per
+    # target via schedule_subject_file_rebake! (same 60s redis gate as votes).
+    #
+    # ⚠ Call LAST in the render path — after every `save_custom_fields`.
+    #   Discourse's hash sync deletes TopicCustomField rows that are not in
+    #   `topic.custom_fields`, so multi-row `curiobase_edge` written earlier
+    #   would be wiped by kind / slug / poster saves.
+    def remember_edges(kind, record)
+      return unless @topic
+
+      targets =
+        if kind == "subject"
+          SubjectEdges.replace!(@topic, record["refs"])
+        else
+          SubjectEdges.clear!(@topic)
+        end
+
+      self_slug = record["slug"].to_s
+      targets.each do |slug|
+        next if slug.blank? || slug == self_slug
+        Curiobase.schedule_subject_file_rebake!(slug)
+      end
     end
 
     # ══════════════════════════════════════════════════════════════════════════

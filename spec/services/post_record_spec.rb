@@ -184,6 +184,10 @@ RSpec.describe Curiobase::RecordValidator do
         )
       expect(e.join).to include("Subjects")
     end
+
+    it "refuses same_as — merge or also_known_as instead" do
+      expect(errors("same_as" => "orfordness-lighthouse").join).to include("same_as")
+    end
   end
 end
 

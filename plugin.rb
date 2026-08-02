@@ -22,6 +22,7 @@ require_relative "lib/curiobase/standing"
 require_relative "lib/curiobase/vote_store"
 require_relative "lib/curiobase/topic_kind"
 require_relative "lib/curiobase/record_topic"
+require_relative "lib/curiobase/subject_edges"
 require_relative "lib/curiobase/recommendations"
 require_relative "lib/curiobase/post_kind"
 require_relative "lib/curiobase/identifiers"
@@ -97,6 +98,7 @@ after_initialize do
   #   that call the param is not merely ignored — it raises.
   Curiobase::TopicKind.register!
   Curiobase::RecordTopic.register!
+  Curiobase::SubjectEdges.register!
   Curiobase::SeriesEpisodes.register!
   Curiobase::GoogleBooks.register!
   # The poster URL, so a Subject's association list can show thumbnails without

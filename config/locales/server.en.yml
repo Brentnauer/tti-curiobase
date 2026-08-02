@@ -86,6 +86,11 @@ en:
       part_of: "Part of"
       same_as: "Same as"
       involves: "Involves"
+    # Inbound attribution — authorship stays on the source file.
+    inbound:
+      heading: "Other files point here"
+      explains: "explains this"
+      contradicts: "contradicts this"
 
     # ⚠ Every one of these names the offending value and the allowed set. An
     #   error that says "invalid record" sends the author back to a document;
@@ -106,6 +111,7 @@ en:
       edge_self: "Curiobase record: a record cannot link to itself (%{slug})."
       edge_duplicate: "Curiobase record: duplicate edge to '%{slug}' under the same verb."
       edge_conflict: "Curiobase record: '%{slug}' is listed under more than one verb (%{verbs}). Pick one."
+      same_as: "Curiobase record: `same_as` is not an edge — merge the topics, or put the alias in `also_known_as`."
 
     part_of: "Part of"
     episodes_heading: "Episodes"

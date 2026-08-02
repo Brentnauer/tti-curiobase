@@ -186,7 +186,7 @@ RSpec.describe Curiobase::JsonLd do
       expect(ld(event)["location"]).to eq("@type" => "Place", "name" => "Rendlesham Forest, Suffolk")
     end
 
-    it "emits isPartOf for part_of edges and invents nothing for explains" do
+    it "emits isPartOf for part_of edges and invents nothing for outbound explains" do
       lighthouse = Fabricate(:tag, name: "orfordness-lighthouse")
       TagGroupMembership.create!(tag: lighthouse, tag_group: group)
       Curiobase::Subjects.reset_cache!
@@ -206,7 +206,40 @@ RSpec.describe Curiobase::JsonLd do
       part = part.first if part.is_a?(Array)
       expect(part["@type"]).to eq("Thing")
       expect(part["name"].to_s.downcase).to include("majestic")
-      expect(blob.to_json).not_to include("orfordness")
+      # Outbound explains is not a schema.org property we invent.
+      expect(blob).not_to have_key("isBasedOn")
+    end
+
+    it "emits isBasedOn for inbound explains (attribution, not a mirror verb)" do
+      rendlesham = Fabricate(:tag, name: "rendlesham-forest")
+      lighthouse = Fabricate(:tag, name: "orfordness-lighthouse")
+      TagGroupMembership.create!(tag: rendlesham, tag_group: group)
+      TagGroupMembership.create!(tag: lighthouse, tag_group: group)
+      Curiobase::Subjects.reset_cache!
+
+      claim = record!("Rendlesham Forest, the three nights", <<~R.strip)
+        type: subject
+        slug: rendlesham-forest
+        kind: incident
+        domain: contact
+        dek: Three nights of lights near two USAF bases in December 1980.
+      R
+
+      explainer = record!("Orfordness Lighthouse, the beam", <<~R.strip)
+        type: subject
+        slug: orfordness-lighthouse
+        kind: place
+        domain: contact
+        explains: rendlesham-forest
+        dek: The lighthouse whose beam is the leading sceptical account.
+      R
+
+      # Bake writes curiobase_edge on the explainer; claim JSON-LD reads inbound.
+      expect(ld(explainer)).to be_present
+      based = ld(claim)["isBasedOn"]
+      based = based.first if based.is_a?(Array)
+      expect(based["@type"]).to eq("Thing")
+      expect(based["name"].to_s).to include("Orfordness")
     end
 
     # ══════════════════════════════════════════════════════════════════════════

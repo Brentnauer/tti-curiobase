@@ -261,6 +261,29 @@ task "curiobase:doctor" => :environment do
         end
       end
 
+      if ref[:kind] == "subject"
+        Array(record["refs"]).each do |edge|
+          next unless edge.is_a?(Hash)
+          target = edge["slug"].to_s
+          verb = edge["verb"].presence || Curiobase::PostRecord::RELATED
+          if verb == "same_as"
+            say.call(
+              "#{label}: `same_as` → '#{target}' — merge the topics or use also_known_as; " \
+              "same_as is not an edge",
+            )
+          end
+          next if target.blank?
+          # Vocabulary membership is the composer gate; a missing *file* is the
+          # silent failure — both sides of the edge render as nothing useful.
+          unless Curiobase::RecordTopic.find(target, type: :subject)
+            say.call(
+              "#{label}: #{verb} → '#{target}' has no Subject file — " \
+              "inbound and the link both go nowhere until one exists",
+            )
+          end
+        end
+      end
+
       next unless ref[:kind] == "work"
 
       # ⚠ ORPHANED VOTES. Tagging creates the pairing; votes only score it. Untag
