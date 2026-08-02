@@ -327,6 +327,14 @@ full card shows an inbound attribution block ("Other files point here") for
 record. Do not use `same_as` — merge topics or put aliases in `also_known_as`.
 Work→Work relations are not these keys.
 
+**Ops / consistency.** Inbound cooked HTML is eventually consistent: edge
+changes (and source topic trash/recover) enqueue a debounced target rebake
+(`schedule_subject_file_rebake!`, 60s redis gate, 5s delay). Manual
+`Curiobase.rebake_now!(post)` is immediate. After enabling this feature on an
+existing catalogue, run `bin/rake curiobase:rebake` (or rebake Subjects that
+are inbound targets) so attribution appears without waiting for an edit.
+`curiobase:doctor` flags edges whose target has no Subject file.
+
 ### Subject facts by kind
 
 Facts are flat key-value lines (no nested groups). Use the ones that fit the kind:

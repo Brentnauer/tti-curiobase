@@ -11,7 +11,13 @@ module Curiobase
     RE = /\[wrap=(work|subject)\s+id=([\w-]+)\]/i
 
     def self.for(topic)
-      raw = topic&.first_post&.raw
+      from_raw(topic&.first_post&.raw)
+    end
+
+    # Same resolution as `.for`, without touching `topic.first_post`.
+    # SubjectEdges.inbound batches first-post raws so N inbound sources are
+    # not N association loads.
+    def self.from_raw(raw)
       return nil if raw.blank?
 
       # Fenced block answers first — a converted topic may still carry a wrap

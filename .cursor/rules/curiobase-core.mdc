@@ -17,7 +17,7 @@ Discourse catalogue plugin. Full agent memory: **`AGENTS.md`**. Product docs: **
 - Empty series hub: no `add_child(nil)`.
 - Gravity: one eligible vote weighs 1 — no supporter group / TL ladder.
 - No auto-seeded community wiki post; use Discourse first-post wiki + groups.
-- Subject edges: outbound in fence; inbound via `curiobase_edge` CF rows (attribution, not mirror verbs); `same_as` refused.
+- Subject edges: outbound in fence; inbound via `curiobase_edge` CF rows (attribution, not mirror verbs); `same_as` refused; `remember_edges` last after `save_custom_fields`; fan-out debounced (incl. topic trash/recover).
 
 ## Scratch
 

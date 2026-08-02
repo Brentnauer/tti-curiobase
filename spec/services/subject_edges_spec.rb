@@ -99,6 +99,52 @@ RSpec.describe Curiobase::SubjectEdges do
       expect(target).to be_present
       expect(source).to be_present
     end
+
+    # ⚠ QUERY BUDGET. inbound used to call TopicRecord.for per source → N+1
+    #   on first_post. A Subject with many inbound explains must stay O(1)
+    #   SQL shape (CF + topics + one first-post pluck).
+    it "does not open one first_post query per inbound source" do
+      subject_topic!("Rendlesham Forest", "rendlesham-forest")
+      5.times do |i|
+        tag = Fabricate(:tag, name: "inbound-src-#{i}")
+        TagGroupMembership.create!(tag: tag, tag_group: group)
+        Curiobase::Subjects.reset_cache!
+        subject_topic!("Inbound Source #{i}", "inbound-src-#{i}", "explains: rendlesham-forest")
+      end
+
+      post_queries = 0
+      counter =
+        lambda do |*args|
+          sql = args.last[:sql].to_s
+          # Count first-post fetches; the batch is one WHERE topic_id IN (...) AND post_number = 1.
+          post_queries += 1 if sql.include?("posts") && sql.include?("post_number")
+        end
+
+      ActiveSupport::Notifications.subscribed(counter, "sql.active_record") do
+        rows = described_class.inbound("rendlesham-forest")
+        expect(rows.size).to eq(5)
+      end
+
+      expect(post_queries).to be <= 1
+    end
+  end
+
+  describe ".schedule_fan_out!" do
+    it "enqueues a debounced rebake for each edged target" do
+      target = subject_topic!("Rendlesham Forest", "rendlesham-forest")
+      source =
+        subject_topic!(
+          "Orfordness Lighthouse",
+          "orfordness-lighthouse",
+          "explains: rendlesham-forest",
+        )
+
+      Discourse.redis.del("curiobase:rebake:#{target.id}")
+
+      expect_enqueued_with(job: :curiobase_rebake, args: { post_id: target.first_post.id }) do
+        described_class.schedule_fan_out!(source)
+      end
+    end
   end
 
   describe "card + bake integration" do
@@ -120,6 +166,53 @@ RSpec.describe Curiobase::SubjectEdges do
       expect(html).to include("Other files point here")
       expect(html).to include("explains this")
       expect(html).to include("Orfordness Lighthouse")
+    end
+
+    # ⚠ remember_edges MUST run after every save_custom_fields. Writing edge
+    #   rows then letting kind/slug/poster sync wipe them was the silent
+    #   production failure for this feature.
+    it "keeps curiobase_edge rows after a full rebake that also writes kind/slug" do
+      subject_topic!("Rendlesham Forest", "rendlesham-forest")
+      source =
+        subject_topic!(
+          "Orfordness Lighthouse",
+          "orfordness-lighthouse",
+          "explains: rendlesham-forest",
+        )
+
+      edges =
+        TopicCustomField
+          .where(topic_id: source.id, name: described_class::FIELD)
+          .pluck(:value)
+      expect(edges).to contain_exactly("explains:rendlesham-forest")
+
+      Curiobase.rebake_now!(source.first_post.reload)
+      expect(
+        TopicCustomField
+          .where(topic_id: source.id, name: described_class::FIELD)
+          .pluck(:value),
+      ).to contain_exactly("explains:rendlesham-forest")
+    end
+
+    it "enqueues the target rebake when a new edge is baked, not on a no-op rebake" do
+      target = subject_topic!("Rendlesham Forest", "rendlesham-forest")
+      Discourse.redis.del("curiobase:rebake:#{target.id}")
+
+      expect_enqueued_with(job: :curiobase_rebake, args: { post_id: target.first_post.id }) do
+        subject_topic!(
+          "Orfordness Lighthouse",
+          "orfordness-lighthouse",
+          "explains: rendlesham-forest",
+        )
+      end
+
+      source = Topic.find_by(title: "Orfordness Lighthouse")
+      Discourse.redis.del("curiobase:rebake:#{target.id}")
+
+      # Same edges again → replace! returns [] → no schedule.
+      expect_not_enqueued_with(job: :curiobase_rebake, args: { post_id: target.first_post.id }) do
+        Curiobase.rebake_now!(source.first_post.reload)
+      end
     end
   end
 end

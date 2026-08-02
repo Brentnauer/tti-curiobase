@@ -207,6 +207,20 @@ after_initialize do
   #   deleted account goes on scoring every pairing it ever rated, forever.
   on(:user_destroyed) { |user| Curiobase::VoteStore.forget_user(user.id) }
 
+  # ── inbound attribution follows the source topic's life ─────────────────
+  #
+  # Edge rows die with the topic (custom fields), but the *target*'s cooked
+  # inbound block stays stale until it rebakes. Trash and recover both fan
+  # out through the same debounced schedule as edge edits.
+  on(:topic_trashed) do |topic|
+    next unless SiteSetting.curiobase_enabled
+    Curiobase::SubjectEdges.schedule_fan_out!(topic)
+  end
+  on(:topic_recovered) do |topic|
+    next unless SiteSetting.curiobase_enabled
+    Curiobase::SubjectEdges.schedule_fan_out!(topic)
+  end
+
   # ── keep the vocabulary cache honest ────────────────────────────────────
   on(:tag_created)  { Curiobase::Subjects.reset_cache! }
   on(:tag_updated)  { Curiobase::Subjects.reset_cache! }

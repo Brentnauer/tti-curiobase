@@ -79,6 +79,9 @@ module Curiobase
     end
 
     # Who points at this subject, for the verbs the card cares about.
+    #
+    # ⚠ BATCHED. One CF scan, one Topic load, one first-post pluck — not
+    #   TopicRecord.for per source (that would N+1 on first_post).
     def self.inbound(slug, verbs: INBOUND_VERBS)
       slug = slug.to_s
       return [] if slug.blank?
@@ -87,7 +90,13 @@ module Curiobase
       cfs = TopicCustomField.where(name: FIELD, value: values).to_a
       return [] if cfs.empty?
 
-      topics = Topic.where(id: cfs.map(&:topic_id), deleted_at: nil).index_by(&:id)
+      topic_ids = cfs.map(&:topic_id).uniq
+      topics = Topic.where(id: topic_ids, deleted_at: nil).index_by(&:id)
+      raws =
+        Post
+          .where(topic_id: topic_ids, post_number: 1)
+          .pluck(:topic_id, :raw)
+          .to_h
 
       cfs.filter_map do |cf|
         topic = topics[cf.topic_id]
@@ -96,7 +105,7 @@ module Curiobase
         verb, = decode(cf.value)
         next if verb.blank?
 
-        ref = TopicRecord.for(topic)
+        ref = TopicRecord.from_raw(raws[cf.topic_id])
         next unless ref && ref[:kind].to_s == "subject"
 
         Row.new(
@@ -109,6 +118,20 @@ module Curiobase
     rescue StandardError => e
       Rails.logger.warn("[curiobase] inbound edges for #{slug} failed: #{e.class}: #{e.message}")
       []
+    end
+
+    # Source topic is gone or back — targets must rebake so inbound cooked
+    # drops (or restores) the attribution. Debounced per target.
+    def self.schedule_fan_out!(topic)
+      return unless topic
+
+      previous = TopicCustomField.where(topic_id: topic.id, name: FIELD).pluck(:value)
+      return if previous.empty?
+
+      fan_out_slugs(previous).each do |slug|
+        next if slug.blank?
+        Curiobase.schedule_subject_file_rebake!(slug)
+      end
     end
 
     def self.encode_refs(refs)
