@@ -19,6 +19,7 @@ Discourse catalogue plugin. Full agent memory: **`AGENTS.md`**. Product docs: **
 - No auto-seeded community wiki post; use Discourse first-post wiki + groups.
 - Subject edges: outbound in fence; inbound via `curiobase_edge` CF rows (attribution, not mirror verbs); `same_as` refused; `remember_edges` last after `save_custom_fields`; fan-out debounced (incl. topic trash/recover).
 - Association chips: Works-first (not blended All); medium top-10; discussions likes-ranked peer chip.
+- Pairing vocabulary = Subject files (not a tag group); tags with a file get `cb-subject-tag`.
 
 ## Scratch
 

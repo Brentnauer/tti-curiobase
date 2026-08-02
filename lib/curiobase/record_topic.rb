@@ -146,6 +146,7 @@ module Curiobase
     def self.remember(topic, slug)
       return if topic.blank? || slug.blank?
       forget_cache(slug)
+      Subjects.reset_cache!
       return if topic.custom_fields[FIELD] == slug
       # The topic's previous claim is being released — clear its cache too, or a
       # renamed slug leaves the old one resolving here for ten more minutes.
@@ -169,6 +170,7 @@ module Curiobase
       topic.custom_fields[FIELD] = nil
       topic.save_custom_fields
       forget_cache(slug)
+      Subjects.reset_cache!
     end
 
     # /t/<slug>/<id> when the record has a file, /tag/<slug>/<id> when it does

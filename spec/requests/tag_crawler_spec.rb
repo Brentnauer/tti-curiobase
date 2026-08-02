@@ -22,15 +22,12 @@ require "rails_helper"
 #   A unit test on the method would have passed. Only the real route catches it.
 RSpec.describe "the tag page, for a crawler" do
   fab!(:tag) { Fabricate(:tag, name: "majestic-12") }
-  fab!(:tag_group) { Fabricate(:tag_group, name: "Subjects", tags: [tag]) }
 
   fab!(:file_topic) { Fabricate(:topic, title: "Majestic 12, the committee itself") }
   fab!(:work_topic) { Fabricate(:topic, title: "Deus Ex (2000), the Ion Storm game") }
 
   before do
     SiteSetting.curiobase_enabled = true
-    SiteSetting.curiobase_subject_tag_group = "Subjects"
-    Curiobase::Subjects.reset_cache!
 
     Curiobase.rebake_now!(
       Fabricate(:post, topic: file_topic, post_number: 1, raw: <<~RAW),
@@ -106,7 +103,7 @@ RSpec.describe "the tag page, for a crawler" do
 
     expect(page["about"]["@type"]).to eq("Organization")
     expect(page["about"]["mainEntityOfPage"]).to include("/t/#{file_topic.slug}/#{file_topic.id}")
-    expect(page["url"]).to include("/tag/majestic-12")
+    expect(page["url"]).to eq("#{Discourse.base_url}/tag/#{tag.name}/#{tag.id}")
   end
 
   it "lists the works as an ordered ItemList" do

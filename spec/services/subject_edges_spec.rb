@@ -3,16 +3,14 @@
 require "rails_helper"
 
 RSpec.describe Curiobase::SubjectEdges do
-  fab!(:group) { Fabricate(:tag_group, name: "Subjects") }
   fab!(:rendlesham_tag) { Fabricate(:tag, name: "rendlesham-forest") }
   fab!(:orford_tag) { Fabricate(:tag, name: "orfordness-lighthouse") }
 
   before do
     SiteSetting.curiobase_enabled = true
-    SiteSetting.curiobase_subject_tag_group = "Subjects"
-    TagGroupMembership.create!(tag: rendlesham_tag, tag_group: group)
-    TagGroupMembership.create!(tag: orford_tag, tag_group: group)
-    Curiobase::Subjects.reset_cache!
+    # Edge targets must have Subject files (pairing vocabulary).
+    claim_subject_file!("rendlesham-forest")
+    claim_subject_file!("orfordness-lighthouse")
   end
 
   def subject_topic!(title, slug, raw_extra = "")
@@ -106,9 +104,8 @@ RSpec.describe Curiobase::SubjectEdges do
     it "does not open one first_post query per inbound source" do
       subject_topic!("Rendlesham Forest", "rendlesham-forest")
       5.times do |i|
-        tag = Fabricate(:tag, name: "inbound-src-#{i}")
-        TagGroupMembership.create!(tag: tag, tag_group: group)
-        Curiobase::Subjects.reset_cache!
+        Fabricate(:tag, name: "inbound-src-#{i}")
+        claim_subject_file!("inbound-src-#{i}")
         subject_topic!("Inbound Source #{i}", "inbound-src-#{i}", "explains: rendlesham-forest")
       end
 

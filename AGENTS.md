@@ -4,7 +4,7 @@ Context for AI assistants and humans shipping this Discourse plugin. Product doc
 
 ## What this is
 
-Discourse plugin that turns first-post fenced `curiobase` blocks into catalogue cards (Work / Subject), pairings via Subject tags, and gravity votes. Truth lives in `posts.raw` + PluginStore; **views** are baked into `posts.cooked` so crawlers and no-JS see the same facts.
+Discourse plugin that turns first-post fenced `curiobase` blocks into catalogue cards (Work / Subject), pairings via tags that have a Subject file, and gravity votes. Truth lives in `posts.raw` + PluginStore; **views** are baked into `posts.cooked` so crawlers and no-JS see the same facts.
 
 ## Hard invariants (do not regress)
 
@@ -13,11 +13,12 @@ Discourse plugin that turns first-post fenced `curiobase` blocks into catalogue 
 3. **Outside HTTP, use `Curiobase.rebake_now!`** — bare `post.rebake!` can strip cards if ProcessPost never runs.
 4. **Empty series hubs must not `add_child(nil)`** — cook aborts; keep hub card without an episodes section when there are no children.
 5. **Posters / plates are attachment-only** — never auto-pull YouTube / Google Books / Archive covers into `.cb-poster`. Sources: dragged first-post image (`PostMedia`), explicit `poster.url` (fixture/legacy), else labelled empty tile. Stage embeds stay separate in `.cb-stage`. Video works skip the head poster column but still claim a dragged image into `curiobase_poster` for Subject association thumbs (lift out of body so it does not sit under the card).
-6. **One vote is one vote** — no TL/staff/supporter weight ladder. `Standing` is 1.0 or 0.0 (min trust + not suspended/silenced).
-7. **No plugin “annotation” wiki** — community notes are Discourse first-post wiki + `edit_wiki_post_allowed_groups` (e.g. TL2). Do not reintroduce auto-seeded post 2.
-8. **Disagreement is computed** — `Gravity.disagree?` (low≥2 and high≥2). Surface on Work bars, assoc rows (`disagree` in readings/MessageBus), and status-mismatch notes when staff status is settled.
-9. **Typed Subject edges** — `explains` / `contradicts` / `precedes` / `part_of` / `involves` + untyped `refs`. One array with `verb` after `to_record`. Outbound authored once; inbound via `curiobase_edge` topic custom-field rows + attribution block (not mirror verbs). `same_as` is refused — merge or `also_known_as`. No Work→Work here. `remember_edges` must run **last** after every `save_custom_fields` or multi-row edges are wiped. Fan-out is enqueue-only + 60s debounce; trash/recover of a source also fans out.
-10. **Association chips are Works-first** — default bucket `works` (top 10 by gravity); medium chips are top 10 within medium; `discussion` is likes-ranked and never mixed into Works. No blended All chip.
+6. **Pairing vocabulary = Subject files** — gravity / associations / edge targets require a live Subject file for the slug (`Subjects.vocabulary`), not a tag group. Tags with a file get `cb-subject-tag` in the UI.
+7. **One vote is one vote** — no TL/staff/supporter weight ladder. `Standing` is 1.0 or 0.0 (min trust + not suspended/silenced).
+8. **No plugin “annotation” wiki** — community notes are Discourse first-post wiki + `edit_wiki_post_allowed_groups` (e.g. TL2). Do not reintroduce auto-seeded post 2.
+9. **Disagreement is computed** — `Gravity.disagree?` (low≥2 and high≥2). Surface on Work bars, assoc rows (`disagree` in readings/MessageBus), and status-mismatch notes when staff status is settled.
+10. **Typed Subject edges** — `explains` / `contradicts` / `precedes` / `part_of` / `involves` + untyped `refs`. One array with `verb` after `to_record`. Outbound authored once; inbound via `curiobase_edge` topic custom-field rows + attribution block (not mirror verbs). `same_as` is refused — merge or `also_known_as`. No Work→Work here. `remember_edges` must run **last** after every `save_custom_fields` or multi-row edges are wiped. Fan-out is enqueue-only + 60s debounce; trash/recover of a source also fans out.
+11. **Association chips are Works-first** — default bucket `works` (top 10 by gravity); medium chips are top 10 within medium; `discussion` is likes-ranked and never mixed into Works. No blended All chip.
 
 ## Media / embeds (current contract)
 
@@ -49,10 +50,12 @@ Discourse plugin that turns first-post fenced `curiobase` blocks into catalogue 
 | Concern | Primary files |
 |---|---|
 | Card bake | `app/services/curiobase/card_renderer.rb`, `subject_card.rb` |
+| Pairing vocabulary | `app/services/curiobase/subjects.rb` (Subject files, not a tag group) |
 | Subject edges | `lib/curiobase/subject_edges.rb` (`curiobase_edge` rows) |
 | Embeds | `app/services/curiobase/embeds.rb`, `google_books.rb` |
-| Styles | `assets/stylesheets/curiobase.scss` (`.cb-embed--gbooks`, `.cb-embed--archive`) |
+| Styles | `assets/stylesheets/curiobase.scss` (`.cb-embed--gbooks`, `.cb-embed--archive`, `.cb-subject-tag`) |
 | Onebox defuse | `assets/javascripts/.../curiobase-embeds.js` |
+| Subject-file tags | `assets/javascripts/.../curiobase-tags.js` |
 | Specs | `spec/services/embeds_spec.rb`, `work_media_series_spec.rb`, … |
 
 ## Do not

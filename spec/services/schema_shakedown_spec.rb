@@ -6,14 +6,12 @@ require "rails_helper"
 # at once. Two fixtures had been enough to hide every one of these.
 RSpec.describe "Curiobase schema shakedown" do
   fab!(:tag) { Fabricate(:tag, name: "causal-loop") }
-  fab!(:group) { Fabricate(:tag_group, name: "Subjects", tags: [tag]) }
   fab!(:topic)
   fab!(:op) { Fabricate(:post, topic: topic, raw: "[wrap=work id=126]\n[/wrap]") }
 
   before do
     SiteSetting.curiobase_enabled = true
-    SiteSetting.curiobase_subject_tag_group = "Subjects"
-    Curiobase::Subjects.reset_cache!
+    claim_subject_file!("causal-loop")
     topic.tags = [tag]
   end
 

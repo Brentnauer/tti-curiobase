@@ -145,8 +145,8 @@ module Curiobase
 
       m = PostMedia.new(@doc, @post, variant: variant)
       node = m.take!
-      # Cached for BOTH kinds: a Work's poster feeds the association list, a
-      # Subject's plate feeds the tag-page banner. The field means "this
+      # Cached for BOTH kinds: a Work's poster feeds the association list; a
+      # Subject's plate is shown on the record topic. The field means "this
       # record's image", whichever shape it is.
       remember_poster(m.src) if node
       @media[variant] = node
@@ -175,6 +175,8 @@ module Curiobase
       return if @topic.custom_fields[TopicKind::FIELD] == value
       @topic.custom_fields[TopicKind::FIELD] = value
       @topic.save_custom_fields
+      # Kind flips (or first write of "subject") change the pairing vocabulary.
+      Subjects.reset_cache!
     end
 
     # Outbound edges → `curiobase_edge` rows on this topic; fan-out rebakes
@@ -273,7 +275,6 @@ module Curiobase
       embed = Embeds.for_record(w, @topic)
 
       head = node("div", class: work_head_class(w, embed))
-      attach_work_media(head, w, embed)
 
       body = node("div", class: "cb-body")
 
@@ -287,7 +288,14 @@ module Curiobase
       #
       #   They still LOOK like they come first — .cb-badges carries order: -1.
       #   Visual order is CSS's job; document order belongs to the crawler.
-      body.add_child(para("cb-dek", w["dek"])) if w["dek"].present?
+      #
+      # ⚠ The poster column is added AFTER the body for the same reason: an
+      #   empty "FILM · 2007" tile ahead of the dek made every Work meta start
+      #   with the placeholder label. CSS keeps the poster visually on the left.
+      #
+      # ⚠ `div.excerpt` — Discourse topic meta uses only that block (see
+      #   ExcerptParser), so badges/meta after the dek do not pollute the snippet.
+      dek_block(w["dek"])&.then { |d| body.add_child(d) }
       body.add_child(badge(w["medium"], w["mode"]))
       body.add_child(series_line(w)) if w["series"].present?
 
@@ -301,6 +309,7 @@ module Curiobase
       body.add_child(links) if links
 
       head.add_child(body)
+      attach_work_media(head, w, embed)
       card.add_child(head)
 
       # Discord stock order: identity block, then media, then the rest.
@@ -679,7 +688,7 @@ module Curiobase
     # Subjects come from Discourse TAGS, not from WordPress. Tagging a topic is
     # what creates the pairing — there is nothing else to author.
     #
-    # ⚠ Only tags in the synced vocabulary count. Adding `funny` to a topic must
+    # ⚠ Only tags with a Subject file count. Adding `funny` to a topic must
     #   not produce a rating row.
     def gravity_block(work)
       slugs = Curiobase::Subjects.for_topic(@topic)

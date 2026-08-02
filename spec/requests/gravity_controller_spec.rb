@@ -7,7 +7,6 @@ require "rails_helper"
 RSpec.describe Curiobase::GravityController do
   fab!(:tag) { Fabricate(:tag, name: "causal-loop") }
   fab!(:other_tag) { Fabricate(:tag, name: "funny") }
-  fab!(:group) { Fabricate(:tag_group, name: "Subjects", tags: [tag]) }
   fab!(:topic)
   # ⚠ Not `fab!(:post)` — that shadows the `post` request helper and every
   #   request in this file fails with "wrong number of arguments".
@@ -18,9 +17,8 @@ RSpec.describe Curiobase::GravityController do
     SiteSetting.curiobase_enabled = true
     # ⚠ Endpoint 404s when voting is closed — see the last example in this file.
     SiteSetting.curiobase_member_voting_enabled = true
-    SiteSetting.curiobase_subject_tag_group = "Subjects"
     SiteSetting.curiobase_min_trust_level = 1
-    Curiobase::Subjects.reset_cache!
+    claim_subject_file!("causal-loop")
     topic.tags = [tag, other_tag]
     FileUtils.rm_f(Rails.root.join("tmp", "curiobase-votes.json"))
   end

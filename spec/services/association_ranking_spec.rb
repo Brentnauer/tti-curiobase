@@ -17,14 +17,12 @@ require "rails_helper"
 RSpec.describe "Curiobase · association ranking" do
   fab!(:admin) { Fabricate(:admin) }
   fab!(:voter) { Fabricate(:user, trust_level: TrustLevel[4]) }
-  fab!(:group) { Fabricate(:tag_group, name: "Subjects") }
   fab!(:tag) { Fabricate(:tag, name: "majestic-12") }
 
   before do
     SiteSetting.curiobase_enabled = true
     SiteSetting.curiobase_member_voting_enabled = true
-    SiteSetting.curiobase_subject_tag_group = "Subjects"
-    TagGroupMembership.create!(tag: tag, tag_group: group)
+    claim_subject_file!("majestic-12")
   end
 
   # A Work, baked (so `curiobase_kind` exists), optionally aged and rated.

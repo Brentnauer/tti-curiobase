@@ -15,7 +15,7 @@ Time Travel Institute’s forum is already a 28-year archive of contested subjec
 |---|---|
 | **Work** | A film, book, game, series, video, or document you can experience |
 | **Subject** | An idea, incident, claim, person, place, object, or org that works circle |
-| **Pairing** | Created only by tagging a Work topic with a Subject slug from the Subject tag group |
+| **Pairing** | Created by tagging a Work with a slug that has a Subject file |
 | **Gravity** | 1–5 *centrality* (“how hard does this work pull on this idea”), **not** quality |
 | **File** | The Subject’s own record topic is canonical; the tag page is navigation |
 | **Bake** | Cards and scores live in `posts.cooked` so crawlers and no-JS readers see the same facts |
@@ -77,8 +77,7 @@ All under **Admin → Settings → Curiobase**. Defaults are intentional: safe d
 
 | Setting | Default | Client? | Role in v1 | Production guidance |
 |---|---|---|---|---|
-| `curiobase_enabled` | off | yes | Master switch | Enable last, after vocabulary + a few records exist |
-| `curiobase_subject_tag_group` | `Subjects` | no | Defines which tags create pairings | Create group + tags **before** enable; rename carefully |
+| `curiobase_enabled` | off | yes | Master switch | Enable last, after Subject files + a few Works exist |
 | `curiobase_member_voting_enabled` | on | yes | Gravity exists only if on | Leave on for catalogue; off = no scores (by design) |
 | `curiobase_min_trust_level` | 1 | yes | Who may cast; eligible votes weigh 1 | Raise if vote quality is poor |
 | `curiobase_structured_ratings` | off | no | Emit `AggregateRating` stars | Leave off until you want the SERP experiment; entity markup still emits |
@@ -92,7 +91,7 @@ All under **Admin → Settings → Curiobase**. Defaults are intentional: safe d
 
 | Discourse setting / object | Why |
 |---|---|
-| Tag group `Subjects` (or whatever you set) | Vocabulary |
+| Subject file topics (`type: subject`) | Pairing vocabulary — tags with a file create gravity rows |
 | First-post wiki / `edit_wiki_post_allowed_groups` | Shared community notes on the record (e.g. TL2+) |
 | Theme | Visual polish; long-term CSS may move to a theme component |
 
@@ -111,7 +110,7 @@ A release is “good v1” when all of the following are true on staging (then p
 - [ ] Staff can create a Work and a Subject via fenced blocks; composer rejects bad keys/values with named errors.
 - [ ] Tagging a Work with a Subject tag creates a rateable pairing and shows a gravity row after rebake (including tag change **without** editing the post).
 - [ ] Subject file association list ranks by gravity; filter chips work with and without JS; `?curiobase=` filters the tag topic list.
-- [ ] Tag page banner + list scores appear for Subject vocabulary tags only.
+- [ ] Tag page banner + list scores appear for tags that have a Subject file only.
 
 ### Gravity
 - [ ] Logged-in users at min TL can rate 1–5; retract works; rate limit holds.
@@ -136,7 +135,7 @@ A release is “good v1” when all of the following are true on staging (then p
 
 ### P0 — before public enable
 1. **Staging dry-run** on a Discourse image matching prod channel (`latest` / tests-passed).
-2. **Vocabulary** — Subject tag group populated; policy for who may create Subject tags.
+2. **Vocabulary** — Subject files authored for each catalogue slug; policy for who may create them.
 3. **Convert legacy wraps** on any leftover topics (`curiobase:convert` / `doctor`).
 4. ~~**README / install**~~ — done (latest/`tests-passed`, sync script, structured-ratings guardrails).
 5. **Wiki edit groups** — set `edit_wiki_post_allowed_groups` (and first-post wiki) if community edits the record.
@@ -166,7 +165,7 @@ A release is “good v1” when all of the following are true on staging (then p
 
 | Phase | Actions | Exit criteria |
 |---|---|---|
-| **0. Prep** | Staging = prod Discourse channel; clone plugin; create Subjects group | Doctor + specs green on staging |
+| **0. Prep** | Staging = prod Discourse channel; clone plugin; author Subject files for pairing slugs | Doctor + specs green on staging |
 | **1. Dark** | `curiobase_enabled` on; voting on; buy **off**; staff-only records | Cards bake; no member confusion |
 | **2. Soft** | Invite TL2+ to rate a few pairings | Scores stable; no rebake storms |
 | **3. Wiki** | First-post wiki + `edit_wiki_post_allowed_groups` if wanted | Shared notes without a second seeded post |

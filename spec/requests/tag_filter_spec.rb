@@ -7,7 +7,6 @@ require "rails_helper"
 # different page.
 RSpec.describe "Curiobase tag page filter" do
   fab!(:tag) { Fabricate(:tag, name: "john-titor") }
-  fab!(:group) { Fabricate(:tag_group, name: "Subjects", tags: [tag]) }
 
   fab!(:film_topic) { Fabricate(:topic, title: "Primer (2004) — the garage film") }
   fab!(:film_post) { Fabricate(:post, topic: film_topic, raw: "[wrap=work id=123]\n[/wrap]") }
@@ -16,9 +15,8 @@ RSpec.describe "Curiobase tag page filter" do
 
   before do
     SiteSetting.curiobase_enabled = true
-    SiteSetting.curiobase_subject_tag_group = "Subjects"
     SiteSetting.tagging_enabled = true
-    Curiobase::Subjects.reset_cache!
+    @subject_file = claim_subject_file!("john-titor")
     [film_topic, chat_topic].each { |t| t.tags = [tag] }
     # The kind is cached at bake time — that is the whole point of the field.
     Curiobase.rebake_now!(film_post)
@@ -31,7 +29,7 @@ RSpec.describe "Curiobase tag page filter" do
   end
 
   it "lists everything with no filter" do
-    expect(titles).to contain_exactly(film_topic.title, chat_topic.title)
+    expect(titles).to contain_exactly(film_topic.title, chat_topic.title, @subject_file.title)
   end
 
   it "narrows to records of one medium" do
@@ -47,7 +45,11 @@ RSpec.describe "Curiobase tag page filter" do
   # ⚠ TopicQuery#assert_valid_keys RAISES on an unknown option — an unrecognised
   #   value must be ignored inside the filter, not passed through.
   it "ignores a value that is not a known kind" do
-    expect(titles(curiobase: "nonsense")).to contain_exactly(film_topic.title, chat_topic.title)
+    expect(titles(curiobase: "nonsense")).to contain_exactly(
+      film_topic.title,
+      chat_topic.title,
+      @subject_file.title,
+    )
   end
 
   it "caches the medium on the topic at bake time" do

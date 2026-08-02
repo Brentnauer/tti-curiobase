@@ -5,14 +5,12 @@ require "rails_helper"
 RSpec.describe Curiobase::CardRenderer do
   fab!(:tag) { Fabricate(:tag, name: "causal-loop") }
   fab!(:noise) { Fabricate(:tag, name: "funny") }
-  fab!(:group) { Fabricate(:tag_group, name: "Subjects", tags: [tag]) }
   fab!(:topic)
   fab!(:post) { Fabricate(:post, topic: topic, raw: "[wrap=work id=123]\n[/wrap]\n\nA post.") }
 
   before do
     SiteSetting.curiobase_enabled = true
-    SiteSetting.curiobase_subject_tag_group = "Subjects"
-    Curiobase::Subjects.reset_cache!
+    claim_subject_file!("causal-loop")
     topic.tags = [tag, noise]
   end
 
@@ -37,6 +35,24 @@ RSpec.describe Curiobase::CardRenderer do
   it "puts the dek before the fact row" do
     cooked = rebake
     expect(cooked.index("cb-dek")).to be < cooked.index("cb-meta")
+  end
+
+  # Empty poster tiles still carry a "FILM · YEAR" label — that text must not
+  # lead the meta description.
+  it "puts the dek before the poster column in the DOM" do
+    cooked = rebake
+    expect(cooked.index("cb-dek")).to be < cooked.index("cb-poster")
+  end
+
+  # Discourse ExcerptParser uses only `div.excerpt` for topics.excerpt / meta.
+  it "wraps the dek so the topic excerpt stops before badges" do
+    cooked = rebake
+    expect(cooked).to include('class="excerpt"')
+    excerpt = PrettyText.excerpt(cooked, 500, strip_links: true, strip_images: true)
+    plain = ExcerptParser.to_plain_text(excerpt).to_s
+    expect(plain.downcase).to include("engineer") # primer fixture dek
+    expect(plain.downcase).not_to include("fiction")
+    expect(plain.downcase).not_to match(/\Afilm\b/)
   end
 
   it "renders a row for a subject tag" do
@@ -97,8 +113,7 @@ RSpec.describe Curiobase::CardRenderer do
     # Repeating it per subject row would imply it changed per subject.
     it "appears once, not once per subject row" do
       another = Fabricate(:tag, name: "john-titor")
-      group.tags = [tag, another]
-      Curiobase::Subjects.reset_cache!
+      claim_subject_file!("john-titor")
       topic.tags = [tag, another]
       post.update!(like_count: 3)
 
@@ -118,8 +133,7 @@ RSpec.describe Curiobase::CardRenderer do
     it "uses the nonfiction wording for a nonfiction work" do
       post.update!(raw: "[wrap=work id=128]\n[/wrap]")
       titor = Fabricate(:tag, name: "john-titor")
-      group.tags = [titor]
-      Curiobase::Subjects.reset_cache!
+      claim_subject_file!("john-titor")
       topic.tags = [titor]
 
       cooked = rebake

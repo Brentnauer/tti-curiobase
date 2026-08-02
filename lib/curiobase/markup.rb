@@ -25,6 +25,20 @@ module Curiobase
       p
     end
 
+    # ⚠ Discourse's ExcerptParser treats `div.excerpt` / `span.excerpt` as the
+    #   ONLY text that becomes `topics.excerpt` / the crawler meta description.
+    #   Without this, a short dek is followed by badge mush (`ideatimeopen`) and
+    #   fact labels (`Related…`) inside the ~155-character window Google shows.
+    #
+    #   The dek stays first in the card DOM; this wrapper just stops the excerpt
+    #   at the sentence. Badges still lead visually via CSS `order: -1`.
+    def dek_block(text)
+      return nil if text.blank?
+      wrap = node("div", class: "excerpt")
+      wrap.add_child(para("cb-dek", text))
+      wrap
+    end
+
     def text(str) = Nokogiri::XML::Text.new(str.to_s, @doc.document)
 
     # ⚠ `p.cb-badges`, first span primary and the rest muted. Both renderers
