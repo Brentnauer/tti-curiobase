@@ -88,8 +88,10 @@ module Curiobase
 
       figure.add_child(out)
       # ⚠ Take the whole wrapper Discourse built, not just the img — a bare
-      #   <a class="lightbox"> left behind renders as an empty link.
-      (img.ancestors(".lightbox-wrapper").first || img).remove
+      #   <a class="lightbox"> left behind renders as an empty link. Also drop
+      #   an emptied parent <p> so video list-thumb claims do not leave a blank
+      #   paragraph under the card.
+      remove_media_from_body!(img)
       @src = out["src"]
       figure
     end
@@ -99,6 +101,16 @@ module Curiobase
     attr_reader :src
 
     private
+
+    def remove_media_from_body!(img)
+      target = img.ancestors(".lightbox-wrapper").first || img
+      parent = target.parent
+      target.remove
+      return unless parent&.name == "p"
+      return if parent.children.any? { |c| c.element? || (c.text? && c.text.match?(/\S/)) }
+
+      parent.remove
+    end
 
     # Emoji and avatars are <img> too.
     def candidate?(img)

@@ -312,7 +312,7 @@ module Curiobase
       base["isPartOf"] = part.size == 1 ? part.first : part if part.any?
 
       explained_by =
-        SubjectEdges
+        ::Curiobase::SubjectEdges
           .inbound(record["slug"].to_s, verbs: %w[explains])
           .filter_map { |row| inbound_entity(row) }
       if explained_by.any?

@@ -74,8 +74,9 @@ embeds, episodes, and “Find a copy.”
 **Gravity.** Members rate 1–5 how central a Subject is to a Work. Published anchors say what each
 number means (fiction, nonfiction, or neutral wording — same scale).
 
-**Association lists.** A Subject’s file shows the works that engage it, ranked by gravity, with
-filter chips per medium. Chips are real links; a crawler that follows one gets a complete filtered
+**Association lists.** A Subject’s file shows Works that engage it, ranked by gravity, with a
+**Works** chip by default, per-medium chips (top 10 within that medium), and a peer **Discussions**
+chip (top 10 by likes). Chips are real links; a crawler that follows one gets a complete filtered
 page. Scores refresh live for humans without waiting on rebake.
 
 **Series hubs.** A Work with `medium: series` lists episode Works linked by `series: hub-slug`,
@@ -261,7 +262,9 @@ dek: Three nights of lights near two USAF bases in December 1980.
 ````
 
 Drag an image into the post: it becomes the **poster** (Works, 2:3) or the **plate** (Subjects,
-3:2). Subjects may set `image_credit` for the plate caption.
+3:2). Subjects may set `image_credit` for the plate caption. For `medium: video`, the dragged
+image is still claimed (Subject list thumbs + lifted out of the body) but is **not** shown in
+the card head — the stage player is the media.
 
 ### Required fields
 
@@ -435,7 +438,7 @@ badges), above gravity — Discord-style: identity, then media, then the rest.
 | Medium | Poster column | Stage |
 |---|---|---|
 | `film` / `series` / `game` | Author attachment only (else label tile) | YouTube **iframe** trailer when `youtube:` is set |
-| `video` | No (text head) | YouTube **iframe** (the work itself), else Archive iframe |
+| `video` | No head column (text head). Drag a YouTube thumbnail into the post — claimed for Subject list thumbs only, not shown in the card head | YouTube **iframe** (the work itself), else Archive iframe |
 | `book` | Author attachment only (else label tile) | Google Books **iframe** when `google_books:` is set; Archive iframe fallback |
 | `document` | Author attachment only (else label tile) | Archive.org **iframe** (`/embed/{id}`) when `archive_org:` is set |
 
@@ -474,9 +477,11 @@ An empty series hub still bakes a full card; the episodes section appears only w
 
 On a Subject **file** (full card):
 
-- Works ranked by gravity (then secondary keys)
-- Filter chips: all media in vocabulary + `discussion`
-- Chips link to `?curiobase=<medium>` on the tag page (and highlight in-card with JS)
+- **Works** chip (default): top 10 Works by gravity → OP likes → posts
+- Medium chips: top 10 Works of that medium (membership, not “overall then hide”)
+- **Discussions** chip: top 10 threads by topic likes, then `bumped_at` — peer ladder, not mixed into Works
+- No blended **All** chip (avoids one numbered list for two incomparable rankings)
+- Chips link to the tag page (`Works` unfiltered; others `?curiobase=<medium|discussion>`) and filter in-card with JS
 - Live score refresh via `GET /curiobase/readings?subject=…&works=…`
 - After votes, MessageBus + assoc-live JS update scores and Work order without full page reload
 

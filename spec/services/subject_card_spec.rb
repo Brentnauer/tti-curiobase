@@ -11,12 +11,14 @@ RSpec.describe Curiobase::SubjectCard do
   # Something has to engage the subject or there are no chips to test.
   fab!(:chat_topic) { Fabricate(:topic, title: "Did he ever actually come back?") }
   fab!(:chat_post) { Fabricate(:post, topic: chat_topic, raw: "Nobody knows.") }
+  fab!(:work_topic) { Fabricate(:topic, title: "Primer (2004) — the garage film") }
+  fab!(:work_post) { Fabricate(:post, topic: work_topic, raw: "[wrap=work id=123]\n[/wrap]") }
 
   before do
     SiteSetting.curiobase_enabled = true
     SiteSetting.curiobase_subject_tag_group = "Subjects"
     Curiobase::Subjects.reset_cache!
-    [record_topic, chat_topic].each { |t| t.tags = [tag] }
+    [record_topic, chat_topic, work_topic].each { |t| t.tags = [tag] }
 
     # ⚠ BAKING IS SETUP, NOT AN ASSERTION.
     #
@@ -33,6 +35,7 @@ RSpec.describe Curiobase::SubjectCard do
     #   On the live forum the equivalent is: topics baked before this shipped
     #   have no cache either. `bin/rake curiobase:rebake` fills it.
     Curiobase.rebake_now!(record_post)
+    Curiobase.rebake_now!(work_post)
   end
 
   def html(variant, filter: nil)
@@ -47,15 +50,24 @@ RSpec.describe Curiobase::SubjectCard do
       expect(h.index("cb-dek")).to be < h.index("cb-assoc")
     end
 
-    it "marks the All chip active when no filter is selected" do
-      expect(html(:full)).to include('data-kind="all"').and include("cb-filter is-active")
-      # The active class sits on the All chip specifically.
+    it "marks the Works chip active when no filter is selected" do
+      expect(html(:full)).to include('data-kind="works"').and include("cb-filter is-active")
       frag = Nokogiri::HTML5.fragment(html(:full))
-      expect(frag.at_css('.cb-filter.is-active')["data-kind"]).to eq("all")
+      expect(frag.at_css('.cb-filter.is-active')["data-kind"]).to eq("works")
+      expect(frag.at_css(".cb-assoc")["data-default"]).to eq("works")
+    end
+
+    it "hides discussions under the default Works view" do
+      frag = Nokogiri::HTML5.fragment(html(:full))
+      discussion = frag.css(".cb-assoc-row").find { |r| r["data-kind"] == "discussion" }
+      expect(discussion).to be_present
+      expect(discussion["hidden"]).to eq("hidden")
+      expect(discussion["data-buckets"]).to eq("discussion")
     end
 
     it "invites a pairing when nothing engages the Subject yet" do
       chat_topic.tags = []
+      work_topic.tags = []
       expect(html(:full)).to include("cb-assoc--empty")
       expect(html(:full)).to include(I18n.t("curiobase.assoc_empty"))
     end
@@ -101,6 +113,7 @@ RSpec.describe Curiobase::SubjectCard do
     # "All 0" is a control that does nothing sitting beside a number saying so.
     it "shows no chips at all when nothing engages the subject" do
       chat_topic.tags = []
+      work_topic.tags = []
       expect(html(:banner)).to include("cb-filters--empty")
       expect(html(:banner)).not_to include("cb-filter\"")
     end
@@ -111,8 +124,9 @@ RSpec.describe Curiobase::SubjectCard do
   describe "filter chips" do
     it "carries the kind and the real total on every chip" do
       h = html(:full)
-      expect(h).to include('data-kind="all"')
+      expect(h).to include('data-kind="works"')
       expect(h).to include('data-kind="discussion"')
+      expect(h).not_to include('data-kind="all"')
       expect(h).to match(/data-count="\d+"/)
     end
 
@@ -144,7 +158,7 @@ RSpec.describe Curiobase::SubjectCard do
     it "appears when the list is holding things back, and names the real total" do
       h = capped(:full)
       expect(h).to include("cb-assoc-all")
-      expect(h).to include("All 3 topics tagged John Titor")
+      expect(h).to include("All 4 topics tagged John Titor")
       expect(h).to include("/tag/john-titor/#{tag.id}")
     end
 
@@ -251,13 +265,8 @@ RSpec.describe Curiobase::SubjectCard do
   end
 
   describe "computed disagreement" do
-    fab!(:work_topic) { Fabricate(:topic, title: "Primer (2004) — the garage film") }
-    fab!(:work_post) { Fabricate(:post, topic: work_topic, raw: "[wrap=work id=123]\n[/wrap]") }
-
     before do
       SiteSetting.curiobase_member_voting_enabled = true
-      work_topic.tags = [tag]
-      Curiobase.rebake_now!(work_post)
       2.times do
         Curiobase::VoteStore.cast(
           work_id: "primer-2004",

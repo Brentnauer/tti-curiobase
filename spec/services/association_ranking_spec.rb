@@ -91,19 +91,25 @@ RSpec.describe "Curiobase · association ranking" do
       expect(assoc.rows.select { |r| r.kind == "discussion" }).to be_empty
     end
 
-    # Discussions rank by `bumped_at`, which IS an indexed SQL sort — so they
-    # are ordered and limited in SQL rather than loaded and sliced.
-    it "takes the newest threads, in SQL" do
+    # Discussions rank by `like_count` then `bumped_at` — indexed SQL sorts —
+    # so they are ordered and limited in SQL rather than loaded and sliced.
+    it "takes the most-liked threads, in SQL" do
       stub_const(Curiobase::Associations, :PER_BUCKET, 3) do
-        10.times { |i| thread!(i, hours_old: i) }
+        5.times do |i|
+          topic = thread!(i, hours_old: i)
+          topic.update_columns(like_count: i)
+        end
         rows = assoc.rows.select { |r| r.kind == "discussion" }
 
         expect(rows.size).to eq(3)
         expect(rows.map(&:title)).to eq(
-          ["An ordinary thread number 0 here",
-           "An ordinary thread number 1 here",
-           "An ordinary thread number 2 here"],
+          [
+            "An ordinary thread number 4 here",
+            "An ordinary thread number 3 here",
+            "An ordinary thread number 2 here",
+          ],
         )
+        expect(rows.map(&:buckets).uniq).to eq([["discussion"]])
       end
     end
   end
@@ -123,7 +129,7 @@ RSpec.describe "Curiobase · association ranking" do
     it "fills each medium's bucket even when it wins nothing overall" do
       stub_const(Curiobase::Associations, :PER_BUCKET, 3) do
         a = assoc
-        expect(a.shown_counts["all"]).to eq(3)
+        expect(a.shown_counts["works"]).to eq(3)
         expect(a.shown_counts["book"]).to eq(3)
         # ⚠ The point. Films score below every book, so under the old shape a
         #   reader clicking "Film" saw whatever films happened to survive — here,
@@ -150,9 +156,10 @@ RSpec.describe "Curiobase · association ranking" do
         top = works.first
         films = works.select { |r| r.medium == "film" }
 
+        expect(top.buckets).to include("works")
         expect(top.buckets).to include("all")
         expect(top.buckets).to include("book")
-        expect(films.map(&:buckets).flatten.uniq).to eq(["film"])
+        expect(films.map(&:buckets).flatten.uniq.sort).to eq(["film"])
       end
     end
 

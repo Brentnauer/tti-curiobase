@@ -52,6 +52,16 @@ RSpec.describe Curiobase::Associations do
     expect(d.replies).to eq(0)
   end
 
+  it "keeps discussions off the Works bucket" do
+    d = rows.find { |r| r.kind == "discussion" }
+    expect(d.buckets).to eq(["discussion"])
+    expect(rows.find { |r| r.kind == "work" }.buckets).to include("works")
+  end
+
+  it "defaults the chip to Works when Works exist" do
+    expect(assoc.default_filter).to eq("works")
+  end
+
   # ⚠ Gravity stays primary. Blending would let a widely-liked 3 outrank an
   #   unloved 5, which inverts what the catalogue is for.
   describe "ranking" do
@@ -98,6 +108,7 @@ RSpec.describe Curiobase::Associations do
   describe "counts" do
     it "counts the same things the list shows, and not the subject's own file" do
       expect(assoc.counts["all"]).to eq(2)
+      expect(assoc.counts["works"]).to eq(1)
       expect(assoc.counts["film"]).to eq(1)
       expect(assoc.counts["discussion"]).to eq(1)
       expect(assoc.counts).not_to have_key("subject")

@@ -24,6 +24,7 @@ en:
     members_disagree: "members disagree"
     # Staff status settled; members still split on at least one pairing.
     status_membership_split: "Marked %{status}, but members still disagree on how some works pull on this."
+    filter_works: "Works"
     filter_all: "All"
     # Filter chips count things, so they are plural: "Books 12".
     kinds:

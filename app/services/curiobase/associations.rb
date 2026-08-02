@@ -29,13 +29,17 @@ module Curiobase
     #
     #   Discussions and Works need opposite treatment and that is the whole fix:
     #
-    #     Discussions rank by `bumped_at`, which IS an indexed SQL sort. So they
-    #     are ordered and limited in SQL and cost O(PER_BUCKET) at any scale.
+    #     Discussions rank by `like_count` (then `bumped_at`), which IS an
+    #     indexed SQL sort. So they are ordered and limited in SQL and cost
+    #     O(PER_BUCKET) at any scale.
     #
     #     Works rank by gravity, which lives in PluginStore and cannot be sorted
     #     in SQL at all. So every Work for the subject is loaded and ranked in
     #     Ruby — bounded by works-per-subject, a number the operator controls,
     #     rather than by tagged topics, which the archive controls.
+    #
+    #   The default chip is Works, not a blended All — the two ladders never
+    #   share one numbered list.
     PER_BUCKET = 10
 
     # ⚠ How many Works may be loaded to rank them. Not a display cap — a refusal
@@ -78,8 +82,9 @@ module Curiobase
     #
     # The card is BAKED, so every filter state has to already be in the HTML —
     # there is no request to make when a chip is clicked. So this renders the
-    # top ten for `all` plus the top ten for each medium present, deduped, and
-    # `Row#buckets` says which chips each row belongs to.
+    # top ten for `works` plus the top ten for each medium present, plus the
+    # top ten discussions, deduped, and `Row#buckets` says which chips each
+    # row belongs to.
     #
     # ⚠ A row can be #14 overall and #3 among books. Filtering on `data-kind`
     #   alone — matching a row's medium — would show it under "Book" but a row
@@ -96,7 +101,12 @@ module Curiobase
         ranked = work_rows.sort_by { |r| Scores.rank_key(r.gravity&.display, r.recommendations, r.posts_count) }
 
         keep = {} # Row => Set of bucket names, insertion-ordered
-        ranked.first(PER_BUCKET).each { |r| (keep[r] ||= []) << "all" }
+        ranked.first(PER_BUCKET).each do |r|
+          # `works` is the real chip. `all` stays as an alias so a cached client
+          # that still mounts with apply("all") does not blank the list — the
+          # empty-on-load bug after the All → Works rename.
+          (keep[r] ||= []).concat(%w[works all])
+        end
         ranked.group_by { |r| r.medium.to_s }.each do |medium, group|
           next if medium.blank?
           group.first(PER_BUCKET).each { |r| (keep[r] ||= []) << medium }
@@ -131,7 +141,9 @@ module Curiobase
       @modes ||= work_rows.map(&:mode).compact_blank.uniq
     end
 
-    # { "all" => 84, "film" => 12, "discussion" => 58, ... } for the filter chips.
+    # { "works" => 26, "all" => 84, "film" => 12, "discussion" => 58, ... }
+    # for the filter chips. `works` is every Work; `all` is Works + discussions
+    # (tag scale / truncated?).
     #
     # ⚠ COUNTED IN SQL, NOT FROM `rows`.
     #
@@ -164,8 +176,10 @@ module Curiobase
           .count
           .each do |kind, n|
             next if kind == "subject"
-            c[kind.presence || "discussion"] += n
+            key = kind.presence || "discussion"
+            c[key] += n
             c["all"] += n
+            c["works"] += n unless key == "discussion"
           end
 
         c
@@ -176,6 +190,12 @@ module Curiobase
     # without it a reader has no way to know 59 more exist.
     def truncated?
       counts["all"].to_i > rows.size
+    end
+
+    # Default chip when nothing is selected: Works, unless the subject only
+    # has discussions yet.
+    def default_filter
+      counts["works"].to_i.positive? || counts["discussion"].to_i.zero? ? "works" : "discussion"
     end
 
     private
@@ -257,11 +277,15 @@ module Curiobase
     # ⚠ A thread is a conversation ABOUT an idea, not a treatment OF one, so it
     #   carries no gravity score. Mixing them would make the mean meaningless.
     #
-    # ⚠ ORDERED AND LIMITED IN SQL. Recency is `bumped_at`, which is indexed, so
-    #   the ten newest threads cost a LIMIT rather than loading a window and
-    #   slicing it in Ruby. This is why splitting the query was the fix and not
-    #   just widening it: works cannot be ranked in SQL and discussions can, so
-    #   forcing both through one query made each one wrong in the other's way.
+    # ⚠ ORDERED AND LIMITED IN SQL. Likes (`like_count`) then recency
+    #   (`bumped_at`) are indexed sorts, so the ten most-liked threads cost a
+    #   LIMIT rather than loading a window and slicing it in Ruby. This is why
+    #   splitting the query was the fix and not just widening it: works cannot
+    #   be ranked in SQL and discussions can, so forcing both through one query
+    #   made each one wrong in the other's way.
+    #
+    # ⚠ Bucket is `discussion` ONLY — never `works`. The default chip is the
+    #   catalogue ladder; threads are a peer filter, not a blended All.
     def discussion_rows
       @discussion_rows ||=
         begin
@@ -272,7 +296,7 @@ module Curiobase
           #   slug. A record does not engage itself.
           TopicKind
             .discussions(tagged)
-            .order(bumped_at: :desc)
+            .order(like_count: :desc, bumped_at: :desc)
             .limit(PER_BUCKET)
             .map do |topic|
               Row.new(
@@ -281,7 +305,7 @@ module Curiobase
                 url: topic.relative_url,
                 posts_count: topic.posts_count.to_i,
                 replies: [topic.posts_count.to_i - 1, 0].max,
-                buckets: ["all", "discussion"],
+                buckets: ["discussion"],
               )
             end
         end

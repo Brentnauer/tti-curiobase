@@ -215,6 +215,23 @@ RSpec.describe "silent failure paths" do
     end
   end
 
+  # ⚠ rebake! publishes fence-only cooked and enqueues a second ProcessPost.
+  #   Outside HTTP that race left Subject files stuck as lang-curiobase blocks.
+  describe "Curiobase.rebake_now!" do
+    it "does not call Post#rebake! (avoids fence flash + duplicate ProcessPost)" do
+      _, post = record_topic!(
+        "Primer, the garage film about loops",
+        "type: work\nslug: primer-rebake-now\nmedium: film\ndek: Two engineers build a box.",
+      )
+      expect(post).not_to receive(:rebake!)
+
+      Curiobase.rebake_now!(post)
+
+      expect(post.reload.cooked).to include("curiobase-card")
+      expect(post.cooked).not_to include("lang-curiobase")
+    end
+  end
+
   # ── PostMedia ───────────────────────────────────────────────────────────────
   #
   # ⚠ This class had no coverage at all. It owns the UploadReference claim, which

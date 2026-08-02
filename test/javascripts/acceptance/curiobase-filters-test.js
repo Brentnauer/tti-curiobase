@@ -8,9 +8,9 @@ import { cloneJSON } from "discourse/lib/object";
 // THE FILTER CHIPS FILTER ON MEMBERSHIP, NOT ON MEDIUM.
 // ══════════════════════════════════════════════════════════════════════════════
 //
-// The server bakes the top ten for `all` PLUS the top ten for each medium,
-// deduped — so the list is a union. A row's medium says what it IS; it does not
-// say whether it earned a place under that chip.
+// The server bakes the top ten for `works` PLUS the top ten for each medium
+// PLUS discussions, deduped — so the list is a union. A row's medium says what
+// it IS; it does not say whether it earned a place under that chip.
 //
 // ⚠ The first version matched `row.dataset.kind === kind`, which is a type
 //   match and not a filter. Under "Book" it revealed every book in the union,
@@ -25,20 +25,22 @@ import { cloneJSON } from "discourse/lib/object";
 function assoc() {
   return `
     <div class="curiobase-card curiobase-card--subject" data-id="majestic-12">
-      <section class="cb-assoc">
+      <section class="cb-assoc" data-default="works">
         <nav class="cb-filters">
-          <a class="cb-filter is-active" data-kind="all" data-count="40" data-shown="3"
-             href="/tag/majestic-12/7">All 40</a>
+          <a class="cb-filter is-active" data-kind="works" data-count="26" data-shown="2"
+             href="/tag/majestic-12/7">Works 26</a>
           <a class="cb-filter" data-kind="film" data-count="12" data-shown="2"
              href="/tag/majestic-12/7?curiobase=film">Film 12</a>
           <a class="cb-filter" data-kind="book" data-count="9" data-shown="1"
              href="/tag/majestic-12/7?curiobase=book">Book 9</a>
+          <a class="cb-filter" data-kind="discussion" data-count="14" data-shown="1"
+             href="/tag/majestic-12/7?curiobase=discussion">Discussions 14</a>
         </nav>
         <ol class="cb-assoc-list">
-          <li class="cb-assoc-row" data-kind="film" data-buckets="all film">
+          <li class="cb-assoc-row" data-kind="film" data-buckets="works all film">
             <a class="cb-assoc-title" href="/t/a/1">film-top</a>
           </li>
-          <li class="cb-assoc-row" data-kind="book" data-buckets="all">
+          <li class="cb-assoc-row" data-kind="book" data-buckets="works all">
             <a class="cb-assoc-title" href="/t/b/2">book-overall</a>
           </li>
           <li class="cb-assoc-row" data-kind="film" data-buckets="film">
@@ -46,6 +48,9 @@ function assoc() {
           </li>
           <li class="cb-assoc-row" data-kind="book" data-buckets="book">
             <a class="cb-assoc-title" href="/t/d/4">book-only</a>
+          </li>
+          <li class="cb-assoc-row" data-kind="discussion" data-buckets="discussion">
+            <a class="cb-assoc-title" href="/t/e/5">a-thread</a>
           </li>
         </ol>
         <p><a class="cb-assoc-all-link" href="/tag/majestic-12/7">All 40 topics tagged Majestic 12</a></p>
@@ -73,14 +78,14 @@ acceptance("Curiobase | the association filters", function (needs) {
     server.get("/t/280.json", () => helper.response(topicWith(assoc())));
   });
 
-  test("shows everything under All on mount, and only the overall top", async function (assert) {
+  test("shows Works on mount, and only the overall Work top", async function (assert) {
     await visit("/t/-/280");
 
-    assert.dom('.cb-filter[data-kind="all"]').hasClass("is-active");
+    assert.dom('.cb-filter[data-kind="works"]').hasClass("is-active");
     assert.deepEqual(
       visibleTitles(),
       ["film-top", "book-overall"],
-      "All reveals the overall ranking, not every row in the union"
+      "Works reveals the overall ranking, not every row in the union"
     );
   });
 
@@ -103,12 +108,20 @@ acceptance("Curiobase | the association filters", function (needs) {
     assert.deepEqual(visibleTitles(), ["film-top", "film-only"]);
   });
 
+  test("Discussions is a peer chip, not mixed into Works", async function (assert) {
+    await visit("/t/-/280");
+    assert.false(visibleTitles().includes("a-thread"));
+
+    await click('.cb-filter[data-kind="discussion"]');
+    assert.deepEqual(visibleTitles(), ["a-thread"]);
+  });
+
   test("marks the active chip", async function (assert) {
     await visit("/t/-/280");
     await click('.cb-filter[data-kind="film"]');
 
     assert.dom('.cb-filter[data-kind="film"]').hasClass("is-active");
-    assert.dom('.cb-filter[data-kind="all"]').doesNotHaveClass("is-active");
+    assert.dom('.cb-filter[data-kind="works"]').doesNotHaveClass("is-active");
   });
 
   // ⚠ Read from the chip, never counted from the rows. The list is a union, so
@@ -125,10 +138,10 @@ acceptance("Curiobase | the association filters", function (needs) {
       .hasAttribute("href", "/tag/majestic-12/7?curiobase=book", "and it carries the filter");
   });
 
-  test("drops the filter from the exit when All is active", async function (assert) {
+  test("drops the filter from the exit when Works is active", async function (assert) {
     await visit("/t/-/280");
     await click('.cb-filter[data-kind="film"]');
-    await click('.cb-filter[data-kind="all"]');
+    await click('.cb-filter[data-kind="works"]');
 
     assert.dom(".cb-assoc-all-link").hasAttribute("href", "/tag/majestic-12/7");
   });

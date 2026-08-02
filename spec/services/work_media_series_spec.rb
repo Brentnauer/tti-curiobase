@@ -4,6 +4,7 @@ require "rails_helper"
 
 RSpec.describe "Curiobase work media and series" do
   fab!(:admin)
+  fab!(:list_thumb) { Fabricate(:image_upload, width: 900, height: 1350) }
 
   before do
     SiteSetting.curiobase_enabled = true
@@ -68,6 +69,42 @@ RSpec.describe "Curiobase work media and series" do
       "youtube.com/embed/",
     )
     expect(frag.at_css(".cb-poster, .cb-poster--empty")).to be_nil
+  end
+
+  # Video keeps a text head + stage player, but a dragged thumbnail (e.g. from a
+  # YouTube thumbnail download) is claimed for Subject association lists and
+  # lifted out of the body so it does not sit under the card.
+  it "claims a dragged video thumbnail for list thumbs without a head poster" do
+    topic = Fabricate(:topic, title: "Why Files list thumb demo", user: admin)
+    post =
+      Fabricate(
+        :post,
+        topic: topic,
+        user: admin,
+        post_number: 1,
+        raw: <<~RAW,
+          ```curiobase
+          type: work
+          slug: why-files-list-thumb
+          medium: video
+          youtube: dQw4w9WgXcQ
+          dek: Episode with a manual YouTube thumbnail for lists.
+          ```
+
+          ![thumb|900x1350](#{list_thumb.short_url})
+        RAW
+      )
+    Curiobase.rebake_now!(post)
+    post.reload
+    topic.reload
+
+    frag = Nokogiri::HTML.fragment(post.cooked)
+    expect(frag.at_css(".cb-head--text")).to be_present
+    expect(frag.at_css(".cb-poster, .cb-poster--empty")).to be_nil
+    # Lifted out of the body — no free-floating cooked image or empty remnant.
+    expect(frag.css("img").reject { |img| img.ancestors(".curiobase-card").any? }).to be_empty
+    expect(post.cooked).not_to include("<p></p>")
+    expect(topic.custom_fields[Curiobase::CardRenderer::POSTER_FIELD]).to be_present
   end
 
   it "links an episode to its series hub and lists it on the hub" do

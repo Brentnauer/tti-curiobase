@@ -14,14 +14,34 @@ module Curiobase
   #
   #   Anything that rebakes outside a request must use this.
   #
-  #   Still no revision and no bump: rebake! hardcodes bypass_bump: true, and
+  #   Still no revision and no bump: we mirror rebake!'s bypass_bump path, and
   #   ProcessPost only rewrites cooked.
+  #
+  # ⚠ Do NOT call post.rebake! here. That publishes the fence-only cooked to
+  #   MessageBus and enqueues a second ProcessPost that can race this one —
+  #   Subject files have been observed stuck as `lang-curiobase` code blocks
+  #   after an in-process rebake “succeeded”. Cook + ProcessPost in-process,
+  #   then publish once the card is in place.
   def self.rebake_now!(post)
-    post.rebake!
+    new_cooked = post.cook(post.raw, topic_id: post.topic_id)
+    post.update_columns(
+      cooked: new_cooked,
+      baked_at: Time.zone.now,
+      baked_version: Post::BAKED_VERSION,
+    )
+    post.sync_first_post_caches
+
+    TopicLink.extract_from(post)
+    QuotedPost.extract_from(post)
+
     Jobs::ProcessPost.new.execute(
       post_id: post.id,
-      cook_method: Post.cook_methods[:regular],
+      bypass_bump: true,
+      skip_pull_hotlinked_images: true,
     )
+
+    post.reload
+    post.publish_change_to_clients!(:rebaked)
     post
   end
 

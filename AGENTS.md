@@ -12,18 +12,19 @@ Discourse plugin that turns first-post fenced `curiobase` blocks into catalogue 
 2. **Bake for shared truth; fetch for “mine”** — never put personal vote state into shared cooked HTML.
 3. **Outside HTTP, use `Curiobase.rebake_now!`** — bare `post.rebake!` can strip cards if ProcessPost never runs.
 4. **Empty series hubs must not `add_child(nil)`** — cook aborts; keep hub card without an episodes section when there are no children.
-5. **Posters / plates are attachment-only** — never auto-pull YouTube / Google Books / Archive covers into `.cb-poster`. Sources: dragged first-post image (`PostMedia`), explicit `poster.url`, else labelled empty tile. Stage embeds stay separate in `.cb-stage`.
+5. **Posters / plates are attachment-only** — never auto-pull YouTube / Google Books / Archive covers into `.cb-poster`. Sources: dragged first-post image (`PostMedia`), explicit `poster.url` (fixture/legacy), else labelled empty tile. Stage embeds stay separate in `.cb-stage`. Video works skip the head poster column but still claim a dragged image into `curiobase_poster` for Subject association thumbs (lift out of body so it does not sit under the card).
 6. **One vote is one vote** — no TL/staff/supporter weight ladder. `Standing` is 1.0 or 0.0 (min trust + not suspended/silenced).
 7. **No plugin “annotation” wiki** — community notes are Discourse first-post wiki + `edit_wiki_post_allowed_groups` (e.g. TL2). Do not reintroduce auto-seeded post 2.
 8. **Disagreement is computed** — `Gravity.disagree?` (low≥2 and high≥2). Surface on Work bars, assoc rows (`disagree` in readings/MessageBus), and status-mismatch notes when staff status is settled.
 9. **Typed Subject edges** — `explains` / `contradicts` / `precedes` / `part_of` / `involves` + untyped `refs`. One array with `verb` after `to_record`. Outbound authored once; inbound via `curiobase_edge` topic custom-field rows + attribution block (not mirror verbs). `same_as` is refused — merge or `also_known_as`. No Work→Work here. `remember_edges` must run **last** after every `save_custom_fields` or multi-row edges are wiped. Fan-out is enqueue-only + 60s debounce; trash/recover of a source also fans out.
+10. **Association chips are Works-first** — default bucket `works` (top 10 by gravity); medium chips are top 10 within medium; `discussion` is likes-ranked and never mixed into Works. No blended All chip.
 
 ## Media / embeds (current contract)
 
 | Medium | Poster | Stage |
 |---|---|---|
 | film / series / game | Attachment or empty tile | YouTube iframe trailer (`youtube:`) |
-| video | None (text head) | YouTube hero iframe, else Archive iframe |
+| video | None in head (text head); dragged image still claimed for list thumbs | YouTube hero iframe, else Archive iframe |
 | book | Attachment or empty tile | Google Books iframe (`google_books:`), else Archive |
 | document | Attachment or empty tile | Archive iframe (`archive_org:`) |
 
@@ -39,6 +40,8 @@ Discourse plugin that turns first-post fenced `curiobase` blocks into catalogue 
 - Specs: `LOAD_PLUGINS=1 bundle exec rspec plugins/tti-curiobase/spec` from Discourse root.
 - Host reachability: `UNICORN_LISTENER=0.0.0.0:3000` when needed.
 - After Ruby embed/renderer changes, if cooked looks stale or “regressing”, soft-reload Pitchfork/Unicorn workers, then `Curiobase.rebake_now!(post)`.
+- Video list thumbs: drag a YouTube thumbnail into the Work post, soft-reload if needed, then `Curiobase.rebake_now!` on the Work **and** the Subject file that lists it.
+- If a Subject shows a raw `lang-curiobase` fence instead of a card, that is a missed ProcessPost — `Curiobase.rebake_now!(post)`, not another composer edit alone.
 - Do not commit `tmp/`, `tmp_*`, or `node_modules/` (local Playwright experiments are scratch).
 
 ## Where to edit

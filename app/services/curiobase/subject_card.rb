@@ -46,8 +46,10 @@ module Curiobase
     def initialize(record, variant: :full, active_filter: nil, plate: nil)
       @r = record
       @variant = variant
-      # Default "all" so the All chip is marked on file cards (no query param).
-      @active = active_filter.presence || "all"
+      # Resolved against association counts when filters render — Works by
+      # default, Discussions when the subject has no Works yet.
+      @active_filter_param = active_filter
+      @active = nil
       @plate = plate
       @doc = Nokogiri::HTML5::DocumentFragment.parse("")
     end
@@ -132,6 +134,7 @@ module Curiobase
     # ── the tag page ────────────────────────────────────────────────────────
     def build_banner(card)
       assoc = Associations.new(slug)
+      resolve_active!(assoc)
       card.add_child(banner_thumb)
       card.add_child(filters(assoc.counts))
 
@@ -240,7 +243,7 @@ module Curiobase
     def inbound_refs
       return @inbound_refs if defined?(@inbound_refs)
 
-      rows = SubjectEdges.inbound(slug)
+      rows = ::Curiobase::SubjectEdges.inbound(slug)
       if rows.empty?
         @inbound_refs = nil
         return nil
@@ -253,7 +256,7 @@ module Curiobase
 
       list = node("ul", class: "cb-inbound-list")
       rows
-        .sort_by { |r| [SubjectEdges::INBOUND_VERBS.index(r.verb) || 99, r.from_title.to_s] }
+        .sort_by { |r| [::Curiobase::SubjectEdges::INBOUND_VERBS.index(r.verb) || 99, r.from_title.to_s] }
         .each do |row|
           li = node("li", class: "cb-inbound-row", "data-verb": row.verb)
           a = node("a", href: ref_href(row.from_slug))
@@ -349,11 +352,13 @@ module Curiobase
       rows = assoc.rows
       return empty_associations if rows.empty?
 
+      resolve_active!(assoc)
+
       # Held so `thumbs?` can ask whether ANY row in this list has a cover
       # before the first row decides whether to draw a cell.
       @assoc_rows = rows
 
-      block = node("section", class: "cb-assoc", "data-subject": slug)
+      block = node("section", class: "cb-assoc", "data-subject": slug, "data-default": @active)
       h = node("h2", class: "cb-assoc-head")
       h.content = I18n.t("curiobase.associations_heading")
       block.add_child(h)
@@ -391,6 +396,11 @@ module Curiobase
       block
     end
 
+    def resolve_active!(assoc)
+      @active ||= @active_filter_param.presence || assoc.default_filter
+    end
+    private :resolve_active!
+
     # Vacancy, not silence. Teach the pairing rule where the list would be.
     def empty_associations
       block = node("section", class: "cb-assoc cb-assoc--empty")
@@ -420,12 +430,17 @@ module Curiobase
     #   301s on every click, which is a redirect hop Google has to spend budget
     #   on for no reason.
     def filters(counts, shown = {})
-      # A subject nothing engages yet renders "All 0", which is a control that
+      # A subject nothing engages yet renders "Works 0", which is a control that
       # does nothing next to a number that says so. Show nothing instead.
       return node("span", class: "cb-filters cb-filters--empty") if counts["all"].to_i.zero?
 
       nav = node("nav", class: "cb-filters")
-      nav.add_child(chip(I18n.t("curiobase.filter_all"), counts["all"], nil, shown["all"]))
+      # Works first — catalogue ladder. Omitted when the subject only has threads.
+      if counts["works"].to_i.positive?
+        nav.add_child(
+          chip(I18n.t("curiobase.filter_works"), counts["works"], "works", shown["works"]),
+        )
+      end
       FILTERS.each do |k|
         n = counts[k].to_i
         next if n.zero?
@@ -452,12 +467,12 @@ module Curiobase
     #   that exit, and it must not infer either by counting rendered rows: the
     #   list is a union, so a count of visible rows is not a count of anything.
     def chip(label, count, kind, shown = nil)
-      key = kind || "all"
+      key = kind.to_s
       a =
         node(
           "a",
           class: "cb-filter#{" is-active" if @active == key}",
-          href: tag_url(kind),
+          href: tag_url(key),
           "data-kind": key,
           "data-count": count.to_i.to_s,
           "data-shown": shown.to_i.to_s,
@@ -473,7 +488,10 @@ module Curiobase
         else
           "/tag/#{slug}"
         end
-      kind ? "#{base}?curiobase=#{kind}" : base
+      # Works = unfiltered tag page (catalogue + threads). Medium / discussion
+      # chips narrow with ?curiobase=.
+      return base if kind.blank? || kind == "works"
+      "#{base}?curiobase=#{kind}"
     end
 
     def tag_record = tag_for(slug)
@@ -561,7 +579,7 @@ module Curiobase
       #
       # The card is baked, so every filter state is already in this HTML. A row
       # can be #14 overall and #3 among books, so it belongs under "Book" and
-      # not under "All" — and a different row can be #11 among books and belong
+      # not under "Works" — and a different row can be #11 among books and belong
       # under neither. Filtering on `data-kind` would show both, because a
       # medium says what a row is and not whether it earned its place.
       li =
@@ -581,9 +599,10 @@ module Curiobase
       end
       li["data-recommend"] = r.recommendations.to_i.to_s
       li["data-posts"] = r.posts_count.to_i.to_s
-      # Default view is All. Hide medium-only members so the union is not the
-      # initial paint for no-JS readers (JS apply() does the same on mount).
-      li["hidden"] = "hidden" unless Array(r.buckets).include?("all")
+      # Default view is Works (or Discussions when there are no Works). Hide
+      # rows that are not members of the active bucket so the baked union is
+      # not the initial paint for no-JS readers (JS apply() does the same).
+      li["hidden"] = "hidden" unless Array(r.buckets).include?(@active)
 
       li.add_child(assoc_thumb(r)) if thumbs?
 

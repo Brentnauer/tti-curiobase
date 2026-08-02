@@ -56,18 +56,28 @@ export default apiInitializer("1.0", (api) => {
         if (block.dataset.filtersBound) {
           return;
         }
-        block.dataset.filtersBound = "1";
 
         const chips = [...block.querySelectorAll(".cb-filter")];
-        if (chips.length < 2) {
+        if (chips.length === 0) {
           return;
         }
 
-        // ⚠ APPLY "ALL" ON MOUNT. The baked list is a UNION of overall + per-
-        //   medium top-N. Without this, film-only / book-only rows stay visible
-        //   until someone clicks a chip — and no-JS crawlers need the server
-        //   `hidden` attribute (see SubjectCard#assoc_row) for the same fact.
-        apply(block, chips, "all");
+        // Mark bound only after we have chips — a decorate pass that saw an
+        // empty nav used to set filtersBound and never apply().
+        block.dataset.filtersBound = "1";
+
+        // Prefer the baked is-active chip (Works, or Discussions when there
+        // are no Works). Fall back through data-default, then Works. Map
+        // legacy "all" so a stale asset that still mounts on All does not
+        // hide every row after the bucket rename.
+        const active = chips.find((c) => c.classList.contains("is-active"));
+        apply(
+          block,
+          chips,
+          normalizeKind(
+            active?.dataset.kind || block.dataset.default || "works"
+          )
+        );
 
         chips.forEach((chip) =>
           chip.addEventListener("click", (event) => {
@@ -77,7 +87,13 @@ export default apiInitializer("1.0", (api) => {
               return;
             }
             event.preventDefault();
-            apply(block, chips, chip.dataset.kind || "all");
+            apply(
+              block,
+              chips,
+              normalizeKind(
+                chip.dataset.kind || block.dataset.default || "works"
+              )
+            );
           })
         );
       });
@@ -86,6 +102,13 @@ export default apiInitializer("1.0", (api) => {
   );
 });
 
+function normalizeKind(kind) {
+  if (!kind || kind === "all") {
+    return "works";
+  }
+  return kind;
+}
+
 // ══════════════════════════════════════════════════════════════════════════
 // MEMBERSHIP, NOT MEDIUM.
 // ══════════════════════════════════════════════════════════════════════════
@@ -93,23 +116,31 @@ export default apiInitializer("1.0", (api) => {
 // ⚠ THIS USED TO READ `row.dataset.kind === kind`, AND THAT IS NOT A FILTER,
 //   IT IS A TYPE MATCH.
 //
-//   The server bakes the top ten for `all` PLUS the top ten for each medium,
-//   deduped — so the list is a union and a row's medium says what it is, not
-//   whether it earned a place under that chip. Matching on medium showed every
-//   book in the union under "Book", including ones that are only there because
-//   they ranked in the overall ten. `data-buckets` is the membership the server
-//   actually computed, and it is the only honest thing to match on.
+//   The server bakes the top ten for `works` PLUS the top ten for each medium
+//   PLUS the top ten discussions, deduped — so the list is a union and a
+//   row's medium says what it is, not whether it earned a place under that
+//   chip. Matching on medium showed every book in the union under "Book",
+//   including ones that are only there because they ranked in the overall
+//   ten. `data-buckets` is the membership the server actually computed, and
+//   it is the only honest thing to match on.
 //
 // ⚠ And `shown` is READ FROM THE CHIP, not counted from the rows. Counting
 //   visible rows would recompute a fact the server already knows, which is how
 //   the counts and the list disagreed the first time (D-029's chip that
 //   saturated at the page size).
 function apply(block, chips, kind) {
-  chips.forEach((c) => c.classList.toggle("is-active", (c.dataset.kind || "all") === kind));
+  kind = normalizeKind(kind);
+  chips.forEach((c) =>
+    c.classList.toggle("is-active", normalizeKind(c.dataset.kind) === kind)
+  );
 
   block.querySelectorAll(".cb-assoc-row").forEach((row) => {
     const buckets = (row.dataset.buckets || "").split(" ").filter(Boolean);
-    row.hidden = !buckets.includes(kind);
+    // Legacy "all" bucket aliases the Works top-N — treat them the same.
+    const match =
+      buckets.includes(kind) ||
+      (kind === "works" && buckets.includes("all"));
+    row.hidden = !match;
   });
 
   // ⚠ The chip count is the REAL TOTAL while the list holds the best ten, so
@@ -119,12 +150,12 @@ function apply(block, chips, kind) {
   if (!all) {
     return;
   }
-  const chip = chips.find((c) => (c.dataset.kind || "all") === kind);
+  const chip = chips.find((c) => normalizeKind(c.dataset.kind) === kind);
   const total = parseInt(chip?.dataset.count || "0", 10);
   const shown = parseInt(chip?.dataset.shown || "0", 10);
 
   all.hidden = total <= shown;
-  all.href = kind === "all" ? stripFilter(all.href) : withFilter(all.href, kind);
+  all.href = kind === "works" ? stripFilter(all.href) : withFilter(all.href, kind);
 }
 
 function withFilter(href, kind) {

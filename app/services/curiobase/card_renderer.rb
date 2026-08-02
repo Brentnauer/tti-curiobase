@@ -190,9 +190,9 @@ module Curiobase
 
       targets =
         if kind == "subject"
-          SubjectEdges.replace!(@topic, record["refs"])
+          ::Curiobase::SubjectEdges.replace!(@topic, record["refs"])
         else
-          SubjectEdges.clear!(@topic)
+          ::Curiobase::SubjectEdges.clear!(@topic)
         end
 
       self_slug = record["slug"].to_s
@@ -317,8 +317,9 @@ module Curiobase
       card.add_child(buy) if buy
     end
 
-    # Video is the work itself — no poster column. Everything else keeps one
-    # (authored art, cover from the embed host, or a labelled placeholder).
+    # Video is the work itself — no poster column in the head (the stage is the
+    # player). Everything else keeps a poster column (attachment, authored URL,
+    # or labelled empty tile).
     def work_head_class(w, _embed = nil)
       skip_poster?(w) ? "cb-head cb-head--text" : "cb-head"
     end
@@ -328,7 +329,13 @@ module Curiobase
     end
 
     def attach_work_media(head, w, _embed = nil)
-      return if skip_poster?(w)
+      if skip_poster?(w)
+        # Still lift a dragged image (or cache poster.url) so it does not sit
+        # under the card, and so Subject association rows can thumb it. Never
+        # render it in the video head — that would compete with the stage.
+        claim_list_poster!(w)
+        return
+      end
 
       attached =
         if (dragged = hero)
@@ -349,6 +356,17 @@ module Curiobase
         end
 
       head["class"] = "cb-head cb-head--text" unless attached
+    end
+
+    # Video: take! the body image (remember_poster runs inside media()) without
+    # placing a poster column. Authors download a YouTube thumbnail and drag it
+    # in — we never fetch host covers. Fence has no poster key (ELSEWHERE).
+    def claim_list_poster!(w)
+      return if hero
+
+      # Fixture / legacy shape only — post-authored records use the drag path.
+      poster = w.dig("poster", "url")
+      remember_poster(poster) if poster.present?
     end
 
     # Full-width media strip between the identity head and gravity.
