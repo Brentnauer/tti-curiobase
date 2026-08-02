@@ -102,14 +102,13 @@ RSpec.describe Curiobase::GravityController do
       expect(data[:voter_count]).to eq(1)
     end
 
-    it "weighs a staff vote at five against a member's one" do
+    it "averages a staff vote equally with a member's" do
       sign_in(Fabricate(:admin))
       cast(value: 5)
       sign_in(user)
       cast(value: 1)
 
-      # (5×5 + 1×1) / 6
-      expect(response.parsed_body["display"]).to eq(4.33)
+      expect(response.parsed_body["display"]).to eq(3.0)
       expect(response.parsed_body["voter_count"]).to eq(2)
       expect(response.parsed_body["distribution"]).to eq([1, 0, 0, 0, 1])
     end
