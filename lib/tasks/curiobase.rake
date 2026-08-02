@@ -230,6 +230,23 @@ task "curiobase:doctor" => :environment do
         say.call("#{label}: no cached slug — run curiobase:rebake")
       end
 
+      # Staff status vs membership split — editorial signal, not a broken record.
+      if ref[:kind] == "subject" &&
+           Curiobase::SubjectCard::SETTLED_STATUSES.include?(record["status"].to_s)
+        split =
+          Curiobase::Associations
+            .new(ref[:id])
+            .rows
+            .select { |r| r.kind == "work" && r.gravity&.disagree? }
+        if split.any?
+          ids = split.map(&:work_id).compact.first(5).join(", ")
+          say.call(
+            "#{label}: status is '#{record["status"]}' but members disagree on " \
+              "#{split.size} pairing(s) (e.g. #{ids}) — check or leave the tension visible",
+          )
+        end
+      end
+
       next unless ref[:kind] == "work"
 
       # ⚠ ORPHANED VOTES. Tagging creates the pairing; votes only score it. Untag

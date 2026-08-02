@@ -31,6 +31,8 @@ module Curiobase
 
     MEDIA = %w[film series book game video document].freeze
     FILTERS = (MEDIA + %w[discussion]).freeze
+    # Staff statuses that claim the file is settled — membership may still split.
+    SETTLED_STATUSES = %w[explained debunked hoax-admitted].freeze
 
     def self.for_slug(slug, variant: :full, active_filter: nil)
       record = Source.subject(slug)
@@ -296,6 +298,9 @@ module Curiobase
       h = node("h2", class: "cb-assoc-head")
       h.content = I18n.t("curiobase.associations_heading")
       block.add_child(h)
+      if (signal = status_membership_note)
+        block.add_child(signal)
+      end
       block.add_child(filters(assoc.counts, assoc.shown_counts))
 
       list = node("ol", class: "cb-assoc-list#{thumbs? ? " cb-assoc-list--thumbs" : ""}")
@@ -335,6 +340,15 @@ module Curiobase
       block.add_child(h)
       block.add_child(para("cb-assoc-invite", I18n.t("curiobase.assoc_empty")))
       block
+    end
+
+    # Staff `status:` can say the file is settled while members still split on
+    # how hard Works pull on it. Surface that without replacing either signal.
+    def status_membership_note
+      return nil unless SETTLED_STATUSES.include?(@r["status"].to_s)
+      return nil unless @assoc_rows.to_a.any? { |r| r.kind == "work" && r.gravity&.disagree? }
+
+      para("cb-status-signal", I18n.t("curiobase.status_membership_split", status: @r["status"].to_s.tr("-", " ")))
     end
 
     # ⚠ Real links to the TAG PAGE, not JavaScript tabs and not the topic.
@@ -559,7 +573,13 @@ module Curiobase
       # data-strength drives a colour ramp in CSS. Redundant encoding — the
       # number is right there — so colour is never the only carrier of meaning.
       cell["data-strength"] = value.round.clamp(1, 5).to_s
-      cell["title"] = I18n.t("curiobase.gravity_heading")
+      title = I18n.t("curiobase.gravity_heading")
+      if r.gravity.disagree?
+        cell["class"] = "cb-assoc-meta cb-assoc-gravity cb-assoc-gravity--split"
+        cell["data-disagree"] = "1"
+        title = "#{title} · #{I18n.t("curiobase.members_disagree")}"
+      end
+      cell["title"] = title
 
       dot = node("span", class: "cb-glyph", "aria-hidden": "true")
       dot.content = "●"

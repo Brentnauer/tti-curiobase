@@ -31,8 +31,20 @@ RSpec.describe Curiobase::ReadingsController do
     expect(body["subject"]).to eq("causal-loop")
     expect(body["readings"]["primer-2004"]["display"]).to be_a(Numeric)
     expect(body["readings"]["primer-2004"]["voter_count"]).to eq(2)
+    expect(body["readings"]["primer-2004"]["disagree"]).to eq(false)
     expect(body["readings"]["unknown-work"]["display"]).to be_nil
     expect(body["readings"]["unknown-work"]["voter_count"]).to eq(0)
+    expect(body["readings"]["unknown-work"]["disagree"]).to eq(false)
+  end
+
+  it "flags disagreement when the pairing is split" do
+    2.times { Curiobase::VoteStore.cast(work_id: "primer-2004", subject: "causal-loop", user_id: Fabricate(:user, trust_level: TrustLevel[1]).id, value: 1) }
+    2.times { Curiobase::VoteStore.cast(work_id: "primer-2004", subject: "causal-loop", user_id: Fabricate(:user, trust_level: TrustLevel[1]).id, value: 5) }
+
+    get "/curiobase/readings.json",
+        params: { subject: "causal-loop", works: "primer-2004" }
+
+    expect(response.parsed_body["readings"]["primer-2004"]["disagree"]).to eq(true)
   end
 
   it "also accepts works as an array" do

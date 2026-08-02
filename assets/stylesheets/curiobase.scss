@@ -1120,6 +1120,20 @@
   &[data-strength="4"] .cb-glyph { opacity: 0.75; }
   &[data-strength="5"] .cb-glyph { opacity: 1; }
   &[data-strength="5"] { color: var(--tertiary); }
+
+  // Membership split — dotted underline; title carries "members disagree".
+  &--split {
+    text-decoration: underline dotted;
+    text-underline-offset: 0.2em;
+  }
+}
+
+// Staff status vs membership split — quiet, never a second badge row.
+.cb-status-signal {
+  margin: 0 0 0.75em;
+  font-size: var(--font-down-1);
+  line-height: var(--line-height-large);
+  color: var(--primary-medium);
 }
 
 // Matches the heart Discourse itself uses for a like, so the affordance and

@@ -250,6 +250,17 @@ RSpec.describe Curiobase::Gravity do
     expect(r.distribution).to eq([1, 0, 0, 0, 1])
     expect(r.voter_count).to eq(2)
     expect(r.display).to eq(3.0)
+    expect(r).not_to be_disagree
+  end
+
+  it "marks disagreement when both ends of the scale have real weight" do
+    2.times { vote(Fabricate(:user, trust_level: TrustLevel[1]), 1) }
+    2.times { vote(Fabricate(:user, trust_level: TrustLevel[1]), 5) }
+
+    r = described_class.for(work, "causal-loop")
+    expect(r.distribution).to eq([2, 0, 0, 0, 2])
+    expect(r).to be_disagree
+    expect(described_class.disagree?(r.distribution)).to be true
   end
 
   it "scores each pairing separately" do

@@ -379,6 +379,10 @@ the account qualifies. Suspended users stop counting. Deleting a user removes th
 - Clicking your own mark again retracts the vote.
 - After a vote, Subject association rows update scores and reorder Works live (discussions stay
   after Works). Baked HTML remains the crawler path; a throttled rebake follows.
+- **Members disagree** is computed from the vote distribution (real weight on both 1–2 and 4–5).
+  Work cards name it beside the bar; association rows get a dotted gravity mark + tooltip. When
+  staff `status` is `explained` / `debunked` / `hoax-admitted` but any pairing still splits,
+  the Subject list shows a quiet note — and `curiobase:doctor` can flag the same tension.
 
 ### Limits
 

@@ -157,4 +157,45 @@ RSpec.describe Curiobase::SubjectCard do
       expect(capped(:banner)).not_to include("cb-assoc-all")
     end
   end
+
+  describe "computed disagreement" do
+    fab!(:work_topic) { Fabricate(:topic, title: "Primer (2004) — the garage film") }
+    fab!(:work_post) { Fabricate(:post, topic: work_topic, raw: "[wrap=work id=123]\n[/wrap]") }
+
+    before do
+      SiteSetting.curiobase_member_voting_enabled = true
+      work_topic.tags = [tag]
+      Curiobase.rebake_now!(work_post)
+      2.times do
+        Curiobase::VoteStore.cast(
+          work_id: "primer-2004",
+          subject: "john-titor",
+          user_id: Fabricate(:user, trust_level: TrustLevel[1]).id,
+          value: 1,
+        )
+      end
+      2.times do
+        Curiobase::VoteStore.cast(
+          work_id: "primer-2004",
+          subject: "john-titor",
+          user_id: Fabricate(:user, trust_level: TrustLevel[1]).id,
+          value: 5,
+        )
+      end
+    end
+
+    it "marks split pairings on association gravity cells" do
+      frag = Nokogiri::HTML5.fragment(html(:full))
+      cell = frag.at_css(".cb-assoc-gravity--split")
+      expect(cell).to be_present
+      expect(cell["data-disagree"]).to eq("1")
+      expect(cell["title"]).to include(I18n.t("curiobase.members_disagree"))
+    end
+
+    it "notes when staff status is settled but members still split" do
+      # Fixture status is hoax-admitted — a settled staff mark.
+      expect(html(:full)).to include("cb-status-signal")
+      expect(html(:full)).to include(I18n.t("curiobase.status_membership_split", status: "hoax admitted"))
+    end
+  end
 end

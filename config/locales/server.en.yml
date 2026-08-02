@@ -22,6 +22,8 @@ en:
     assoc_empty: "Nothing engages this yet — tag a Work with this Subject to create a pairing."
     gravity_empty: "Tag this Work with a Subject to rate how strongly it pulls on the idea."
     members_disagree: "members disagree"
+    # Staff status settled; members still split on at least one pairing.
+    status_membership_split: "Marked %{status}, but members still disagree on how some works pull on this."
     filter_all: "All"
     # Filter chips count things, so they are plural: "Books 12".
     kinds:

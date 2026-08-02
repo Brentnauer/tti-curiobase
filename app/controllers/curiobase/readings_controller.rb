@@ -39,6 +39,7 @@ module Curiobase
           out[wid] = {
             display: reading&.display,
             voter_count: reading&.voter_count.to_i,
+            disagree: reading&.disagree? || false,
           }
         end
 

@@ -142,6 +142,7 @@ module Curiobase
         # nil below two voters, so the client draws no bar — same rule as the
         # baked card. See Gravity::Reading#distributed?.
         distribution: reading&.distributed? ? reading.distribution : nil,
+        disagree: reading&.disagree? || false,
       }
     end
 
@@ -155,6 +156,7 @@ module Curiobase
           work_id: @work_id,
           display: reading&.display,
           voter_count: reading&.voter_count.to_i,
+          disagree: reading&.disagree? || false,
         },
       )
     rescue StandardError => e

@@ -790,17 +790,9 @@ module Curiobase
       # name the disagreement — that is the contested-archive signal.
     def distribution_note_text(dist, voter_count)
       base = I18n.t("curiobase.members_rated", count: voter_count)
-      return base unless contested_distribution?(dist)
+      return base unless Gravity.disagree?(dist)
 
       "#{base} · #{I18n.t("curiobase.members_disagree")}"
-    end
-
-    def contested_distribution?(dist)
-      return false unless dist.is_a?(Array) && dist.size == 5
-
-      low = dist[0].to_i + dist[1].to_i
-      high = dist[3].to_i + dist[4].to_i
-      low >= 2 && high >= 2
     end
 
     def distribution_breakdown(dist)

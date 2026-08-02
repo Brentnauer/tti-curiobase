@@ -23,7 +23,21 @@ module Curiobase
         # ⚠ One vote drawn as five bars looks like consensus. Below two voters
         #   the number alone is the honest presentation.
         def distributed? = voter_count.to_i >= 2
+
+        # Membership split: real weight on both ends of the scale. Independent
+        # of staff `status:` — that is the editorial signal; this is the vote.
+        def disagree? = distributed? && Gravity.disagree?(distribution)
       end
+
+    # Low (1–2) and high (4–5) each have at least two votes. Same rule as the
+    # Work card's "members disagree" note — one definition for bake + API + JS.
+    def self.disagree?(distribution)
+      return false unless distribution.is_a?(Array) && distribution.size == 5
+
+      low = distribution[0].to_i + distribution[1].to_i
+      high = distribution[3].to_i + distribution[4].to_i
+      low >= 2 && high >= 2
+    end
 
     # ══════════════════════════════════════════════════════════════════════════
     # EVERY READ GOES THROUGH `readings`. TWO QUERIES, WHATEVER THE SHAPE.

@@ -133,6 +133,7 @@ function normalize(data) {
     work_id: data.work_id || data.workId,
     display: data.display,
     voter_count: data.voter_count ?? data.voterCount,
+    disagree: !!(data.disagree ?? data.Disagree),
   };
 }
 
@@ -152,6 +153,7 @@ function paintRow(block, workId, reading, opts = {}) {
     delete row.dataset.gravity;
     cell.className = "cb-assoc-meta cb-unrated";
     cell.removeAttribute("data-strength");
+    cell.removeAttribute("data-disagree");
     cell.title = I18n.t("curiobase.unrated");
     cell.textContent = "—";
     if (!opts.skipReorder) {
@@ -161,10 +163,18 @@ function paintRow(block, workId, reading, opts = {}) {
   }
 
   const value = Number(display);
+  const disagree = !!reading?.disagree;
   row.dataset.gravity = value.toFixed(2);
-  cell.className = "cb-assoc-meta cb-assoc-gravity";
+  cell.className =
+    "cb-assoc-meta cb-assoc-gravity" + (disagree ? " cb-assoc-gravity--split" : "");
   cell.dataset.strength = String(Math.min(5, Math.max(1, Math.round(value))));
-  cell.title = I18n.t("curiobase.gravity_heading");
+  if (disagree) {
+    cell.dataset.disagree = "1";
+    cell.title = `${I18n.t("curiobase.gravity_heading")} · ${I18n.t("curiobase.members_disagree")}`;
+  } else {
+    cell.removeAttribute("data-disagree");
+    cell.title = I18n.t("curiobase.gravity_heading");
+  }
   cell.replaceChildren();
 
   const dot = document.createElement("span");
