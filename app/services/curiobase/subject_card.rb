@@ -201,13 +201,17 @@ module Curiobase
         dt = node("dt", "data-verb": verb, class: "cb-refs-verb")
         dt.content = rows.first["label"].presence || PostRecord.edge_label(verb)
         dl.add_child(dt)
-        rows.each do |ref|
-          dd = node("dd", "data-verb": verb)
+
+        # One <dd> per verb. Separate <dd>s auto-place into column 1 of the
+        # facts grid and drop under the label — the "Related" wrap bug.
+        dd = node("dd", "data-verb": verb, class: "cb-refs-targets")
+        rows.each_with_index do |ref, i|
+          dd.add_child(text(" · ")) if i.positive?
           a = node("a", href: ref_href(ref["slug"]))
           a.content = ref["title"].presence || ref["slug"]
           dd.add_child(a)
-          dl.add_child(dd)
         end
+        dl.add_child(dd)
       end
       dl.children.any? ? dl : nil
     end

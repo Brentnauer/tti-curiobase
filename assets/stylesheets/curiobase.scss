@@ -466,8 +466,11 @@
   .cb-badges {
     order: -1;
     display: flex;
+    flex-wrap: wrap;
     gap: 6px;
     margin: 0 0 0.5em;
+    // Cooked `<p>` inherits a tall line-height; chips must not.
+    line-height: 1;
   }
 
   // ⚠ 2px matches core's `--category-badge-border-radius` exactly. The one
@@ -479,11 +482,12 @@
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    // Caps + `--line-height-large` left a tall line box with empty space under
-    // the glyphs. Tight line-height + flex centers the label in the chip.
+    // Caps sit high in the em box (no descenders). Equal padding still looks
+    // bottom-heavy; shave the bottom so the label reads optically centred.
     line-height: 1;
-    padding: 0.35em 0.55em;
+    padding: 0.22em 0.55em 0.14em;
     border-radius: 2px;
+    box-sizing: border-box;
 
     // Quiet chips — kind/domain are classification, not a call to action.
     // Solid tertiary blocks competed with the topic title above the card.
@@ -856,6 +860,11 @@
 .cb-refs {
   a { font-weight: 600; }
 
+  .cb-refs-targets {
+    // Keep multi-target wraps inside the value column (· separators).
+    min-width: 0;
+  }
+
   .cb-refs-verb[data-verb="contradicts"] {
     color: var(--danger, var(--primary-medium));
   }
@@ -914,8 +923,17 @@
   margin: 0.9em 0 0;
   font-size: var(--font-down-1);
 
-  dt { color: var(--primary-medium); }
-  dd { margin: 0; }
+  // Pin columns explicitly. Without this, a second <dd> after one <dt>
+  // auto-places into column 1 and sits under the label.
+  dt {
+    grid-column: 1;
+    color: var(--primary-medium);
+  }
+  dd {
+    grid-column: 2;
+    margin: 0;
+    min-width: 0;
+  }
 }
 
 .cb-landing {

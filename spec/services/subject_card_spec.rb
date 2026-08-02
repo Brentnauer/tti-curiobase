@@ -181,8 +181,14 @@ RSpec.describe Curiobase::SubjectCard do
       expect(frag.at_css(".cb-dek")).to be_present
       expect(frag.to_html.index("cb-dek")).to be < frag.to_html.index("cb-refs")
       expect(frag.css('dt[data-verb="explains"]').size).to eq(1)
-      expect(frag.css('dd[data-verb="explains"]').size).to eq(2)
+      # One dd per verb — multiple targets share it (· separated), so the
+      # facts grid cannot drop a second dd under the label.
+      explains = frag.at_css('dd[data-verb="explains"]')
+      expect(explains).to be_present
+      expect(explains.css("a").map(&:text)).to eq(["Orfordness Lighthouse", "Other"])
+      expect(explains.text).to include(" · ")
       expect(frag.css('dt[data-verb="related"]').size).to eq(1)
+      expect(frag.css('dd[data-verb="related"]').size).to eq(1)
     end
 
     it "omits edges from the banner" do
