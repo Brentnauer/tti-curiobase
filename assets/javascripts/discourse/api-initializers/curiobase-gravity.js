@@ -389,8 +389,8 @@ function updateAggregate(mount, r) {
     seg.style.flexGrow = ((dist[i] / total) * 100).toFixed(2);
   });
 
-  // ⚠ The count labels the BAR, never the number beside it. The number is
-  //   standing-weighted; the bar is an unweighted headcount.
+  // The count labels the BAR, never the number beside it. Both describe the
+  // same eligible headcount; the number is their mean.
   let note = score.querySelector(".cb-dist-note");
   if (!note) {
     note = document.createElement("span");

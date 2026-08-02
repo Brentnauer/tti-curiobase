@@ -22,7 +22,6 @@ require_relative "lib/curiobase/standing"
 require_relative "lib/curiobase/vote_store"
 require_relative "lib/curiobase/topic_kind"
 require_relative "lib/curiobase/record_topic"
-require_relative "lib/curiobase/annotation"
 require_relative "lib/curiobase/recommendations"
 require_relative "lib/curiobase/post_kind"
 require_relative "lib/curiobase/identifiers"
@@ -98,7 +97,6 @@ after_initialize do
   #   that call the param is not merely ignored — it raises.
   Curiobase::TopicKind.register!
   Curiobase::RecordTopic.register!
-  Curiobase::Annotation.register!
   Curiobase::SeriesEpisodes.register!
   Curiobase::GoogleBooks.register!
   # The poster URL, so a Subject's association list can show thumbnails without
@@ -221,17 +219,8 @@ after_initialize do
   on(:post_edited) do |post, topic_changed|
     next unless SiteSetting.curiobase_enabled
     next unless post.is_first_post?
-
-    Curiobase.maybe_ensure_annotation!(post)
-
     next unless topic_changed
     Curiobase.schedule_record_rebake!(post.topic)
-  end
-
-  on(:post_created) do |post|
-    next unless SiteSetting.curiobase_enabled
-    next unless post.is_first_post?
-    Curiobase.maybe_ensure_annotation!(post)
   end
 
   on(:topic_tags_changed) do |topic, payload|

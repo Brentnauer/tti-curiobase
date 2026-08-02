@@ -13,8 +13,8 @@ module Curiobase
 
     # ⚠ EVERY SWEEP OVER THE CATALOGUE MUST USE THIS.
     #
-    #   There are two ways to author a record and four things that walk them
-    #   all: rebake, doctor, annotate, and verify.sh. Each one was written when
+    #   There are two ways to author a record and three things that walk them
+    #   all: rebake, doctor, and verify.sh. Each one was written when
     #   there was only one way, and each one silently skipped the converted
     #   record — `curiobase:rebake` reported 33 posts when there were 34, and
     #   nothing about a smaller number looks like a bug.

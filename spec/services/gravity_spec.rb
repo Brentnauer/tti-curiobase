@@ -79,45 +79,25 @@ RSpec.describe Curiobase::Standing do
   fab!(:tl3) { Fabricate(:user, trust_level: TrustLevel[3]) }
   fab!(:tl0) { Fabricate(:user, trust_level: TrustLevel[0]) }
   fab!(:admin)
-  fab!(:supporters) { Fabricate(:group, name: "supporters") }
 
-  before { SiteSetting.curiobase_supporter_group = "" }
+  before { SiteSetting.curiobase_min_trust_level = 1 }
 
-  # ⚠ The setting is `type: group`, so it holds an ID. It was a typed NAME, and
-  #   a typo or a later rename returned an empty set — every supporter silently
-  #   losing their bonus while the setting still read as configured.
-  it "ignores a group that no longer exists rather than raising" do
-    SiteSetting.curiobase_supporter_group = supporters.id
-    supporters.add(tl3)
-    supporters.destroy!
-
-    expect(described_class.weight_for(tl3.id)).to eq(3.0)
-  end
-
-  it "weighs a vote by trust level" do
+  it "gives every eligible member weight 1" do
     expect(described_class.weight_for(tl1.id)).to eq(1.0)
-    expect(described_class.weight_for(tl3.id)).to eq(3.0)
+    expect(described_class.weight_for(tl3.id)).to eq(1.0)
+    expect(described_class.weight_for(admin.id)).to eq(1.0)
   end
 
-  it "weighs staff at 5 — as staff, not as an institute" do
-    expect(described_class.weight_for(admin.id)).to eq(5.0)
-  end
-
-  # ⚠ Recorded, counts for nothing, and starts counting the moment the account
-  #   reaches TL1 — because the weight is read at display time, not cast time.
-  it "gives TL0 a weight of zero rather than refusing the vote" do
+  # Recorded, counts for nothing until the account meets the floor — because
+  # weight is read at display time, not cast time.
+  it "gives under-floor accounts weight zero rather than refusing the vote" do
     expect(described_class.weight_for(tl0.id)).to eq(0.0)
   end
 
-  it "adds one for a supporter, capped at five" do
-    SiteSetting.curiobase_supporter_group = supporters.id
-    supporters.add(tl3)
-    supporters.add(admin)
-
-    expect(described_class.weight_for(tl3.id)).to eq(4.0)
-    # ⚠ Staff plus supporter is still 5. If money moved the number materially
-    #   the number would stop being worth reading.
-    expect(described_class.weight_for(admin.id)).to eq(5.0)
+  it "respects a raised min trust level" do
+    SiteSetting.curiobase_min_trust_level = 3
+    expect(described_class.weight_for(tl1.id)).to eq(0.0)
+    expect(described_class.weight_for(tl3.id)).to eq(1.0)
   end
 
   # Standing is present-tense: a vote stops counting while its owner is out.
@@ -132,8 +112,8 @@ RSpec.describe Curiobase::Standing do
   it "weighs a whole pairing in one query" do
     expect(described_class.weights_for([tl1.id, tl3.id, admin.id])).to eq(
       tl1.id => 1.0,
-      tl3.id => 3.0,
-      admin.id => 5.0,
+      tl3.id => 1.0,
+      admin.id => 1.0,
     )
   end
 end
@@ -176,13 +156,14 @@ RSpec.describe Curiobase::VoteStore do
     expect { described_class.cast(**pairing, user_id: voter.id, value: 9) }.to raise_error(ArgumentError)
   end
 
-  it "attaches the weight on read, never storing it" do
+  it "attaches eligibility on read, never storing a weight" do
     described_class.cast(**pairing, user_id: voter.id, value: 4)
-    expect(described_class.weighted_votes(**pairing)).to eq([{ value: 4, weight: 2.0 }])
+    expect(described_class.weighted_votes(**pairing)).to eq([{ value: 4, weight: 1.0 }])
 
-    # The stored fact does not change; the weight follows the person.
-    voter.update!(trust_level: TrustLevel[4])
-    expect(described_class.weighted_votes(**pairing)).to eq([{ value: 4, weight: 4.0 }])
+    SiteSetting.curiobase_min_trust_level = 3
+    expect(described_class.weighted_votes(**pairing)).to eq([])
+  ensure
+    SiteSetting.curiobase_min_trust_level = 1
   end
 
   # ⚠ "I no longer have a view" is a different statement from "I think it is a
@@ -248,10 +229,10 @@ RSpec.describe Curiobase::Gravity do
     expect(r.voter_count).to eq(1)
   end
 
-  it "moves when a member disagrees, without being overturned" do
+  it "moves when a member disagrees, as an equal partner" do
     vote(staff, 5)
     vote(member, 1)
-    expect(described_class.for(work, "causal-loop").display).to eq(4.33)
+    expect(described_class.for(work, "causal-loop").display).to eq(3.0)
   end
 
   # ⚠ One vote drawn as five bars looks like consensus.
@@ -260,16 +241,15 @@ RSpec.describe Curiobase::Gravity do
     expect(described_class.for(work, "causal-loop")).not_to be_distributed
   end
 
-  it "builds the distribution UNWEIGHTED, so disagreement stays visible" do
+  it "builds the distribution as a headcount, so disagreement stays visible" do
     vote(staff, 5)
     vote(member, 1)
 
     r = described_class.for(work, "causal-loop")
     expect(r).to be_distributed
-    # Staff weigh 5 in the number and 1 in the bar — the bar answers "do people
-    # agree", and weighting it would destroy exactly that.
     expect(r.distribution).to eq([1, 0, 0, 0, 1])
     expect(r.voter_count).to eq(2)
+    expect(r.display).to eq(3.0)
   end
 
   it "scores each pairing separately" do

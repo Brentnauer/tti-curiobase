@@ -57,8 +57,7 @@ post_process_cooked → CardRenderer
         │
         ├─► cooked HTML (dek, poster/plate, gravity rows, associations…)
         ├─► topic custom fields (kind, slug claim, poster URL)
-        ├─► tag.description ← dek (Subject)
-        └─► maybe_ensure_annotation! (if setting on)
+        └─► tag.description ← dek (Subject)
 
 Subject tag on Work ──► pairing exists
         │
@@ -81,9 +80,7 @@ All under **Admin → Settings → Curiobase**. Defaults are intentional: safe d
 | `curiobase_enabled` | off | yes | Master switch | Enable last, after vocabulary + a few records exist |
 | `curiobase_subject_tag_group` | `Subjects` | no | Defines which tags create pairings | Create group + tags **before** enable; rename carefully |
 | `curiobase_member_voting_enabled` | on | yes | Gravity exists only if on | Leave on for catalogue; off = no scores (by design) |
-| `curiobase_min_trust_level` | 1 | yes | Who may cast | TL1 is fine; raise if vote quality is poor |
-| `curiobase_supporter_group` | — | no | +1 weight (cap 5) | Optional; use group **picker**, never a typed name |
-| `curiobase_annotation_enabled` | off | no | Community wiki post 2 | Enable when ready for member notes; **new** records auto-seed; run `curiobase:annotate` once for history |
+| `curiobase_min_trust_level` | 1 | yes | Who may cast; eligible votes weigh 1 | Raise if vote quality is poor |
 | `curiobase_structured_ratings` | off | no | Emit `AggregateRating` stars | Leave off until you want the SERP experiment; entity markup still emits |
 | `curiobase_structured_ratings_min_voters` | `5` | no | Floor on primary pairing | Only matters when structured ratings are on |
 | `curiobase_buy_links_enabled` | off | no | “Find a copy” | Keep off until affiliate IDs and free IDs are real |
@@ -96,13 +93,12 @@ All under **Admin → Settings → Curiobase**. Defaults are intentional: safe d
 | Discourse setting / object | Why |
 |---|---|
 | Tag group `Subjects` (or whatever you set) | Vocabulary |
-| `edit_wiki_post_allowed_groups` | Who edits annotation wikis (recommend stricter than default TL1 on a crank-heavy archive) |
-| Staff / TL ladder | Gravity weights |
+| First-post wiki / `edit_wiki_post_allowed_groups` | Shared community notes on the record (e.g. TL2+) |
 | Theme | Visual polish; long-term CSS may move to a theme component |
 
 **Settings gaps (nice-to-have, not blockers):**
 
-- No setting for “annotation trust / who may edit” — correctly deferred to core wiki groups.
+- No plugin setting for wiki trust — use core Discourse wiki + group gates.
 - No setting for rebake throttle / association `PER_BUCKET` — code constants; fine for v1.
 
 ---
@@ -119,7 +115,7 @@ A release is “good v1” when all of the following are true on staging (then p
 
 ### Gravity
 - [ ] Logged-in users at min TL can rate 1–5; retract works; rate limit holds.
-- [ ] Standing weights apply (TL / staff / optional supporter); suspended users stop counting.
+- [ ] Eligible votes weigh 1 each; suspended / under-floor users stop counting.
 - [ ] Deleting a user removes their votes from PluginStore.
 - [ ] Aggregates in the client response match what the next bake will show.
 
@@ -142,8 +138,8 @@ A release is “good v1” when all of the following are true on staging (then p
 1. **Staging dry-run** on a Discourse image matching prod channel (`latest` / tests-passed).
 2. **Vocabulary** — Subject tag group populated; policy for who may create Subject tags.
 3. **Convert legacy wraps** on any leftover topics (`curiobase:convert` / `doctor`).
-4. ~~**README / install**~~ — done (latest/`tests-passed`, annotation auto + rake, sync script, structured-ratings guardrails).
-5. **Wiki edit groups** — set `edit_wiki_post_allowed_groups` before enabling annotations.
+4. ~~**README / install**~~ — done (latest/`tests-passed`, sync script, structured-ratings guardrails).
+5. **Wiki edit groups** — set `edit_wiki_post_allowed_groups` (and first-post wiki) if community edits the record.
 6. ~~**Smoke script**~~ — `bin/smoke-googlebot.py` (Work + Subject + tag). Leave `curiobase_structured_ratings` off unless intentionally testing stars.
 
 ### P1 — first month
@@ -171,9 +167,9 @@ A release is “good v1” when all of the following are true on staging (then p
 | Phase | Actions | Exit criteria |
 |---|---|---|
 | **0. Prep** | Staging = prod Discourse channel; clone plugin; create Subjects group | Doctor + specs green on staging |
-| **1. Dark** | `curiobase_enabled` on; voting on; annotation/buy **off**; staff-only records | Cards bake; no member confusion |
-| **2. Soft** | Invite TL2+ to rate a few pairings; watch weights | Scores stable; no rebake storms |
-| **3. Annotate** | Set wiki groups; enable annotation; `curiobase:annotate` once | Post 2 exists; refuse cases logged |
+| **1. Dark** | `curiobase_enabled` on; voting on; buy **off**; staff-only records | Cards bake; no member confusion |
+| **2. Soft** | Invite TL2+ to rate a few pairings | Scores stable; no rebake storms |
+| **3. Wiki** | First-post wiki + `edit_wiki_post_allowed_groups` if wanted | Shared notes without a second seeded post |
 | **4. Commerce** | Enable buy links only with real IDs + free identifiers where true | Disclosure present; no empty shops |
 | **5. Announce** | Point members at Subject files + how to rate | Support FAQ ready |
 
@@ -186,8 +182,8 @@ Rollback: set `curiobase_enabled` false. Cooked HTML may still contain old cards
 1. Create Subject tag in the Subject group (slug = record slug).  
 2. Create Subject topic with fenced block + plate image; title = display name.  
 3. Create Work topic with fenced block + poster; tag with Subject slugs.  
-4. Rate (staff vote weighs 5) so the pairing isn’t empty.  
-5. Optionally fill community wiki after annotation is on.  
+4. Rate so the pairing isn’t empty (every eligible vote weighs 1).  
+5. Optionally mark the first post a wiki for TL2+ community edits.  
 6. Run `curiobase:doctor` after bulk work.
 
 **Pairing rule to teach members:** tagging *is* the link. No tag → no gravity row, no association membership.

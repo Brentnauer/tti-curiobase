@@ -19,9 +19,8 @@ en:
       retract: "Click again to take your vote back"
       sign_in_to_rate: "Sign in to rate"
       trust_level_to_rate: "Rating opens up as you read more"
-      # ⚠ Labels the DISTRIBUTION BAR, not the number. The bar is an unweighted
-      #   count of people and the count describes it exactly; the number beside
-      #   it is weighted by standing and is not a plain average of those voters.
+      # Labels the DISTRIBUTION BAR (headcount). The number beside it is the
+      # plain mean of eligible votes — one member, one vote.
       members_rated:
         one: "1 vote"
         other: "%{count} votes"

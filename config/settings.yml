@@ -25,18 +25,6 @@ curiobase:
     default: "Subjects"
     client: false
 
-  # Post 2 of every record topic becomes a community wiki.
-  #
-  # ⚠ Ships off. When on, *new* valid records auto-seed post 2; run
-  #   `curiobase:annotate` once to backfill history. That rake writes posts.
-  #
-  # ⚠ Who may edit is NOT set here — it is Discourse's own
-  #   `edit_wiki_post_allowed_groups`. On a crank-heavy archive, tighten that
-  #   before enabling.
-  curiobase_annotation_enabled:
-    default: false
-    client: false
-
   # ⚠ Gravity IS the vote — there is no other source for the number. Turning
   #   this off removes the number entirely (no editorial fallback).
   curiobase_member_voting_enabled:
@@ -100,21 +88,4 @@ curiobase:
   #   within weeks and a permanent chore; a search for the title never expires.
   curiobase_ebay_campaign:
     default: ""
-    client: false
-
-  # Members of this group get +1 on their vote weight, capped at 5.
-  #
-  # ⚠ Keep the bonus at +1. A supporter at TL3 weighs 4, not 6. If money moves
-  #   the number materially the number stops being worth reading, and every
-  #   reader who works that out stops trusting the catalogue.
-  #
-  # ⚠ `type: group` — A PICKER, NOT A TYPED NAME. This was a free-text field
-  #   holding a group name, looked up with `Group.find_by(name:)`. A typo, a
-  #   rename, or trailing whitespace returned an empty set: every supporter
-  #   silently loses their bonus and the setting still reads as configured.
-  #   That is this project's signature failure — a no-op that looks like it
-  #   worked — and a picker makes it unrepresentable.
-  curiobase_supporter_group:
-    default: ""
-    type: group
     client: false

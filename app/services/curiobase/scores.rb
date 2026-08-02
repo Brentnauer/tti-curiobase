@@ -10,8 +10,8 @@ module Curiobase
     #
     #   display = Σ wᵢ·voteᵢ / Σ wᵢ
     #
-    # Weights come from Standing — trust level, staff, supporter. That is the
-    # whole model.
+    # Weights come from Standing — 1.0 for every eligible member, 0.0 otherwise.
+    # One vote is one vote.
     #
     # ⚠ TWO THINGS USED TO SIT OUTSIDE THIS AVERAGE AND BOTH WERE WRONG.
     #
@@ -21,10 +21,9 @@ module Curiobase
     #   chart. Wrong here, where a pairing with three votes has three votes and
     #   inventing seventeen more says something false about how contested it is.
     #
-    #   Then an "institute" term with a permanent weight of 5, added on top of
-    #   the ladder, so the operator's judgement outranked the membership by
-    #   construction. That inverted the point of the feature. The operator votes
-    #   like everyone else; their vote weighs 5 because they are staff.
+    #   Then an "institute" term (and later TL/staff ladders) so some accounts
+    #   outranked others by construction. Gravity is what the membership says;
+    #   the operator votes like everyone else.
     #
     #   The visible behaviour of one-admin-vote is identical either way — the
     #   number shows immediately, because it is the only vote in the average.

@@ -39,7 +39,7 @@ Work.”
 13. [Association lists and filters](#association-lists-and-filters)
 14. [Find a copy](#find-a-copy)
 15. [Structured data](#structured-data)
-16. [Community wiki](#community-wiki)
+16. [Community notes](#community-notes)
 17. [Tag pages](#tag-pages)
 18. [HTTP API](#http-api)
 19. [Rake tasks](#rake-tasks)
@@ -105,8 +105,7 @@ post_process_cooked → CardRenderer
         │
         ├─► cooked HTML (dek, media, gravity, associations…)
         ├─► topic custom fields (kind, slug claim, poster URL, series parent)
-        ├─► tag.description ← dek (Subject)
-        └─► maybe_ensure_annotation! (if setting on)
+        └─► tag.description ← dek (Subject)
 
 Subject tag on Work ──► pairing exists
         │
@@ -177,10 +176,8 @@ features opt-in.
 |---|---|---|---|
 | `curiobase_enabled` | off | yes | Master switch. Enable last, after vocabulary + a few records exist. |
 | `curiobase_subject_tag_group` | `Subjects` | no | Which tags create pairings. Rename carefully. |
-| `curiobase_min_trust_level` | `1` | yes | Minimum trust level to rate. |
+| `curiobase_min_trust_level` | `1` | yes | Minimum trust level to rate. Eligible votes all weigh the same. |
 | `curiobase_member_voting_enabled` | on | yes | Gravity *is* the vote. Off = no scores at all (no editorial fallback). |
-| `curiobase_supporter_group` | — | no | Group **picker**. Members get +1 vote weight, capped at 5. |
-| `curiobase_annotation_enabled` | off | no | Community wiki at post 2. New records auto-seed when on; run `curiobase:annotate` once for history. |
 | `curiobase_structured_ratings` | off | no | Emit `AggregateRating` on Work pages (SEO experiment). Entity markup still emits either way. |
 | `curiobase_structured_ratings_min_voters` | `5` | no | Floor on the primary pairing before stars emit. |
 | `curiobase_buy_links_enabled` | off | no | “Find a copy” line. |
@@ -195,9 +192,8 @@ Each shop stays hidden until its id is set. The free half of “Find a copy” n
 | Discourse setting / object | Why |
 |---|---|
 | Tag group matching `curiobase_subject_tag_group` | Subject vocabulary |
-| `edit_wiki_post_allowed_groups` | Who edits annotation wikis (tighten before enabling annotations) |
-| Staff / TL ladder | Gravity weights |
-| `allowed_iframes` / CSP | YouTube embeds (plugin also registers youtube embed prefixes) |
+| First-post wiki / `edit_wiki_post_allowed_groups` | Community notes on the record itself (e.g. TL2+); not a plugin setting |
+| `allowed_iframes` / CSP | YouTube / Books / Archive embeds (plugin also registers prefixes) |
 
 When structured ratings are on, Google sees **one** `AggregateRating` per Work URL from the pairing
 with the most voters (not an average across all Subject tags). Likes/recommends are never exported
@@ -210,8 +206,8 @@ as ratings.
 1. Create a Subject tag in the Subject group (slug = record slug).
 2. Create the Subject topic: fenced block + optional plate image; title = display name.
 3. Create Work topics: fenced block + optional poster; tag with Subject slugs.
-4. Rate the pairing (staff weighs 5) so the list isn’t empty.
-5. Optionally fill the community wiki after annotation is on.
+4. Rate the pairing so the list isn’t empty.
+5. Optionally make the first post a wiki (Discourse) so TL2+ can refine the record.
 6. Run `curiobase:doctor` after any bulk change.
 
 **Teach members:** tagging *is* the link. No Subject tag → no gravity row, no association membership.
@@ -371,17 +367,11 @@ Three label sets, one scale — a 5 is a 5 in any of them; mixed association lis
 A Work card uses its own `mode`. A Subject association list uses fiction or nonfiction only when
 every listed Work agrees; otherwise neutral.
 
-### Vote weight
+### Who counts
 
-| Standing | Weight |
-|---|---|
-| TL0 | 0 (vote is stored; starts counting at TL1) |
-| TL1–TL4 | 1–4 |
-| Staff | 5 |
-| Supporter group | +1, capped at 5 |
-
-Weight is applied **on read**, never frozen at cast time — standing changes follow the member.
-Suspended users stop counting. Deleting a user removes their PluginStore votes.
+Every eligible member’s vote weighs **1**. Eligibility is `trust_level ≥ curiobase_min_trust_level`,
+active, and not suspended/silenced. Under-floor votes can still be stored; they start counting when
+the account qualifies. Suspended users stop counting. Deleting a user removes their PluginStore votes.
 
 ### Client behaviour
 
@@ -494,15 +484,13 @@ Smoke with Googlebot UA or `bin/smoke-googlebot.py`.
 
 ---
 
-## Community wiki
+## Community notes
 
-When `curiobase_annotation_enabled` is on:
+Curiobase does **not** seed a separate wiki post. Use Discourse’s own tools on the record topic:
 
-- Valid **new** records auto-seed post 2 as a wiki with seeded headings
-- Run `curiobase:annotate` once to backfill existing records
-- Refuses if post 2 already exists and is not an annotation (won’t append at post 47)
-- Who may edit is Discourse’s `edit_wiki_post_allowed_groups` — set it before enabling
-- Card links to the notes when present
+- Mark the **first post** as a wiki when you want shared edits
+- Set `edit_wiki_post_allowed_groups` (e.g. trust_level_2) for who may edit
+- Keep the fenced `curiobase` block intact — that is still the machine-readable record
 
 ---
 
@@ -559,7 +547,6 @@ LOAD_PLUGINS=1 bundle exec rake curiobase:doctor
 |---|---|
 | `curiobase:doctor` | Health check — stale claims, slug collisions, missing medium/kind cache, quiet breakage |
 | `curiobase:rebake` | Re-render every record. No revisions, no bumps. Uses the full cook path. |
-| `curiobase:annotate` | Backfill community wikis (setting must be on) |
 | `curiobase:convert[only]` | Move a legacy `[wrap]` into a fenced block. Refuses rather than dropping a field |
 | `curiobase:repair[write]` | Restore fields an earlier conversion dropped (`write` to persist) |
 | `curiobase:unclaim` | Release stale slug claims |

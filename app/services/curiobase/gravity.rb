@@ -11,10 +11,9 @@ module Curiobase
   #   an invitation, not a defect: the card asks the reader to be the first.
   #
   # ⚠ NOBODY SITS OUTSIDE THE AVERAGE. An earlier version read an "institute"
-  #   assessment off the Work in WordPress and blended it in at a fixed weight
-  #   of 5, so the operator's number outranked the membership permanently. The
-  #   operator now votes through the same control as everyone else and their
-  #   vote weighs 5 because they are staff. See Scores.
+  #   assessment off the Work and blended it in at a fixed weight of 5. Later
+  #   TL/staff ladders did the same more quietly. Every eligible vote now
+  #   weighs 1. See Standing / Scores.
   class Gravity
     Reading =
       Struct.new(:display, :voter_count, :distribution, keyword_init: true) do
@@ -96,13 +95,9 @@ module Curiobase
 
       Reading.new(
         display: display,
-        # ⚠ COUNTS AND THE BAR ARE UNWEIGHTED, on purpose.
-        #
-        #   The number answers "what does the membership say", weighted. The bar
-        #   answers "do they agree", and weighting it would destroy exactly that
-        #   — "eleven people split evenly between 1 and 5" is the most
-        #   interesting thing a contested pairing can say, and it stops being
-        #   visible the moment staff opinion is drawn thicker.
+        # Counts and the bar are headcounts of cast values. Eligibility (weight
+        # 0 vs 1) only affects the mean — suspended / under-floor votes drop
+        # out of the average without rewriting history.
         voter_count: raw.size,
         distribution: distribution_of(raw.values),
       )

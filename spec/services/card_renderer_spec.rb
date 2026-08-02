@@ -73,8 +73,8 @@ RSpec.describe Curiobase::CardRenderer do
 
     cooked = rebake
     expect(cooked).to include("cb-dist")
-    # ⚠ The count sits against the BAR, which is an unweighted count of people.
-    #   The number beside it is weighted and is not their plain average.
+    # The count sits against the BAR (headcount). The number is the mean of
+    # the same eligible votes.
     expect(cooked).to include("2 votes")
   end
 

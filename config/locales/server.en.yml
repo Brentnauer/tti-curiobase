@@ -3,11 +3,9 @@ en:
     curiobase_enabled: "Render Curiobase cards into topics and collect gravity ratings."
     curiobase_min_trust_level: "Minimum trust level required to rate."
     curiobase_subject_tag_group: "The tag group holding the Subject vocabulary. A tag outside it is an ordinary tag."
-    curiobase_annotation_enabled: "Add a community wiki as post 2 of every record. New records seed automatically when this is on; run curiobase:annotate once to backfill existing records."
-    curiobase_member_voting_enabled: "Let members rate how central a subject is to a work. This is where gravity comes from — with it off there is no score at all."
+    curiobase_member_voting_enabled: "Let members rate how central a subject is to a work. This is where gravity comes from — with it off there is no score at all. Every eligible vote weighs the same."
     curiobase_structured_ratings: "Emit AggregateRating on Work pages for search engines. Off by default — gravity is centrality, not a review score. Entity markup still emits."
     curiobase_structured_ratings_min_voters: "Minimum voters on the primary Work↔Subject pairing before AggregateRating is emitted."
-    curiobase_supporter_group: "Members of this group get +1 vote weight, capped at 5."
     curiobase_buy_links_enabled: "Show a 'Find a copy' line on Work cards. Free sources (Internet Archive, libraries, Steam, streaming lookup) appear on their own; each shop also needs its affiliate id below, or it stays hidden."
     curiobase_gog_tracking_prefix: "GOG affiliate tracking prefix — a whole URL, not an id. Paste it from your Adtraction dashboard up to and including the parameter the destination goes in; the GOG search URL is appended, URL-encoded. Blank hides the GOG button."
     curiobase_amazon_tag: "Amazon Associates tag, e.g. tti-20. Blank hides the Amazon button."
@@ -109,41 +107,7 @@ en:
       archive: "Internet Archive"
       preview: "Preview"
 
-    annotation:
-      link: "Community notes ↓"
-      # ⚠ HEADINGS, NOT AN INVITATION. "Add your thoughts" produces nothing;
-      #   three questions produce answers. Keep them concrete and answerable by
-      #   someone who has actually read or watched the thing — that is the whole
-      #   point, and it is the knowledge the institute does not have.
-      #
-      # ⚠ Says plainly that edits are public and permanent. Wiki posts carry
-      #   visible revision history regardless of edit_history_visible_to_public,
-      #   and people should know that before they type, not after.
-      seed:
-        work: |
-          *This post is a wiki — anyone above the trust threshold can edit it. Every edit is public and kept.*
-
-          The card above says how central this work is to the subjects it engages. It does not say whether the thing is any good, or what it gets wrong. That part is yours.
-
-          ### Is it worth the time?
-
-          ### What does it get wrong?
-
-          ### Where should someone start?
-        subject: |
-          *This post is a wiki — anyone above the trust threshold can edit it. Every edit is public and kept.*
-
-          The card above is the file as the institute has it. This post is where the thread's own knowledge goes — the parts that moved on, got settled, or were never as clear as the summary makes them sound.
-
-          ### Where the question stands now
-
-          ### What is settled, and what isn't
-
-          ### Worth reading in this thread
-    # ⚠ Sits against the DISTRIBUTION BAR, not against the number. The bar is
-    #   an unweighted count of people and the count describes it exactly; the
-    #   number beside it is weighted by standing and is not a plain average of
-    #   those same voters.
+    # Labels the distribution bar (headcount) and sits beside the mean.
     members_rated:
       one: "1 vote"
       other: "%{count} votes"

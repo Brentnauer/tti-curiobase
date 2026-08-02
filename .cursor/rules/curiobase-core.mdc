@@ -15,6 +15,8 @@ Discourse catalogue plugin. Full agent memory: **`AGENTS.md`**. Product docs: **
 - Prefer `google_books: VOLUME_ID`; never poison topic cache with probe `"none"` from 429/errors.
 - Outside HTTP: `Curiobase.rebake_now!`, not bare `rebake!`.
 - Empty series hub: no `add_child(nil)`.
+- Gravity: one eligible vote weighs 1 — no supporter group / TL ladder.
+- No auto-seeded community wiki post; use Discourse first-post wiki + groups.
 
 ## Scratch
 

@@ -179,54 +179,6 @@ task "curiobase:repoint" => :environment do
   puts "Repointed #{changed}."
 end
 
-# ⚠ A SEPARATE COMMAND ON PURPOSE for BACKFILL, and not folded into rebake.
-#
-#   New records get a wiki automatically when curiobase_annotation_enabled is
-#   on (see Curiobase.maybe_ensure_annotation!). This task fills history.
-#
-#   This WRITES A POST to every record topic without one. Rebaking re-renders
-#   what is already there and is safe to run on a whim; this changes the
-#   forum's content.
-#
-#   Idempotent — a topic that already has its annotation is skipped.
-desc "Give every record topic its community wiki at post 2"
-task "curiobase:annotate" => :environment do
-  unless SiteSetting.curiobase_annotation_enabled
-    abort "curiobase_annotation_enabled is off. Turn it on first — this writes posts."
-  end
-
-  posts = Curiobase::PostKind.first_posts
-  puts "Checking #{posts.count} record topics"
-
-  made = 0
-  skipped = 0
-  refused = 0
-
-  posts.find_each do |first|
-    topic = first.topic
-    ref = Curiobase::TopicRecord.for(topic)
-    next unless ref
-
-    if Curiobase::Annotation.for_topic(topic)
-      skipped += 1
-      next
-    end
-
-    if Curiobase::Annotation.ensure!(topic, kind: ref[:kind])
-      puts "  #{topic.slug}: wiki at post 2"
-      made += 1
-    else
-      # ensure! logs why. Almost always: something was merged in before the
-      # record was set up, so slot 2 is a member's reply.
-      puts "  ✗ #{topic.slug}: post 2 is taken — look at this one by hand"
-      refused += 1
-    end
-  end
-
-  puts "Created #{made}, already had one #{skipped}, refused #{refused}."
-  puts "Then rebake, so the cards pick up the link." if made.positive?
-end
-
 # ⚠ EVERY FAILURE MODE IN THIS SYSTEM IS SILENT, and that is not an accident —
 #   it is the correct behaviour repeated. Source returns nil rather than
 #   defacing a post. CardRenderer leaves a post alone rather than showing an

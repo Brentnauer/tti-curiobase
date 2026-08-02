@@ -14,7 +14,7 @@ module Curiobase
   #   /wp-json/tti/v1/gravity. The goal was right — avoid Discourse-side schema
   #   — but the cost was hidden. A vote is (user, work, subject, value) and
   #   three of those four are Discourse's: the voter, the subject (a tag), and
-  #   the weight (trust level and groups). The tag page banner recomputes
+  #   the weight (eligibility via Standing). The tag page banner recomputes
   #   association lists PER REQUEST, so remote votes meant an HTTP call per work
   #   on a page crawlers hammer, to fetch rows that then had to be joined
   #   against Discourse users anyway. And deleting a member would leave their
@@ -34,10 +34,10 @@ module Curiobase
   #   Changing your mind is not a new data point; a system that counts it twice
   #   is one where the loudest reader wins.
   #
-  # ⚠ THE WEIGHT IS NOT STORED. Only the honest fact — this user said 4 — is.
-  #   Weight follows standing, and standing changes: people reach TL2, become
-  #   supporters, get suspended. Freezing it at cast time would leave the site
-  #   scored by who people used to be. See Curiobase::Standing.
+  # ⚠ ELIGIBILITY IS NOT STORED. Only the honest fact — this user said 4 — is.
+  #   Whether it counts is decided on read (min trust, suspended). Freezing a
+  #   weight at cast time would leave the site scored by who people used to be.
+  #   See Curiobase::Standing.
   module VoteStore
     RANGE = (1..5)
     PLUGIN = "curiobase"

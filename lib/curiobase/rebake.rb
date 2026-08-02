@@ -61,19 +61,4 @@ module Curiobase
     schedule_subject_file_rebake!(subject_slug)
   end
 
-  # Seed post 2 as a wiki when annotation is enabled. Idempotent; refuses if
-  # slot 2 is already taken. Backfill remaining history with curiobase:annotate.
-  def self.maybe_ensure_annotation!(post)
-    return unless SiteSetting.curiobase_annotation_enabled
-    return unless post&.is_first_post?
-
-    ref = TopicRecord.for(post.topic)
-    return unless ref
-
-    Annotation.ensure!(post.topic, kind: ref[:kind])
-  rescue StandardError => e
-    Rails.logger.warn(
-      "[curiobase] annotation ensure failed on topic #{post.topic_id}: #{e.class}: #{e.message}",
-    )
-  end
 end

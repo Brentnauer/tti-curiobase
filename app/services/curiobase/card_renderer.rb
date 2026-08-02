@@ -75,9 +75,6 @@ module Curiobase
       # string, and nothing here is re-sanitised, so the markup survives intact.
       if kind == "subject"
         card = Nokogiri::HTML5.fragment(SubjectCard.new(record).to_html)
-        # SubjectCard serves three surfaces and only this one sits on a topic,
-        # so the notes link is added here rather than inside it.
-        card.children.first&.add_child(annotation_link) if annotation_link
         wrap.replace(card.to_html)
         return
       end
@@ -121,8 +118,6 @@ module Curiobase
         #   it belonged to anything. SubjectCard places it after the dek, where
         #   it reads as a plate in a file.
         card = Nokogiri::HTML5.fragment(SubjectCard.new(record, plate: media(:plate)).to_html)
-        node = card.children.first
-        node&.add_child(annotation_link) if annotation_link
         container.replace(card.to_html)
       else
         @work_record = record
@@ -290,7 +285,6 @@ module Curiobase
       end
       buy = buy_links(w)
       card.add_child(buy) if buy
-      card.add_child(annotation_link) if annotation_link
     end
 
     # Video is the work itself — no poster column. Everything else keeps one
@@ -608,27 +602,6 @@ module Curiobase
       section
     end
 
-    # A pointer to post 2 — the community wiki. See Curiobase::Annotation.
-    #
-    # ⚠ LAST IN THE CARD, and it must stay there. The order rule is about the
-    #   search snippet, and "Community notes" is the least useful sentence a
-    #   record could open with.
-    #
-    # ⚠ Only once somebody has actually written in it. A link to an empty
-    #   skeleton promises content that is not there, which is the same reason
-    #   the rating control bakes no mount point when voting is closed.
-    def annotation_link
-      return nil unless @topic
-      post = Annotation.for_topic(@topic)
-      return nil unless Annotation.written?(post)
-
-      p = node("p", class: "cb-notes")
-      a = node("a", href: "#{@topic.relative_url}/#{post.post_number}")
-      a.content = I18n.t("curiobase.annotation.link")
-      p.add_child(a)
-      p
-    end
-
     # Where a Work can be looked up elsewhere.
     #
     # ⚠ An external database is a destination, not a value. Never print
@@ -759,10 +732,8 @@ module Curiobase
     #      consensus. The number alone is the honest presentation until there is
     #      something to disagree about.
     #
-    #   2. THE COUNT SITS AGAINST THE BAR, NOT THE NUMBER. The bar is an
-    #      unweighted count of people and the count describes it exactly. The
-    #      number is weighted by standing, so it is not the plain average of
-    #      those same voters and must not be labelled as though it were.
+    #   2. THE COUNT SITS AGAINST THE BAR, NOT THE NUMBER. The bar is a
+    #      headcount; the number is the mean of the same eligible votes.
     def score(reading)
       wrap = node("div", class: "cb-score")
 
@@ -815,8 +786,8 @@ module Curiobase
       wrap
     end
 
-    # Unweighted headcount on the bar. When low and high anchors both have
-    # real weight, name the disagreement — that is the contested-archive signal.
+      # Headcount on the bar. When low and high anchors both have real weight,
+      # name the disagreement — that is the contested-archive signal.
     def distribution_note_text(dist, voter_count)
       base = I18n.t("curiobase.members_rated", count: voter_count)
       return base unless contested_distribution?(dist)

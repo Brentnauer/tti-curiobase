@@ -13,6 +13,8 @@ Discourse plugin that turns first-post fenced `curiobase` blocks into catalogue 
 3. **Outside HTTP, use `Curiobase.rebake_now!`** — bare `post.rebake!` can strip cards if ProcessPost never runs.
 4. **Empty series hubs must not `add_child(nil)`** — cook aborts; keep hub card without an episodes section when there are no children.
 5. **Posters / plates are attachment-only** — never auto-pull YouTube / Google Books / Archive covers into `.cb-poster`. Sources: dragged first-post image (`PostMedia`), explicit `poster.url`, else labelled empty tile. Stage embeds stay separate in `.cb-stage`.
+6. **One vote is one vote** — no TL/staff/supporter weight ladder. `Standing` is 1.0 or 0.0 (min trust + not suspended/silenced).
+7. **No plugin “annotation” wiki** — community notes are Discourse first-post wiki + `edit_wiki_post_allowed_groups` (e.g. TL2). Do not reintroduce auto-seeded post 2.
 
 ## Media / embeds (current contract)
 
