@@ -470,11 +470,11 @@
     gap: 6px;
     margin: 0 0 0.5em;
     // Cooked `<p>` inherits a tall line-height; chips must not.
-    line-height: 1;
+    line-height: var(--line-height-small);
   }
 
-  // ⚠ 2px matches core's `--category-badge-border-radius` exactly. The one
-  //   place in this file where a small literal radius is the native answer.
+  // Boxed chips — same padding rhythm as core `.discourse-tag.box`
+  // (`2px 8px`) and radius as `--category-badge-border-radius`.
   .cb-badge {
     display: inline-flex;
     align-items: center;
@@ -482,11 +482,9 @@
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    // Caps sit high in the em box (no descenders). Equal padding still looks
-    // bottom-heavy; shave the bottom so the label reads optically centred.
-    line-height: 1;
-    padding: 0.22em 0.55em 0.14em;
-    border-radius: 2px;
+    line-height: var(--line-height-small);
+    padding: 2px 8px;
+    border-radius: var(--category-badge-border-radius, 2px);
     box-sizing: border-box;
 
     // Quiet chips — kind/domain are classification, not a call to action.
