@@ -1,0 +1,25 @@
+---
+description: Media stage and poster rules for Curiobase cards
+globs: app/services/curiobase/{embeds,card_renderer,google_books,post_media}.rb,assets/stylesheets/curiobase.scss,assets/javascripts/**/curiobase-embeds.js,spec/services/{embeds,work_media_series}_spec.rb
+alwaysApply: false
+---
+
+# Media bake
+
+## Poster column (`attach_work_media`)
+
+1. Dragged first-post image (`hero` / `PostMedia`)
+2. Explicit `poster.url` on the record
+3. Else labelled empty tile
+
+Do **not** restore `poster_from_embed` or render `embed.thumb` in `.cb-poster` or link-card thumbs.
+
+## Stage (`Embeds` + `embed_chrome`)
+
+- `iframe?` → `.cb-embed-frame` with provider class (`cb-embed--gbooks`, `cb-embed--archive`)
+- Allowlist changes go in `Embeds::ALLOWED_IFRAME_PREFIXES` (wired in `plugin.rb`)
+- `curiobase-embeds.js` only strips Discourse oneboxes inside the card
+
+## Google Books
+
+- Prefer explicit volume id. Transient probe failures return `nil` (retry later) — never write `"none"` onto the topic custom field.

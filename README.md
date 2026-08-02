@@ -404,19 +404,18 @@ badges), above gravity — Discord-style: identity, then media, then the rest.
 
 | Medium | Poster column | Stage |
 |---|---|---|
-| `film` / `series` / `game` | Yes (authored art, or thumb from trailer) | YouTube **iframe** trailer when `youtube:` is set |
-| `video` | No (text head) | YouTube **iframe** (the work itself), else Archive link card |
-| `book` | Cover from Books / authored | Google Books **link card** (cover → books.google.com); Archive fallback |
-| `document` | Archive thumb / authored | Archive.org **link card** |
+| `film` / `series` / `game` | Author attachment only (else label tile) | YouTube **iframe** trailer when `youtube:` is set |
+| `video` | No (text head) | YouTube **iframe** (the work itself), else Archive iframe |
+| `book` | Author attachment only (else label tile) | Google Books **iframe** when `google_books:` is set; Archive iframe fallback |
+| `document` | Author attachment only (else label tile) | Archive.org **iframe** (`/embed/{id}`) when `archive_org:` is set |
 
-**Why link cards for Books / Archive:** Google Books iframes are blocked (`X-Frame-Options:
-SAMEORIGIN`); Archive collection embeds often paint donation shells. A working exit beats a dead
-rectangle. YouTube is allowed via the plugin’s `pretty_text_allowed_iframes` modifier
-(`youtube.com/embed` and `youtube-nocookie.com/embed`). If your theme CSP still strips players,
-add those prefixes site-wide.
+**Posters / plates are never auto-pulled** from YouTube, Google Books, or Archive. Drag an image into the first post (or set an authored `poster` URL on the record). Until then the head shows a labelled empty tile.
 
-Google Books volume ids: set `google_books:` explicitly, or let an ISBN probe fill a topic cache
-(`curiobase_gbooks`). Probe failures never abort a bake.
+**Books:** set `google_books: VOLUME_ID` from the Books URL. ISBN probe is best-effort only (API quota).
+
+**Archive:** set `archive_org:` to the `/details/` identifier (e.g. `chemotaxonomiede05hegn`). Uses Archive’s official share embed. Borrow-only items may show Archive’s borrow UI inside the frame.
+
+YouTube / Books / Archive prefixes are registered via `pretty_text_allowed_iframes`.
 
 ---
 
@@ -597,10 +596,12 @@ python3 bin/smoke-googlebot.py http://127.0.0.1:3000
 
 | Change | What to do |
 |---|---|
-| Renderer / services under `app/` | Usually hot-reload; **rebake** topics to see cooked HTML |
+| Renderer / services under `app/` | Usually hot-reload; **rebake** topics to see cooked HTML. If cooked regresses to old shapes, soft-reload Pitchfork/Unicorn (stale workers) |
 | `lib/` required from `plugin.rb`, `config/settings.yml` | Restart the server |
 | SCSS | Asset pipeline recompile + hard-refresh (stylesheet hash can stick) |
 | Client JS under `api-initializers/` | Refresh; some paths need a full rebuild in production |
+
+Agent / maintainer notes for this repo live in [`AGENTS.md`](AGENTS.md) (also mirrored under `.cursor/rules/`).
 
 ### Layout (where things live)
 
@@ -628,8 +629,9 @@ python3 bin/smoke-googlebot.py http://127.0.0.1:3000
 | Fence visible as code | Plugin off, or record invalid / not first post | Enable plugin; fix fence; ensure first post |
 | No gravity row | Subject tag missing or outside tag group | Tag with vocabulary slug |
 | Scores stale after vote | Throttle / Sidekiq | Wait ≤60s; check `Jobs::CuriobaseRebake`; live UI should still update |
-| Trailer missing | `youtube` id bad, or iframe stripped | Valid id; allowlist / CSP |
-| Books stage empty | No ISBN / volume; probe failed | Set `isbn` or `google_books` |
+| Trailer / Books / Archive missing | Bad id, or iframe stripped | Valid `youtube` / `google_books` / `archive_org`; allowlist / CSP; soft-reload app after Ruby embed changes |
+| Books stage empty | No volume id; ISBN probe 429 / blocked | Prefer `google_books: VOLUME_ID`; `GoogleBooks.clear_cache!` if a bad `"none"` stuck |
+| Empty poster / plate | No dragged image and no `poster.url` | Expected — attach an image in the first post (hosts never auto-fill covers) |
 | Wrong search snippet | Badges before dek in DOM | Must not regress — dek first; badges use CSS `order` |
 | Routes 404 | Routes not reloaded after boot change | Restart; `reload_routes!` is in `plugin.rb` |
 | Doctor noise after convert | Stale claims / wraps | `unclaim` / `convert` / `repair` |

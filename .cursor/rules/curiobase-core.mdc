@@ -1,0 +1,21 @@
+---
+description: Curiobase plugin invariants and where truth lives
+alwaysApply: true
+---
+
+# tti-curiobase
+
+Discourse catalogue plugin. Full agent memory: **`AGENTS.md`**. Product docs: **`README.md`**.
+
+## Must not regress
+
+- **Dek first** in cooked DOM (search snippets).
+- **Attachment-only posters/plates** — never YouTube / Books / Archive auto-covers.
+- Embeds are **baked iframes** in `.cb-stage` (YouTube, Books `output=embed`, Archive `/embed/{id}`).
+- Prefer `google_books: VOLUME_ID`; never poison topic cache with probe `"none"` from 429/errors.
+- Outside HTTP: `Curiobase.rebake_now!`, not bare `rebake!`.
+- Empty series hub: no `add_child(nil)`.
+
+## Scratch
+
+Ignore / never commit `tmp/`, `tmp_*`, `node_modules/`.

@@ -35,7 +35,9 @@ RSpec.describe "Curiobase work media and series" do
       )
 
     frag = Nokogiri::HTML.fragment(post.cooked)
-    expect(frag.at_css(".cb-poster, .cb-poster--empty")).to be_present
+    # No YouTube still in the poster column — attachment only.
+    expect(frag.at_css(".cb-poster--empty, .cb-poster-label")).to be_present
+    expect(frag.to_html).not_to include("i.ytimg.com")
     stage = frag.at_css(".cb-stage")
     expect(stage).to be_present
     iframe = stage.at_css(".cb-embed--trailer iframe, .cb-embed--trailer .cb-embed-frame")
@@ -112,7 +114,7 @@ RSpec.describe "Curiobase work media and series" do
     expect(hub_frag.at_css(".cb-episodes-row")["data-recommend"]).to be_present
   end
 
-  it "embeds google books as a poster cover plus a preview link in the stage" do
+  it "embeds google books as a stage iframe; poster stays author-owned" do
     post =
       bake!(
         "A book with a Google Books preview",
@@ -129,10 +131,35 @@ RSpec.describe "Curiobase work media and series" do
       )
 
     frag = Nokogiri::HTML.fragment(post.cooked)
-    expect(frag.at_css(".cb-head .cb-poster")).to be_present
-    link = frag.at_css(".cb-stage a.cb-media-link[data-provider='google_books']")
-    expect(link["href"]).to include("books.google.com")
-    expect(frag.at_css(".cb-embed--hero iframe")).to be_nil
+    expect(frag.at_css(".cb-head .cb-poster--empty, .cb-head .cb-poster-label")).to be_present
+    expect(frag.to_html).not_to include("books.google.com/books/content")
+    stage = frag.at_css(".cb-stage .cb-embed--gbooks iframe.cb-embed-frame")
+    expect(stage["src"]).to include("books.google.com/books?id=Zy1FAAAAQBAJ")
+    expect(stage["src"]).to include("output=embed")
+    expect(frag.at_css(".cb-stage a.cb-media-link[data-provider='google_books']")).to be_nil
+  end
+
+  it "embeds archive.org as a stage iframe without auto-pulling a cover" do
+    post =
+      bake!(
+        "A document with an Archive embed",
+        <<~RAW,
+          ```curiobase
+          type: work
+          slug: archive-embed-demo
+          medium: document
+          archive_org: chemotaxonomiede05hegn
+          dek: A recovered volume on the Internet Archive.
+          ```
+        RAW
+      )
+
+    frag = Nokogiri::HTML.fragment(post.cooked)
+    expect(frag.at_css(".cb-head .cb-poster--empty, .cb-head .cb-poster-label")).to be_present
+    expect(frag.to_html).not_to include("archive.org/services/img/")
+    iframe = frag.at_css(".cb-stage .cb-embed--archive iframe.cb-embed-frame")
+    expect(iframe["src"]).to eq("https://archive.org/embed/chemotaxonomiede05hegn")
+    expect(frag.at_css(".cb-stage a.cb-media-link")).to be_nil
   end
 
   it "bakes an empty series hub without an episodes section" do

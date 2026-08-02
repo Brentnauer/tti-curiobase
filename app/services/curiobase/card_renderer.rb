@@ -303,7 +303,7 @@ module Curiobase
       %w[video].include?(w["medium"].to_s)
     end
 
-    def attach_work_media(head, w, embed)
+    def attach_work_media(head, w, _embed = nil)
       return if skip_poster?(w)
 
       attached =
@@ -317,49 +317,14 @@ module Curiobase
           head.add_child(fig)
           remember_poster(poster)
           true
-        elsif (cover = poster_from_embed(embed))
-          head.add_child(cover)
-          true
-        elsif embed.blank?
-          # Labelled empty tile only when nothing else carries the visual.
+        else
+          # Never auto-fill from Archive / Books / YouTube. Poster is an
+          # author attachment (or the labelled empty tile until they add one).
           head.add_child(poster_placeholder(w))
           true
-        else
-          # Stage has the trailer / preview — don't invent a "SERIES" hole.
-          false
         end
 
       head["class"] = "cb-head cb-head--text" unless attached
-    end
-
-    # Host cover / still for the identity column. Books & Archive link out;
-    # YouTube trailers use the still as a quiet catalogue thumb (stage plays).
-    def poster_from_embed(embed)
-      return nil unless embed&.thumb.present?
-
-      case embed.provider
-      when "google_books", "archive"
-        return nil unless embed.link?
-
-        a =
-          node(
-            "a",
-            class: "cb-poster cb-poster--link",
-            href: embed.href,
-            rel: "noopener",
-            target: "_blank",
-            "data-provider": embed.provider,
-            title: embed.label,
-          )
-        img = node("img", src: embed.thumb, alt: embed.label.to_s, loading: "lazy")
-        a.add_child(img)
-        a
-      when "youtube"
-        fig = node("div", class: "cb-poster")
-        img = node("img", src: embed.thumb, alt: "", loading: "lazy")
-        fig.add_child(img)
-        fig
-      end
     end
 
     # Full-width media strip between the identity head and gravity.
@@ -369,7 +334,7 @@ module Curiobase
       stage
     end
 
-    # iframe for YouTube heroes; link card for trailers / outbound media.
+    # YouTube / Google Books / Archive → iframe; otherwise link card.
     def embed_chrome(embed)
       return embed_iframe(embed) if embed.iframe?
       embed_link_card(embed)
@@ -386,10 +351,16 @@ module Curiobase
 
     def embed_iframe(embed)
       kind = embed.secondary? ? "trailer" : "hero"
+      extra =
+        case embed.provider
+        when "google_books" then " cb-embed--gbooks"
+        when "archive" then " cb-embed--archive"
+        else ""
+        end
       fig =
         node(
           "div",
-          class: "cb-embed cb-embed--#{kind}",
+          class: "cb-embed cb-embed--#{kind}#{extra}",
           "data-provider": embed.provider,
         )
       iframe =
@@ -420,13 +391,7 @@ module Curiobase
           target: "_blank",
           "data-provider": embed.provider,
         )
-      # Cover already lives in .cb-poster for Books/Archive — don't double it.
-      if embed.thumb.present? && !%w[google_books archive].include?(embed.provider)
-        thumb = node("span", class: "cb-media-link-thumb")
-        img = node("img", src: embed.thumb, alt: "", loading: "lazy")
-        thumb.add_child(img)
-        a.add_child(thumb)
-      end
+      # No host thumbs here — posters are attachment-only on the card head.
       meta = node("span", class: "cb-media-link-meta")
       eye = node("span", class: "cb-media-link-label")
       eye.content = embed.label

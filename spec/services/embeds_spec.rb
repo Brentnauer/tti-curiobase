@@ -20,21 +20,26 @@ RSpec.describe Curiobase::Embeds do
     expect(emb.src).to include("youtube.com/embed/")
   end
 
-  it "bakes archive as a link card, never a dead iframe" do
+  it "bakes archive as an official embed iframe" do
     emb = described_class.for_record("medium" => "document", "external" => { "archive_org" => "nasa" })
     expect(emb.provider).to eq("archive")
-    expect(emb).to be_link
+    expect(emb).to be_iframe
+    expect(emb).not_to be_link
+    expect(emb.src).to eq("https://archive.org/embed/nasa")
     expect(emb.href).to include("archive.org/details/nasa")
   end
 
-  it "bakes google books as a preview link card" do
+  it "bakes google books as a preview iframe in the stage" do
     emb =
       described_class.for_record(
         "medium" => "book",
         "external" => { "google_books" => "Zy1FAAAAQBAJ" },
       )
     expect(emb.provider).to eq("google_books")
-    expect(emb).to be_link
+    expect(emb).to be_iframe
+    expect(emb).not_to be_link
+    expect(emb.src).to include("books.google.com/books?id=Zy1FAAAAQBAJ")
+    expect(emb.src).to include("output=embed")
     expect(emb.href).to include("books.google.com/books?id=")
     expect(emb.thumb).to include("books/content")
     expect(emb.thumb).to include("zoom=0")
@@ -74,6 +79,13 @@ RSpec.describe Curiobase::GoogleBooks do
       )
 
     expect(described_class.volume_id_for("external" => { "isbn" => "9781234567897" })).to be_nil
+  end
+
+  it "does not cache a hard none when Google returns 429" do
+    stub_request(:get, %r{googleapis\.com/books/v1/volumes}).to_return(status: 429, body: "no")
+
+    expect(described_class.volume_id_for("external" => { "isbn" => "9780387985718" })).to be_nil
+    expect(Discourse.cache.read(described_class.cache_key("9780387985718"))).to be_nil
   end
 
   it "returns a volume id when the API says embeddable" do

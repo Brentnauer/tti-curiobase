@@ -1,5 +1,6 @@
 # Local Discourse / agent scratch — never ship.
 tmp/
 tmp_*
+node_modules/
 .DS_Store
 *.log

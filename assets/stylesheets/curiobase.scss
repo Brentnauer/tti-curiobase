@@ -141,6 +141,20 @@
     }
   }
 
+  // Google Books preview iframe — taller than 16:9 video; same stage slot.
+  .cb-embed--gbooks {
+    aspect-ratio: 3 / 4;
+    max-height: 36rem;
+    background: var(--secondary);
+  }
+
+  // Archive BookReader / player — closer to Archive's default 560×384 share size.
+  .cb-embed--archive {
+    aspect-ratio: 16 / 11;
+    max-height: 36rem;
+    background: var(--secondary);
+  }
+
   // Books / Archive — Discourse onebox-body vocabulary, not a second product.
   // No extra left accent: the card already carries --d-post-aside-border.
   .cb-media-link {

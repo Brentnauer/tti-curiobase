@@ -38,23 +38,27 @@ module Curiobase
       return cached if cached.present?
 
       probed = safe_probe_isbn(isbn)
+      # nil = transient failure (timeout, 429, WebMock). Do NOT cache as none.
+      return nil if probed.nil?
+
       write_cache(topic, isbn, probed)
       probed == NONE ? nil : probed
     end
 
     # Probe never raises — a failed/blocked HTTP call must not abort post cook.
+    # Returns volume id, NONE (definitively not embeddable), or nil (try again later).
     def self.safe_probe_isbn(isbn)
       probe_isbn(isbn)
     rescue StandardError => e
       Rails.logger.warn("[curiobase] google books lookup failed: #{e.class}: #{e.message}")
-      NONE
+      nil
     end
 
     def self.probe_isbn(isbn)
       uri = URI(API)
       uri.query = URI.encode_www_form(q: "isbn:#{isbn}", maxResults: 1)
       body = http_get(uri)
-      return NONE if body.blank?
+      return nil if body.blank?
 
       data = JSON.parse(body)
       item = Array(data["items"]).first
@@ -68,7 +72,11 @@ module Curiobase
     end
 
     def self.http_get(uri)
-      Discourse.cache.fetch("curiobase:gbooks:http:#{uri.query}", expires_in: CACHE_TTL) do
+      key = "curiobase:gbooks:http:#{uri.query}"
+      cached = Discourse.cache.read(key)
+      return cached if cached.present?
+
+      body =
         Net::HTTP.start(
           uri.host,
           uri.port,
@@ -82,7 +90,10 @@ module Curiobase
           res = http.request(req)
           res.is_a?(Net::HTTPSuccess) ? res.body.to_s : nil
         end
-      end
+
+      # Only cache successes — a 429 must not freeze "no body" for a week.
+      Discourse.cache.write(key, body, expires_in: CACHE_TTL) if body.present?
+      body
     rescue StandardError => e
       # WebMock in specs, timeouts in prod — never let a Books probe abort a bake.
       Rails.logger.warn("[curiobase] google books http failed: #{e.class}: #{e.message}")
@@ -90,17 +101,26 @@ module Curiobase
     end
 
     def self.read_cache(topic, isbn)
-      if topic
-        stored = topic.custom_fields[FIELD].to_s
-        return stored if stored.present?
-      end
-      Discourse.cache.read(cache_key(isbn))
+      # ISBN-keyed cache is authoritative — the topic field is only a hint and
+      # used to poison pairings when an earlier ISBN got 429 → "none".
+      cached = Discourse.cache.read(cache_key(isbn))
+      return cached if cached.present?
+
+      return nil unless topic
+
+      stored = topic.custom_fields[FIELD].to_s
+      return nil if stored.blank? || stored == NONE
+      # Topic field is a bare volume id from a prior successful resolve for this
+      # topic. Trust it only when it looks like one — never "none".
+      stored.match?(Embeds::GBOOKS_ID) ? stored : nil
     end
 
     def self.write_cache(topic, isbn, value)
       value = value.presence || NONE
       Discourse.cache.write(cache_key(isbn), value, expires_in: CACHE_TTL)
       return unless topic
+      # Never persist NONE on the topic — a quota blip would hide previews for a week.
+      return if value == NONE
 
       return if topic.custom_fields[FIELD] == value
       topic.custom_fields[FIELD] = value
@@ -108,5 +128,15 @@ module Curiobase
     end
 
     def self.cache_key(isbn) = "curiobase:gbooks:isbn:#{isbn}"
+
+    # Ops / recovery: drop a bad "none" so the next bake can probe again.
+    def self.clear_cache!(topic: nil, isbn: nil)
+      Discourse.cache.delete(cache_key(isbn)) if isbn.present?
+      return unless topic
+
+      return if topic.custom_fields[FIELD].blank?
+      topic.custom_fields.delete(FIELD)
+      topic.save_custom_fields
+    end
   end
 end

@@ -8,17 +8,16 @@ module Curiobase
   # ══════════════════════════════════════════════════════════════════════════
   #
   # Measured Aug 2026:
-  #   YouTube nocookie embed  → works in our theme
-  #   Google Books output=embed → 404 + X-Frame-Options: SAMEORIGIN
-  #   Archive.org /embed/nasa   → collection page / donation shell, blank body
+  #   YouTube embed                    → iframe OK
+  #   Google Books ?output=embed       → iframe OK for previewable volumes
+  #   Archive.org /embed/IDENTIFIER    → iframe OK (official embed URL)
+  #     Older note about donation shells applied to some collection pages;
+  #     item embeds are the BookReader / player Archive publishes for sharing.
   #
-  # So: YouTube may iframe (video works AND film/game/series trailers). Books
-  # and Archive bake as Discord-style link cards — those hosts refuse iframes.
   # Every embed lands in `.cb-stage` below the identity head, above gravity.
   #
-  # ⚠ youtube-nocookie / youtube embed URLs MUST be on allowed_iframes via
-  #   register_modifier in plugin.rb. Without that, PrettyText strips the
-  #   player and leftover watch-links get Discourse oneboxes instead.
+  # ⚠ Embed URL prefixes MUST be on allowed_iframes via register_modifier in
+  #   plugin.rb. Without that, PrettyText strips the player.
   module Embeds
     Result =
       Struct.new(:provider, :mode, :role, :label, :src, :href, :thumb, keyword_init: true) do
@@ -47,6 +46,9 @@ module Curiobase
     ALLOWED_IFRAME_PREFIXES = [
       "https://www.youtube.com/embed/",
       "https://www.youtube-nocookie.com/embed/",
+      "https://books.google.com/books",
+      "https://www.google.com/books",
+      "https://archive.org/embed/",
     ].freeze
 
     def self.for_record(record, topic = nil)
@@ -58,11 +60,11 @@ module Curiobase
 
       case medium
       when "video"
-        youtube_iframe(ext["youtube"], :hero) || archive_card(ext["archive_org"], :hero)
+        youtube_iframe(ext["youtube"], :hero) || archive_iframe(ext["archive_org"], :hero)
       when "document"
-        archive_card(ext["archive_org"], :hero)
+        archive_iframe(ext["archive_org"], :hero)
       when "book"
-        books_card(work, topic) || archive_card(ext["archive_org"], :hero)
+        books_iframe(work, topic) || archive_iframe(ext["archive_org"], :hero)
       when "film", "series", "game"
         # Real player in the stage — not a link chip Discourse can onebox.
         youtube_iframe(ext["youtube"], :secondary)
@@ -86,37 +88,43 @@ module Curiobase
               I18n.t("curiobase.embed.watch")
             end
           ),
-        # www.youtube.com/embed is on Discourse's onebox iframe allowlist;
-        # nocookie is added via the pretty_text_allowed_iframes modifier.
         src: "https://www.youtube.com/embed/#{CGI.escape(id)}",
         href: "https://www.youtube.com/watch?v=#{CGI.escape(id)}",
         thumb: "https://i.ytimg.com/vi/#{CGI.escape(id)}/hqdefault.jpg",
       )
     end
 
-    def self.archive_card(id, role)
+    # Official Archive share embed — same stage slot as YouTube / Books.
+    # Identifier is the /details/ slug (e.g. chemotaxonomiede05hegn).
+    def self.archive_iframe(id, role)
       id = id.to_s.strip
       return nil unless id.match?(ARCHIVE_ID)
 
       Result.new(
         provider: "archive",
-        mode: :link,
+        mode: :iframe,
         role: role,
         label: I18n.t("curiobase.embed.archive"),
+        src: "https://archive.org/embed/#{CGI.escape(id)}",
         href: "https://archive.org/details/#{CGI.escape(id)}",
         thumb: "https://archive.org/services/img/#{CGI.escape(id)}",
       )
     end
 
-    def self.books_card(work, topic = nil)
+    # Baked iframe — same stage slot as YouTube. Requires `google_books:` or an
+    # embeddable ISBN resolve; authors should prefer the volume id.
+    def self.books_iframe(work, topic = nil)
       volume_id = GoogleBooks.volume_id_for(work, topic)
       return nil if volume_id.blank?
 
       Result.new(
         provider: "google_books",
-        mode: :link,
+        mode: :iframe,
         role: :hero,
         label: I18n.t("curiobase.embed.preview"),
+        src:
+          "https://books.google.com/books?id=#{CGI.escape(volume_id)}" \
+            "&pg=PR1&printsec=frontcover&output=embed",
         href: "https://books.google.com/books?id=#{CGI.escape(volume_id)}",
         thumb: books_thumb(work, volume_id),
       )
