@@ -1,0 +1,5 @@
+# Local Discourse / agent scratch — never ship.
+tmp/
+tmp_*
+.DS_Store
+*.log

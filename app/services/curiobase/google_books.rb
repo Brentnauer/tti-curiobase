@@ -37,12 +37,17 @@ module Curiobase
       return nil if cached == NONE
       return cached if cached.present?
 
-      probed = probe_isbn(isbn)
+      probed = safe_probe_isbn(isbn)
       write_cache(topic, isbn, probed)
       probed == NONE ? nil : probed
+    end
+
+    # Probe never raises — a failed/blocked HTTP call must not abort post cook.
+    def self.safe_probe_isbn(isbn)
+      probe_isbn(isbn)
     rescue StandardError => e
       Rails.logger.warn("[curiobase] google books lookup failed: #{e.class}: #{e.message}")
-      nil
+      NONE
     end
 
     def self.probe_isbn(isbn)
@@ -78,6 +83,10 @@ module Curiobase
           res.is_a?(Net::HTTPSuccess) ? res.body.to_s : nil
         end
       end
+    rescue StandardError => e
+      # WebMock in specs, timeouts in prod — never let a Books probe abort a bake.
+      Rails.logger.warn("[curiobase] google books http failed: #{e.class}: #{e.message}")
+      nil
     end
 
     def self.read_cache(topic, isbn)

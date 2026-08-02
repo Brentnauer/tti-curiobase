@@ -283,7 +283,11 @@ module Curiobase
       card.add_child(embed_stage(embed)) if embed
 
       card.add_child(gravity_block(w))
-      card.add_child(episodes_block(w)) if w["medium"].to_s == "series"
+      # episodes_block returns nil when the hub has no children yet — never
+      # add_child(nil); Nokogiri raises and the cook rescue leaves an empty wrap.
+      if (eps = episodes_block(w))
+        card.add_child(eps)
+      end
       buy = buy_links(w)
       card.add_child(buy) if buy
       card.add_child(annotation_link) if annotation_link
@@ -482,15 +486,21 @@ module Curiobase
       rows = SeriesEpisodes.for(w["slug"])
       return nil if rows.empty?
 
-      block = node("section", class: "cb-episodes")
+      block = node("section", class: "cb-episodes", "data-hub": w["slug"].to_s, id: "cb-episodes-#{w["slug"]}")
       h = node("h2", class: "cb-episodes-head")
       h.content = I18n.t("curiobase.episodes_heading")
       block.add_child(h)
+      block.add_child(episodes_tools(rows, w["slug"].to_s))
 
       list = node("ol", class: "cb-episodes-list")
       rows.each do |r|
         li = node("li", class: "cb-episodes-row")
         li["data-work"] = r.work_id.to_s if r.work_id.present?
+        li["data-season"] = r.season.to_i.to_s
+        li["data-episode"] = r.episode.to_i.to_s
+        li["data-recommend"] = r.likes.to_i.to_s
+        li["data-title"] = r.title.to_s.downcase
+
         main = node("span", class: "cb-episodes-main")
         if (label = season_episode_label("season" => r.season, "episode" => r.episode))
           eye = node("span", class: "cb-episodes-num")
@@ -501,10 +511,80 @@ module Curiobase
         a.content = r.title
         main.add_child(a)
         li.add_child(main)
+
+        meta = node("span", class: "cb-episodes-meta")
+        n = r.likes.to_i
+        if n.positive?
+          rec = node("span", class: "cb-episodes-likes")
+          label_txt = I18n.t("curiobase.recommend", count: n)
+          rec["aria-label"] = label_txt
+          rec["title"] = label_txt
+          heart = node("span", class: "cb-glyph", "aria-hidden": "true")
+          heart.content = "♥"
+          rec.add_child(heart)
+          rec.add_child(Nokogiri::XML::Text.new(n.to_s, @doc.document))
+          meta.add_child(rec)
+        end
+        li.add_child(meta)
         list.add_child(li)
       end
       block.add_child(list)
       block
+    end
+
+    # Season chips + sort — Discourse filter-chip vocabulary, client-only.
+    # Anchors (not <button>) so PrettyText keeps them in cooked HTML.
+    # href targets this section so no-JS clicks stay put instead of jumping top.
+    def episodes_tools(rows, hub_slug)
+      tools = node("div", class: "cb-episodes-tools")
+      anchor = "#cb-episodes-#{hub_slug}"
+
+      seasons = rows.map { |r| r.season.to_i }.select(&:positive?).uniq.sort
+      if seasons.length > 1
+        nav =
+          node(
+            "nav",
+            class: "cb-filters cb-episodes-seasons",
+            "aria-label": I18n.t("curiobase.season_filter"),
+          )
+        nav.add_child(
+          episode_tool_chip(I18n.t("curiobase.filter_all"), anchor, "data-season": "all", active: true),
+        )
+        seasons.each do |s|
+          nav.add_child(
+            episode_tool_chip(
+              I18n.t("curiobase.season_only", season: s),
+              anchor,
+              "data-season": s.to_s,
+            ),
+          )
+        end
+        tools.add_child(nav)
+      end
+
+      sort =
+        node(
+          "div",
+          class: "cb-filters cb-episodes-sort",
+          role: "group",
+          "aria-label": I18n.t("curiobase.episode_sort"),
+        )
+      sort.add_child(
+        episode_tool_chip(I18n.t("curiobase.sort_air_order"), anchor, "data-sort": "air", active: true),
+      )
+      sort.add_child(
+        episode_tool_chip(I18n.t("curiobase.sort_most_recommended"), anchor, "data-sort": "recommend"),
+      )
+      tools.add_child(sort)
+
+      tools
+    end
+
+    def episode_tool_chip(label, href, active: false, **data)
+      attrs = { class: "cb-filter#{' is-active' if active}", href: href, role: "button" }.merge(data)
+      a = node("a", attrs)
+      a.content = label
+      a
     end
 
     def record_url(slug, type:)
@@ -724,8 +804,12 @@ module Curiobase
       # Tagged but nobody has voted. Not a zero — a vacancy. A 0.0 reads as a
       # verdict, and it would drag every average a reader eyeballs across a page.
       if reading.nil? || !reading.rated?
+        # Em dash in the score column — the long invitation lives on the vote
+        # control, not as a wrapping sentence beside the marks.
         em = node("span", class: "cb-unrated")
-        em.content = I18n.t("curiobase.unrated")
+        em.content = "—"
+        em["title"] = I18n.t("curiobase.unrated")
+        em["aria-label"] = I18n.t("curiobase.unrated")
         wrap.add_child(em)
         return wrap
       end

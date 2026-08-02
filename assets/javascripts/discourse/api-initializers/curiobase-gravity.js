@@ -127,13 +127,16 @@ function buildControl(mount, ctx) {
   mount.append(stars, status);
 
   // Your own rating is fetched, never baked — see CardRenderer#gravity_row.
+  // Do not paint "Your take" before this returns — returning voters would flash
+  // the empty prompt over their real mark.
   ajax("/curiobase/gravity.json", {
     data: { topic_id: ctx.topicId, subject: ctx.subject },
   })
     .then((r) => paint(mount, r?.mine))
     .catch(() => {
       // A failed read of the personal half is not worth a popup. The public
-      // numbers are already on screen and correct.
+      // numbers are already on screen and correct. Still offer the empty prompt.
+      paint(mount, null);
     });
 }
 
@@ -197,7 +200,9 @@ function clearPreview(mount) {
   paintMarks(mount, mine, null);
   const status = mount.querySelector(".cb-vote-status");
   if (status) {
-    status.textContent = mine ? anchor(mount.dataset.anchorMode || "neutral", mine) : "";
+    status.textContent = mine
+      ? anchor(mount.dataset.anchorMode || "neutral", mine)
+      : I18n.t("curiobase.rate_prompt");
   }
   highlightLegend(mount, mine);
 }
@@ -279,7 +284,7 @@ function paint(mount, value) {
   const status = mount.querySelector(".cb-vote-status");
   if (status) {
     const mode = mount.dataset.anchorMode || "neutral";
-    status.textContent = chosen ? anchor(mode, chosen) : "";
+    status.textContent = chosen ? anchor(mode, chosen) : I18n.t("curiobase.rate_prompt");
   }
 }
 
@@ -337,7 +342,9 @@ function updateAggregate(mount, r) {
     if (!score.querySelector(".cb-unrated")) {
       const em = document.createElement("span");
       em.className = "cb-unrated";
-      em.textContent = I18n.t("curiobase.unrated");
+      em.textContent = "—";
+      em.title = I18n.t("curiobase.unrated");
+      em.setAttribute("aria-label", I18n.t("curiobase.unrated"));
       score.prepend(em);
     }
     return;

@@ -502,6 +502,12 @@ module Curiobase
         li["data-work"] = r.work_id.to_s
         li["data-subject"] = slug
       end
+      # Live re-sort keys for curiobase-assoc-live.js — same order as Scores.rank_key.
+      if r.kind == "work" && r.gravity&.rated?
+        li["data-gravity"] = format("%.2f", r.gravity.display.to_f)
+      end
+      li["data-recommend"] = r.recommendations.to_i.to_s
+      li["data-posts"] = r.posts_count.to_i.to_s
       # Default view is All. Hide medium-only members so the union is not the
       # initial paint for no-JS readers (JS apply() does the same on mount).
       li["hidden"] = "hidden" unless Array(r.buckets).include?("all")

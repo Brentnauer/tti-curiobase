@@ -16,10 +16,10 @@ en:
   curiobase:
     gravity_heading: "How strongly does this pull on the idea?"
     # ⚠ AN INVITATION, because gravity is the membership's number and an unrated
-    #   pairing is a vacancy rather than a gap. This read "not yet assessed" for
-    #   a while, from a period when the operator's judgement was the score and a
-    #   reader had nothing to add.
-    unrated: "be the first to rate this"
+    #   pairing is a vacancy rather than a gap. Short copy for tooltips / aria —
+    #   the score column shows an em dash; the vote control says "Your take".
+    unrated: "No rating yet"
+    rate_prompt: "Your take"
     associations_heading: "What engages this"
     assoc_empty: "Nothing engages this yet — tag a Work with this Subject to create a pairing."
     gravity_empty: "Tag this Work with a Subject to rate how strongly it pulls on the idea."
@@ -98,6 +98,10 @@ en:
     episodes_heading: "Episodes"
     season_episode: "S%{season}E%{episode}"
     season_only: "Season %{season}"
+    season_filter: "Filter by season"
+    episode_sort: "Sort episodes"
+    sort_air_order: "Air order"
+    sort_most_recommended: "Most recommended"
     episode_only: "Episode %{episode}"
     embed:
       trailer: "Trailer"

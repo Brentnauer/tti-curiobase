@@ -108,8 +108,9 @@ function refresh(block, subject) {
     .then((payload) => {
       const readings = payload?.readings || {};
       Object.keys(readings).forEach((workId) => {
-        paintRow(block, workId, readings[workId]);
+        paintRow(block, workId, readings[workId], { skipReorder: true });
       });
+      reorderList(block);
     })
     .catch((err) => {
       // eslint-disable-next-line no-console
@@ -135,7 +136,7 @@ function normalize(data) {
   };
 }
 
-function paintRow(block, workId, reading) {
+function paintRow(block, workId, reading, opts = {}) {
   const row = findWorkRow(block, workId);
   if (!row) {
     return;
@@ -148,14 +149,19 @@ function paintRow(block, workId, reading) {
 
   const display = reading?.display;
   if (display == null || display === "") {
+    delete row.dataset.gravity;
     cell.className = "cb-assoc-meta cb-unrated";
     cell.removeAttribute("data-strength");
     cell.title = I18n.t("curiobase.unrated");
     cell.textContent = "—";
+    if (!opts.skipReorder) {
+      reorderList(block);
+    }
     return;
   }
 
   const value = Number(display);
+  row.dataset.gravity = value.toFixed(2);
   cell.className = "cb-assoc-meta cb-assoc-gravity";
   cell.dataset.strength = String(Math.min(5, Math.max(1, Math.round(value))));
   cell.title = I18n.t("curiobase.gravity_heading");
@@ -169,6 +175,50 @@ function paintRow(block, workId, reading) {
   cell.classList.remove("cb-mean--pulse");
   void cell.offsetWidth;
   cell.classList.add("cb-mean--pulse");
+  if (!opts.skipReorder) {
+    reorderList(block);
+  }
+}
+
+// Match Scores.rank_key for Works only. Discussions always follow Works in
+// baked HTML (`works + discussion_rows`) and must keep that relative order —
+// sorting them with unrated works by posts_count scrambles bumped_at order.
+function reorderList(block) {
+  const list = block.querySelector(".cb-assoc-list");
+  if (!list) {
+    return;
+  }
+  const rows = [...list.querySelectorAll(":scope > .cb-assoc-row")];
+  const works = rows.filter((row) => row.dataset.work);
+  const discussions = rows.filter((row) => !row.dataset.work);
+  if (works.length < 2) {
+    return;
+  }
+
+  const key = (row) => {
+    const g = parseFloat(row.dataset.gravity);
+    return [
+      Number.isFinite(g) ? -g : 0,
+      -(parseInt(row.dataset.recommend || "0", 10) || 0),
+      -(parseInt(row.dataset.posts || "0", 10) || 0),
+    ];
+  };
+
+  works.sort((a, b) => {
+    const ka = key(a);
+    const kb = key(b);
+    for (let i = 0; i < ka.length; i++) {
+      if (ka[i] !== kb[i]) {
+        return ka[i] - kb[i];
+      }
+    }
+    return 0;
+  });
+
+  const frag = document.createDocumentFragment();
+  works.forEach((row) => frag.appendChild(row));
+  discussions.forEach((row) => frag.appendChild(row));
+  list.appendChild(frag);
 }
 
 function findWorkRow(block, workId) {

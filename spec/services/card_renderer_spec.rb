@@ -54,7 +54,8 @@ RSpec.describe Curiobase::CardRenderer do
   it "invites a vote when nobody has rated the pairing" do
     cooked = rebake
     expect(cooked).to include("cb-unrated")
-    expect(cooked).to include("be the first to rate this")
+    expect(cooked).to include("—")
+    expect(cooked).to include("No rating yet")
   end
 
   it "shows a lone vote at its own value, with no bar" do

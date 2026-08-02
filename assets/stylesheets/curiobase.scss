@@ -237,6 +237,10 @@
   }
 
   .cb-episodes-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75em;
     margin: 0;
     padding: 0.4em 0;
     border-top: var(--cb-rule);
@@ -252,6 +256,7 @@
     align-items: baseline;
     gap: 0.65em;
     min-width: 0;
+    flex: 1;
   }
 
   .cb-episodes-num {
@@ -273,6 +278,37 @@
 
     &:hover {
       text-decoration: underline;
+    }
+  }
+
+  .cb-episodes-tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.55em 1em;
+    margin: 0 0 0.55em;
+  }
+
+  .cb-episodes-tools .cb-filters {
+    margin-bottom: 0;
+  }
+
+  .cb-episodes-meta {
+    flex: none;
+    font-size: var(--font-down-2);
+    color: var(--cb-muted, var(--primary-medium));
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cb-episodes-likes {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25em;
+
+    .cb-glyph {
+      color: var(--love, var(--danger, var(--primary-medium)));
+      font-size: 0.85em;
     }
   }
 
@@ -507,16 +543,29 @@
 //   not the same width, so changing your vote resized the column, resized the
 //   name, and reflowed the dek. The row still moved, just later in the process.
 //
-//   9.5em holds the longest anchor in every mode at 0.72em.
+// ⚠ THE ROW IS THE UNIT, NOT THE VOTE BOX. Each Subject pairing reads like a
+//   Discourse topic-list item: secondary surface + hairline against the aside
+//   fill. Framing only the marks made a dark widget bolted onto flat copy.
 .cb-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 4.5em 9.5em;
-  column-gap: 1.25em;
+  column-gap: 1em;
   align-items: start;
-  padding: 0.55em 0;
-  border-top: 1px solid var(--primary-low);
+  margin: 0.45em 0 0;
+  padding: 0.65em 0.75em;
+  border: 1px solid var(--primary-low);
+  border-radius: var(--d-border-radius, 4px);
+  background: var(--secondary);
 
-  &:first-of-type { border-top: 0; }
+  &:first-of-type {
+    margin-top: 0;
+  }
+
+  // Same hover language as topic-list / select-kit rows.
+  &:hover {
+    background: var(--d-hover, var(--primary-very-low));
+    border-color: var(--primary-low-mid, var(--primary-medium));
+  }
 }
 
 .cb-row-name { min-width: 0; }
@@ -630,11 +679,19 @@
 //
 //   Below the marks with a fixed line height, the geometry never changes: the
 //   space is there whether the label is or not.
+//
+// ⚠ NO BOX AROUND THE MARKS. The Subject row carries the chrome; the control
+//   is Discourse flat buttons sitting in that row.
 .cb-vote {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 0.25em;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-sizing: border-box;
+  min-width: 0;
 
   &:empty { display: none; }
 
@@ -675,7 +732,7 @@
   border-radius: var(--d-border-radius, 4px);
   line-height: 1;
   cursor: pointer;
-  color: var(--primary-low-mid);
+  color: var(--primary-low-mid, var(--primary-medium));
   // ⚠ `var(--d-duration-fast, …)` was here and THAT VARIABLE DOES NOT EXIST in
   //   this Discourse — checked, not assumed. It fell through to the literal on
   //   every render, so the code read as theme-aware while being nothing of the
@@ -743,11 +800,16 @@
   min-height: 2.4em;
   width: 100%;
   font-size: var(--font-down-2);
-  font-style: italic;
+  font-style: normal;
+  font-weight: 500;
   line-height: var(--line-height-medium);
   color: var(--primary-medium);
   text-align: right;
   overflow-wrap: break-word;
+}
+
+.cb-vote:not([data-mine]) .cb-vote-status {
+  color: var(--tertiary);
 }
 
 // ── subject ────────────────────────────────────────────────────────────────

@@ -12,7 +12,8 @@ en:
   js:
     curiobase:
       gravity_heading: "How strongly does this pull on the idea?"
-      unrated: "be the first to rate this"
+      unrated: "No rating yet"
+      rate_prompt: "Your take"
       # ⚠ Says what the click will DO, not what the mark means. On your own vote
       #   that is the opposite of every other mark in the row.
       retract: "Click again to take your vote back"

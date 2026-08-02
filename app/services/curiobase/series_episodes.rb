@@ -19,6 +19,8 @@ module Curiobase
         :episode,
         :work_id,
         :medium,
+        :likes,
+        :topic_id,
         keyword_init: true,
       )
 
@@ -53,6 +55,7 @@ module Curiobase
 
       topics = Topic.where(id: topic_ids)
       batch = Source.for_topics(topics)
+      likes = Recommendations.for_topics(topic_ids)
 
       rows =
         topics.filter_map do |topic|
@@ -67,6 +70,8 @@ module Curiobase
             episode: w["episode"],
             work_id: Gravity.work_id(w),
             medium: w["medium"],
+            likes: likes[topic.id].to_i,
+            topic_id: topic.id,
           )
         end
 

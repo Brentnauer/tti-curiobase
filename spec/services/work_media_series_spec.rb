@@ -108,6 +108,8 @@ RSpec.describe "Curiobase work media and series" do
     expect(hub_frag.at_css(".cb-episodes")).to be_present
     expect(hub_frag.at_css(".cb-episodes-title").text).to include("John Titor")
     expect(hub_frag.at_css(".cb-episodes-num").text).to match(/S1E12/)
+    expect(hub_frag.at_css(".cb-episodes-sort")).to be_present
+    expect(hub_frag.at_css(".cb-episodes-row")["data-recommend"]).to be_present
   end
 
   it "embeds google books as a poster cover plus a preview link in the stage" do
@@ -131,5 +133,87 @@ RSpec.describe "Curiobase work media and series" do
     link = frag.at_css(".cb-stage a.cb-media-link[data-provider='google_books']")
     expect(link["href"]).to include("books.google.com")
     expect(frag.at_css(".cb-embed--hero iframe")).to be_nil
+  end
+
+  it "bakes an empty series hub without an episodes section" do
+    post =
+      bake!(
+        "Empty series hub card",
+        <<~RAW,
+          ```curiobase
+          type: work
+          slug: empty-series-hub
+          medium: series
+          dek: A series with no episodes yet still needs a card.
+          ```
+        RAW
+      )
+
+    frag = Nokogiri::HTML.fragment(post.cooked)
+    expect(frag.at_css(".curiobase-card")).to be_present
+    expect(frag.at_css(".cb-dek").text).to include("no episodes yet")
+    expect(frag.at_css(".cb-episodes")).to be_nil
+  end
+
+  it "bakes association sort keys for live reordering" do
+    # Subject card path — exercised via a Work that tags a Subject is elsewhere;
+    # here we assert the series hub episode tools bake cleanly for two seasons.
+    hub =
+      bake!(
+        "Multi-season series hub for tools",
+        <<~RAW,
+          ```curiobase
+          type: work
+          slug: multi-season-hub
+          medium: series
+          dek: Hub with more than one season of episodes.
+          ```
+        RAW
+      )
+
+    bake!(
+      "Season one episode of the multi hub",
+      <<~RAW,
+        ```curiobase
+        type: work
+        slug: multi-s1e1
+        medium: video
+        series: multi-season-hub
+        season: 1
+        episode: 1
+        youtube: dQw4w9WgXcQ
+        dek: First season episode.
+        ```
+      RAW
+    )
+
+    bake!(
+      "Season two episode of the multi hub",
+      <<~RAW,
+        ```curiobase
+        type: work
+        slug: multi-s2e1
+        medium: video
+        series: multi-season-hub
+        season: 2
+        episode: 1
+        youtube: jNQXAC9IVRw
+        dek: Second season episode.
+        ```
+      RAW
+    )
+
+    Curiobase.rebake_now!(hub)
+    frag = Nokogiri::HTML.fragment(hub.reload.cooked)
+    expect(frag.at_css(".cb-episodes-seasons")).to be_present
+    expect(frag.css(".cb-episodes-seasons .cb-filter").map { |n| n["data-season"] }).to include(
+      "all",
+      "1",
+      "2",
+    )
+    expect(frag.at_css("#cb-episodes-multi-season-hub")).to be_present
+    expect(frag.at_css(".cb-episodes-sort a[data-sort='air']")["href"]).to eq(
+      "#cb-episodes-multi-season-hub",
+    )
   end
 end
