@@ -4,8 +4,9 @@
 #
 #   cd ~/discourse && LOAD_PLUGINS=1 bundle exec rake curiobase:seed
 #
-# Creates the subject tag group, every fixture subject/work as a fenced
-# `curiobase` topic, and tags works from their gravity rows. Idempotent.
+# Creates every fixture subject/work as a fenced `curiobase` topic and tags
+# works from their gravity rows. Idempotent. Pairing vocabulary comes from
+# Subject files after bake — no Subjects tag group is required.
 #
 # ⚠ Fenced blocks are the only production authoring format. Wraps remain
 #   readable for legacy topics but new content must not introduce them.
@@ -31,14 +32,11 @@ task "curiobase:seed" => :environment do
   admin = User.where(admin: true).order(:id).first
   abort "No admin user. Create one first." unless admin
 
-  # ── vocabulary ──────────────────────────────────────────────────────────
-  # A tag outside this group is an ordinary tag and produces no rating row.
-  group_name = SiteSetting.curiobase_subject_tag_group
-  group = TagGroup.find_or_create_by!(name: group_name)
-  tags = subjects.map { |s| Tag.find_or_create_by!(name: s["slug"]) }
-  group.tags = (group.tags.to_a + tags).uniq
-  group.save!
-  puts "  tag group '#{group_name}': #{group.tags.map(&:name).sort.join(', ')}"
+  # Tags for subject slugs (Works will tag these). A tag alone is not a
+  # pairing — the Subject file bake puts the slug in the vocabulary.
+  subjects.each { |s| Tag.find_or_create_by!(name: s["slug"]) }
+  Curiobase::Subjects.reset_cache!
+  puts "  subject tags: #{subjects.map { |s| s['slug'] }.sort.join(', ')}"
 
   category = Category.find_by(slug: "uncategorized") || Category.first
 
@@ -294,18 +292,19 @@ task "curiobase:doctor" => :environment do
       slug = record["slug"].to_s
       next if slug.blank?
 
-      # ⚠ TAGS THAT CREATE PAIRINGS MUST BE IN THE SUBJECT VOCABULARY.
+      # ⚠ TAGS THAT CREATE PAIRINGS MUST HAVE A SUBJECT FILE.
       #
-      #   Gravity rows bake from whatever was in the group at cook time. If a
-      #   Subject tag later sits outside `curiobase_subject_tag_group`, the card
-      #   can still show a vote control from stale cooked while the endpoint
-      #   rejects every cast with InvalidParameters :subject.
+      #   Gravity rows bake from the Subject-file vocabulary. A Work tagged
+      #   with an ordinary tag creates no pairing; votes on that name would
+      #   400. Only warn when votes already exist — otherwise every casual
+      #   tag is noise.
       tags.each do |name|
         next if vocabulary.include?(name)
-        next unless Curiobase::RecordTopic.find(name, type: :subject)
+        n = Curiobase::VoteStore.raw(work_id: slug, subject: name).size
+        next if n.zero?
         say.call(
-          "#{label}: tagged '#{name}' which has a Subject file but is not in " \
-          "the '#{SiteSetting.curiobase_subject_tag_group}' tag group — votes will 400",
+          "#{label}: #{n} vote(s) on '#{name}' but that tag has no Subject file — " \
+          "they cannot be cast or shown until one exists",
         )
       end
 

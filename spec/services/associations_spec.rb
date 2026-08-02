@@ -4,7 +4,6 @@ require "rails_helper"
 
 RSpec.describe Curiobase::Associations do
   fab!(:tag) { Fabricate(:tag, name: "john-titor") }
-  fab!(:group) { Fabricate(:tag_group, name: "Subjects", tags: [tag]) }
 
   # Titles are long enough to clear Discourse's own minimum, which is 15
   # characters and a "seems unclear" heuristic.
@@ -18,12 +17,11 @@ RSpec.describe Curiobase::Associations do
 
   before do
     SiteSetting.curiobase_enabled = true
-    SiteSetting.curiobase_subject_tag_group = "Subjects"
-    Curiobase::Subjects.reset_cache!
     [subject_topic, work_topic, chat_topic].each { |t| t.tags = [tag] }
 
     # The counts are a SQL query over the curiobase_kind cache, which is written
     # at bake time. Fabricators write rows without baking; the server never does.
+    # Subject bake also registers the pairing vocabulary.
     [subject_post, work_post].each { |p| Curiobase.rebake_now!(p) }
   end
 

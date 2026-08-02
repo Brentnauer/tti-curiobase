@@ -143,11 +143,20 @@ module Curiobase
       #   SHIP.md as the one part of this that is not fully solved.
       rows = Associations.new(slug).rows.select { |r| r.kind == "work" }
 
+      tag = Tag.find_by_name(slug)
+      # Canonical tag URL includes the numeric id — Discourse 301s the bare slug.
+      tag_url =
+        if tag
+          "#{Discourse.base_url}/tag/#{slug}/#{tag.id}"
+        else
+          "#{Discourse.base_url}/tag/#{slug}"
+        end
+
       page = {
         "@context" => "https://schema.org",
         "@type" => "CollectionPage",
         "name" => record["title"].presence || slug.tr("-", " "),
-        "url" => "#{Discourse.base_url}/tag/#{slug}",
+        "url" => tag_url,
       }
       page["description"] = record["dek"] if record["dek"].present?
 

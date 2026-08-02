@@ -151,11 +151,10 @@ RSpec.describe Curiobase::RecordValidator do
   describe "typed edges" do
     fab!(:tag_a) { Fabricate(:tag, name: "orfordness-lighthouse") }
     fab!(:tag_b) { Fabricate(:tag, name: "official-denial") }
-    fab!(:group) { Fabricate(:tag_group, name: "Subjects", tags: [tag_a, tag_b]) }
 
     before do
-      SiteSetting.curiobase_subject_tag_group = "Subjects"
-      Curiobase::Subjects.reset_cache!
+      claim_subject_file!("orfordness-lighthouse")
+      claim_subject_file!("official-denial")
     end
 
     it "accepts a real edge target" do
@@ -283,7 +282,6 @@ end
 # ══════════════════════════════════════════════════════════════════════════════
 RSpec.describe "Curiobase · every caller understands both authoring formats" do
   fab!(:tag) { Fabricate(:tag, name: "causal-loop") }
-  fab!(:group) { Fabricate(:tag_group, name: "Subjects", tags: [tag]) }
 
   fab!(:subject_topic) { Fabricate(:topic, title: "Causal loops, the whole idea") }
   fab!(:work_topic) { Fabricate(:topic, title: "Primer (2004), the garage film") }
@@ -291,8 +289,6 @@ RSpec.describe "Curiobase · every caller understands both authoring formats" do
 
   before do
     SiteSetting.curiobase_enabled = true
-    SiteSetting.curiobase_subject_tag_group = "Subjects"
-    Curiobase::Subjects.reset_cache!
 
     Fabricate(:post, topic: subject_topic, raw: <<~RAW)
       ```curiobase
@@ -387,7 +383,6 @@ end
 
 RSpec.describe "Curiobase::Source, one door" do
   fab!(:tag) { Fabricate(:tag, name: "causal-loop") }
-  fab!(:group) { Fabricate(:tag_group, name: "Subjects", tags: [tag]) }
   fab!(:topic) { Fabricate(:topic, title: "Causal loops, the whole idea") }
 
   let(:raw) do
@@ -404,8 +399,6 @@ RSpec.describe "Curiobase::Source, one door" do
 
   before do
     SiteSetting.curiobase_enabled = true
-    SiteSetting.curiobase_subject_tag_group = "Subjects"
-    Curiobase::Subjects.reset_cache!
     topic.tags = [tag]
   end
 

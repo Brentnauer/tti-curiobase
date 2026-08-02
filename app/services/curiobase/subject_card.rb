@@ -16,7 +16,7 @@ module Curiobase
   # Two variants:
   #
   #   :full   — everything, including the association list. The record topic.
-  #   :banner — badges, dek, filter chips, and a link to the record topic.
+  #   :banner — title, badges, dek, filter chips, and a link to the record topic.
   #
   # ⚠ The banner is deliberately SHORT.
   #
@@ -40,9 +40,9 @@ module Curiobase
       new(record, variant: variant, active_filter: active_filter)
     end
 
-    # `plate` is the landscape image lifted out of the post by PostMedia. Only
-    # the record's own topic has one — the banner and the tag-list surfaces get
-    # a thumbnail from the cached URL instead.
+    # `plate` is the landscape image lifted out of the post by PostMedia.
+    # Only the record topic shows it — the tag banner is title + dek, not a
+    # second copy of the plate.
     def initialize(record, variant: :full, active_filter: nil, plate: nil)
       @r = record
       @variant = variant
@@ -83,8 +83,15 @@ module Curiobase
       #   .cb-badges carries order: -1. When they were first in document order
       #   every meta description began "incidentcontactcontested …", because
       #   stripping tags leaves badge words with no spaces between them.
-      card.add_child(para("cb-dek", @r["dek"])) if @r["dek"].present?
+      #
+      #   Banner title uses order: -2 so it leads visually without stealing the
+      #   dek's document lead.
+      #
+      # ⚠ Wrapped in Discourse's `div.excerpt` so topic meta stops at the dek
+      #   instead of swallowing badges + Related into the snippet.
+      dek_block(@r["dek"])&.then { |d| card.add_child(d) }
       card.add_child(badge_line)
+      card.add_child(banner_title) if @variant == :banner && @r["title"].present?
       plate_block&.then { |p| card.add_child(p) }
 
       @variant == :banner ? build_banner(card) : build_full(card)
@@ -135,7 +142,6 @@ module Curiobase
     def build_banner(card)
       assoc = Associations.new(slug)
       resolve_active!(assoc)
-      card.add_child(banner_thumb)
       card.add_child(filters(assoc.counts))
 
       # The one link that matters here. Everything else on this page is a list.
@@ -148,6 +154,13 @@ module Curiobase
       elsif @r["landing_url"].present?
         card.add_child(landing_link)
       end
+    end
+
+    # Tag-page nameplate. Visual lead via CSS order; dek stays first in the DOM.
+    def banner_title
+      h = node("h2", class: "cb-banner-title")
+      h.content = @r["title"]
+      h
     end
 
     # ── pieces ──────────────────────────────────────────────────────────────
@@ -497,32 +510,8 @@ module Curiobase
     def tag_record = tag_for(slug)
 
     # ══════════════════════════════════════════════════════════════════════════
-    # A THUMBNAIL ON THE TAG PAGE, NOT THE PLATE.
+    # ASSOCIATION LIST THUMBS
     # ══════════════════════════════════════════════════════════════════════════
-    #
-    # ⚠ Deliberately small. The banner exists to identify the Subject and send
-    #   the reader to its file; repeating the full plate here would make the tag
-    #   page a near-duplicate of the record topic and the two would compete for
-    #   the same query — the split-ranking problem §VI.2 of ARCHITECTURE warns
-    #   about. Enough picture to recognise the thing, not enough to be the page.
-    #
-    # ⚠ Read from the cached URL, never lifted: there is no post to lift from on
-    #   a tag page.
-    def banner_thumb
-      url = record_image_url
-      return node("span", class: "cb-banner-thumb cb-banner-thumb--empty") if url.blank?
-
-      fig = node("span", class: "cb-banner-thumb")
-      fig.add_child(node("img", src: url, alt: "", loading: "lazy", decoding: "async"))
-      fig
-    end
-
-    def record_image_url
-      return @record_image_url if defined?(@record_image_url)
-      id = RecordTopic.find(slug, type: :subject)
-      @record_image_url =
-        id && TopicCustomField.where(topic_id: id, name: CardRenderer::POSTER_FIELD).pick(:value)
-    end
 
     # ⚠ ALL OR NOTHING PER LIST. A column of empty grey boxes beside two real
     #   covers is worse than no column: it reads as broken rather than as

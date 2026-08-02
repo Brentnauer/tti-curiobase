@@ -11,7 +11,6 @@ require "rails_helper"
 RSpec.describe "Curiobase tag banner" do
   fab!(:tag) { Fabricate(:tag, name: "john-titor") }
   fab!(:plain_tag) { Fabricate(:tag, name: "funny") }
-  fab!(:group) { Fabricate(:tag_group, name: "Subjects", tags: [tag]) }
 
   fab!(:record_topic) { Fabricate(:topic, title: "John Titor, the 2036 soldier") }
   fab!(:record_post) { Fabricate(:post, topic: record_topic, raw: "[wrap=subject id=john-titor]\n[/wrap]") }
@@ -20,14 +19,11 @@ RSpec.describe "Curiobase tag banner" do
 
   before do
     SiteSetting.curiobase_enabled = true
-    SiteSetting.curiobase_subject_tag_group = "Subjects"
     SiteSetting.tagging_enabled = true
-    Curiobase::Subjects.reset_cache!
     record_topic.tags = [tag]
     chat_topic.tags = [tag, plain_tag]
 
-    # The "open the record" link reads a cache written at bake time — see
-    # SubjectCard.record_topic. Fabricators write rows without baking.
+    # Bake writes the Subject-file claim — that is the pairing vocabulary.
     Curiobase.rebake_now!(record_post)
   end
 
@@ -41,6 +37,9 @@ RSpec.describe "Curiobase tag banner" do
     b = banner("/tag/john-titor.json")
     expect(b["slug"]).to eq("john-titor")
     expect(b["html"]).to include("cb-dek")
+    expect(b["html"]).to include("cb-banner-title")
+    expect(b["html"]).to include("John Titor")
+    expect(b["html"]).not_to include("cb-banner-thumb")
     expect(b["html"]).to include("/t/#{record_topic.slug}/#{record_topic.id}")
   end
 
@@ -57,8 +56,7 @@ RSpec.describe "Curiobase tag banner" do
       wp = Fabricate(:post, topic: work, raw: "[wrap=work id=123]\n[/wrap]")
       wp.update!(like_count: 9)
       work.tags = [Fabricate(:tag, name: "causal-loop")]
-      group.tags = [tag, Tag.find_by(name: "causal-loop")]
-      Curiobase::Subjects.reset_cache!
+      claim_subject_file!("causal-loop")
       Curiobase.rebake_now!(wp)
 
       Curiobase::VoteStore.cast(

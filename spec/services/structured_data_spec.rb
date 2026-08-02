@@ -10,13 +10,11 @@ require "rails_helper"
 # and a Subject is an Organization or an Event — not a DiscussionForumPosting.
 RSpec.describe Curiobase::JsonLd do
   fab!(:admin) { Fabricate(:admin) }
-  fab!(:group) { Fabricate(:tag_group, name: "Subjects") }
   fab!(:tag) { Fabricate(:tag, name: "majestic-12") }
 
   before do
     SiteSetting.curiobase_enabled = true
-    SiteSetting.curiobase_subject_tag_group = "Subjects"
-    TagGroupMembership.create!(tag: tag, tag_group: group)
+    claim_subject_file!("majestic-12")
   end
 
   def record!(title, body)
@@ -187,9 +185,8 @@ RSpec.describe Curiobase::JsonLd do
     end
 
     it "emits isPartOf for part_of edges and invents nothing for outbound explains" do
-      lighthouse = Fabricate(:tag, name: "orfordness-lighthouse")
-      TagGroupMembership.create!(tag: lighthouse, tag_group: group)
-      Curiobase::Subjects.reset_cache!
+      Fabricate(:tag, name: "orfordness-lighthouse")
+      claim_subject_file!("orfordness-lighthouse")
 
       event = record!("Rendlesham Forest, the three nights", <<~R.strip)
         type: subject
@@ -211,11 +208,10 @@ RSpec.describe Curiobase::JsonLd do
     end
 
     it "emits isBasedOn for inbound explains (attribution, not a mirror verb)" do
-      rendlesham = Fabricate(:tag, name: "rendlesham-forest")
-      lighthouse = Fabricate(:tag, name: "orfordness-lighthouse")
-      TagGroupMembership.create!(tag: rendlesham, tag_group: group)
-      TagGroupMembership.create!(tag: lighthouse, tag_group: group)
-      Curiobase::Subjects.reset_cache!
+      Fabricate(:tag, name: "rendlesham-forest")
+      Fabricate(:tag, name: "orfordness-lighthouse")
+      claim_subject_file!("rendlesham-forest")
+      claim_subject_file!("orfordness-lighthouse")
 
       claim = record!("Rendlesham Forest, the three nights", <<~R.strip)
         type: subject
@@ -367,7 +363,7 @@ RSpec.describe Curiobase::JsonLd do
     SiteSetting.curiobase_structured_ratings = true
     SiteSetting.curiobase_structured_ratings_min_voters = 5
     other = Fabricate(:tag, name: "causal-loop")
-    TagGroupMembership.create!(tag: other, tag_group: group)
+    claim_subject_file!("causal-loop")
 
     film = record!("Primer (2004), the garage film for ratings", <<~R.strip)
       type: work

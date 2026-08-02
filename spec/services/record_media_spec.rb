@@ -163,13 +163,11 @@ RSpec.describe "record media" do
   # ── the association list ────────────────────────────────────────────────────
   describe "thumbnails on a Subject's list" do
     fab!(:tag) { Fabricate(:tag, name: "causal-loop") }
-    fab!(:tag_group) { Fabricate(:tag_group, name: "Subjects", tags: [tag]) }
     fab!(:upload) { Fabricate(:image_upload, width: 900, height: 1350) }
     fab!(:work_topic) { Fabricate(:topic, title: "Primer (2004), the garage film") }
 
     before do
-      SiteSetting.curiobase_subject_tag_group = "Subjects"
-      Curiobase::Subjects.reset_cache!
+      claim_subject_file!("causal-loop")
       post = Fabricate(:post, topic: work_topic, user: admin, post_number: 1, raw: <<~RAW)
         ```curiobase
         type: work
@@ -246,11 +244,14 @@ RSpec.describe "record media" do
       expect(main.children.first["class"]).to include("cb-assoc-kind")
     end
 
-    # ⚠ Small on the banner, not the full plate — the tag page must not become a
-    #   near-duplicate of the record topic. See ARCHITECTURE §VI.2.
-    it "shows a thumbnail on the banner rather than a plate" do
+    # ⚠ Title on the banner, not a plate thumbnail — the tag page names the
+    #   Subject and points at the record; the plate stays on the file topic.
+    it "names the Subject on the banner and omits any plate thumb" do
       html = Curiobase::SubjectCard.for_slug("causal-loop", variant: :banner)&.to_html.to_s
+      expect(html).to include("cb-banner-title")
+      expect(html).to include("Causal Loop")
       expect(html).not_to include("cb-plate")
+      expect(html).not_to include("cb-banner-thumb")
     end
   end
 end

@@ -2,7 +2,6 @@ en:
   site_settings:
     curiobase_enabled: "Render Curiobase cards into topics and collect gravity ratings."
     curiobase_min_trust_level: "Minimum trust level required to rate."
-    curiobase_subject_tag_group: "The tag group holding the Subject vocabulary. A tag outside it is an ordinary tag."
     curiobase_member_voting_enabled: "Let members rate how central a subject is to a work. This is where gravity comes from — with it off there is no score at all. Every eligible vote weighs the same."
     curiobase_structured_ratings: "Emit AggregateRating on Work pages for search engines. Off by default — gravity is centrality, not a review score. Entity markup still emits."
     curiobase_structured_ratings_min_voters: "Minimum voters on the primary Work↔Subject pairing before AggregateRating is emitted."
@@ -106,7 +105,7 @@ en:
       slug_taken: "Curiobase record: the %{type} slug '%{slug}' is already the file for “%{title}” (%{url}). A slug names exactly one record — rename this one, or merge the two topics."
       year: "Curiobase record: '%{year}' is not a year."
       number: "Curiobase record: %{key} '%{value}' must be a positive whole number."
-      ref: "Curiobase record: there is no subject called '%{slug}' — the edge would link to nothing."
+      ref: "Curiobase record: there is no Subject file for '%{slug}' — the edge would link to nothing."
       edges_on_work: "Curiobase record: typed subject edges belong on Subjects, not Works."
       edge_cap: "Curiobase record: at most %{max} subject edges per record (this has %{count})."
       edge_self: "Curiobase record: a record cannot link to itself (%{slug})."

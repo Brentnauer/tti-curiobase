@@ -214,17 +214,26 @@ after_initialize do
   # out through the same debounced schedule as edge edits.
   on(:topic_trashed) do |topic|
     next unless SiteSetting.curiobase_enabled
+    Curiobase::Subjects.reset_cache!
     Curiobase::SubjectEdges.schedule_fan_out!(topic)
   end
   on(:topic_recovered) do |topic|
     next unless SiteSetting.curiobase_enabled
+    Curiobase::Subjects.reset_cache!
     Curiobase::SubjectEdges.schedule_fan_out!(topic)
   end
 
-  # ── keep the vocabulary cache honest ────────────────────────────────────
+  # Tag lifecycle is not the vocabulary source (Subject files are), but a
+  # destroyed name can still leave pairing HTML stale until rebake.
   on(:tag_created)  { Curiobase::Subjects.reset_cache! }
   on(:tag_updated)  { Curiobase::Subjects.reset_cache! }
   on(:tag_destroyed) { Curiobase::Subjects.reset_cache! }
+
+  # Subject-file slug list for the tag renderer (`cb-subject-tag`).
+  add_to_serializer(:site, :curiobase_subject_slugs, respect_plugin_enabled: false) do
+    next [] unless SiteSetting.curiobase_enabled
+    Curiobase::Subjects.vocabulary.to_a.sort
+  end
 
   # ── rebake when a record's subject tags change ──────────────────────────
   #

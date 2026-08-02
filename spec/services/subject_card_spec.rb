@@ -4,7 +4,6 @@ require "rails_helper"
 
 RSpec.describe Curiobase::SubjectCard do
   fab!(:tag) { Fabricate(:tag, name: "john-titor") }
-  fab!(:group) { Fabricate(:tag_group, name: "Subjects", tags: [tag]) }
   fab!(:record_topic) { Fabricate(:topic, title: "John Titor, the 2036 soldier") }
   fab!(:record_post) { Fabricate(:post, topic: record_topic, raw: "[wrap=subject id=john-titor]\n[/wrap]") }
 
@@ -16,8 +15,6 @@ RSpec.describe Curiobase::SubjectCard do
 
   before do
     SiteSetting.curiobase_enabled = true
-    SiteSetting.curiobase_subject_tag_group = "Subjects"
-    Curiobase::Subjects.reset_cache!
     [record_topic, chat_topic, work_topic].each { |t| t.tags = [tag] }
 
     # ⚠ BAKING IS SETUP, NOT AN ASSERTION.
@@ -88,6 +85,9 @@ RSpec.describe Curiobase::SubjectCard do
     it "still leads with the dek, because the banner is first on the page" do
       h = html(:banner)
       expect(h.index("cb-dek")).to be < h.index("cb-filters")
+      expect(h.index("cb-dek")).to be < h.index("cb-banner-title")
+      expect(h).to include("John Titor")
+      expect(h).to include('class="excerpt"')
     end
   end
 
@@ -216,14 +216,16 @@ RSpec.describe Curiobase::SubjectCard do
           { "verb" => "explains", "label" => "Explains", "slug" => "orfordness-lighthouse", "title" => "Orfordness" },
         ],
       }
-      expect(described_class.new(record, variant: :banner).to_html).not_to include("cb-refs")
+      html = described_class.new(record, variant: :banner).to_html
+      expect(html).not_to include("cb-refs")
+      expect(html).to include("cb-banner-title")
+      expect(html).to include("Rendlesham Forest")
+      expect(html).not_to include("cb-banner-thumb")
       expect(described_class.new(record, variant: :full).to_html).to include("cb-refs")
     end
 
     it "attributes inbound explains without mirror verbs" do
       orford = Fabricate(:tag, name: "orfordness-lighthouse")
-      TagGroupMembership.create!(tag: orford, tag_group: TagGroup.find_by(name: "Subjects"))
-      Curiobase::Subjects.reset_cache!
 
       fab_topic = Fabricate(:topic, title: "Orfordness Lighthouse", tags: [orford])
       Fabricate(

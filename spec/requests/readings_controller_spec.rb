@@ -4,13 +4,11 @@ require "rails_helper"
 
 RSpec.describe Curiobase::ReadingsController do
   fab!(:tag) { Fabricate(:tag, name: "causal-loop") }
-  fab!(:group) { Fabricate(:tag_group, name: "Subjects", tags: [tag]) }
 
   before do
     SiteSetting.curiobase_enabled = true
     SiteSetting.curiobase_member_voting_enabled = true
-    SiteSetting.curiobase_subject_tag_group = "Subjects"
-    Curiobase::Subjects.reset_cache!
+    claim_subject_file!("causal-loop")
     FileUtils.rm_f(Rails.root.join("tmp", "curiobase-votes.json"))
   end
 

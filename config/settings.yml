@@ -19,12 +19,6 @@ curiobase:
     default: 1
     client: true
 
-  # The tag group holding the Subject vocabulary. A tag outside it is an
-  # ordinary tag and creates no rating row.
-  curiobase_subject_tag_group:
-    default: "Subjects"
-    client: false
-
   # ⚠ Gravity IS the vote — there is no other source for the number. Turning
   #   this off removes the number entirely (no editorial fallback).
   curiobase_member_voting_enabled:

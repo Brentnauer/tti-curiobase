@@ -55,7 +55,7 @@ Work.”
 |---|---|
 | **Work** | Something you can read, watch, or play — film, series, book, game, video, document |
 | **Subject** | What works circle — idea, incident, claim, person, place, object, org, or document |
-| **Pairing** | Created only by tagging a Work topic with a Subject slug from the Subject tag group |
+| **Pairing** | Created by tagging a Work with a slug that has a Subject file |
 | **Gravity** | 1–5 *centrality* (“how hard does this work pull on this idea”), **not** quality |
 | **File** | The Subject’s own record topic is canonical; the tag page is navigation |
 | **Bake** | Cards and scores live in `posts.cooked` so crawlers and no-JS readers see the same facts |
@@ -129,7 +129,6 @@ converted; do not author new wraps. Fixtures support specs and legacy resolution
 
 - Discourse **latest** / `tests-passed` (developed against `2026.8.x`)
 - Plugin `required_version: 3.2.0+`
-- A tag group for the Subject vocabulary (default name `Subjects`)
 
 **Storage (v1):** votes live in `PluginStore` under plugin name `curiobase` — no migration required
 to install. Topic custom fields cache kind, slug claim, poster URL, and series parent. A SQL vote
@@ -156,8 +155,8 @@ cd /var/discourse && ./launcher rebuild app
 
 Then:
 
-1. Create the Subject tag group (name must match `curiobase_subject_tag_group`).
-2. Add Subject tags (slug = record slug).
+1. Author Subject files (`type: subject` / `slug: …`) — that slug becomes the pairing vocabulary.
+2. Tag Works with those slugs.
 3. Enable `curiobase_enabled` in **Admin → Settings → Curiobase** (last).
 
 See [`docs/V1-PRODUCTION-PLAN.md`](docs/V1-PRODUCTION-PLAN.md) for staged rollout, P0 checklist, and
@@ -175,8 +174,7 @@ features opt-in.
 
 | Setting | Default | Client | Role |
 |---|---|---|---|
-| `curiobase_enabled` | off | yes | Master switch. Enable last, after vocabulary + a few records exist. |
-| `curiobase_subject_tag_group` | `Subjects` | no | Which tags create pairings. Rename carefully. |
+| `curiobase_enabled` | off | yes | Master switch. Enable last, after a few Subject files + Works exist. |
 | `curiobase_min_trust_level` | `1` | yes | Minimum trust level to rate. Eligible votes all weigh the same. |
 | `curiobase_member_voting_enabled` | on | yes | Gravity *is* the vote. Off = no scores at all (no editorial fallback). |
 | `curiobase_structured_ratings` | off | no | Emit `AggregateRating` on Work pages (SEO experiment). Entity markup still emits either way. |
@@ -192,7 +190,7 @@ Each shop stays hidden until its id is set. The free half of “Find a copy” n
 
 | Discourse setting / object | Why |
 |---|---|
-| Tag group matching `curiobase_subject_tag_group` | Subject vocabulary |
+| Subject file topics (`type: subject`) | Pairing vocabulary — tags with a Subject file create gravity rows; others stay ordinary |
 | First-post wiki / `edit_wiki_post_allowed_groups` | Community notes on the record itself (e.g. TL2+); not a plugin setting |
 | `allowed_iframes` / CSP | YouTube / Books / Archive embeds (plugin also registers prefixes) |
 
@@ -304,7 +302,7 @@ about search snippets: the dek leads the cooked HTML so it wins Discourse’s me
 ### Subject→Subject edges
 
 Typed pointers between Subjects. One fence key per verb; comma-separated slugs.
-Targets must exist in the Subject vocabulary. Flat `refs:` stays the untyped escape hatch.
+Targets must have a Subject file. Flat `refs:` stays the untyped escape hatch.
 
 ```curiobase
 explains: orfordness-lighthouse
@@ -377,7 +375,7 @@ Body text below the fence is ordinary Discourse markdown (synopsis, discussion, 
 
 ## Connecting Work ↔ Subject
 
-Tag the Work’s topic with the Subject’s slug (must be in the Subject tag group). That tag *is* the
+Tag the Work’s topic with the Subject’s slug (must have a Subject file for that slug). That tag *is* the
 pairing: it creates the gravity row, association membership, and rateability.
 
 - Adding or removing a Subject tag schedules a throttled rebake of the Work card and the Subject
@@ -489,7 +487,8 @@ On the **tag page**:
 
 - Banner HTML travels with the topic-list payload (no flash of empty list)
 - `?curiobase=` filters Discourse’s own topic list in SQL (`film`, `book`, …, `discussion`)
-- Only tags in the Subject vocabulary get catalogue behaviour
+- Only tags with a Subject file get catalogue pairing behaviour (gravity, associations)
+- Those tags render with class `cb-subject-tag` so they read differently from ordinary tags
 
 ---
 
@@ -659,7 +658,7 @@ Agent / maintainer notes for this repo live in [`AGENTS.md`](AGENTS.md) (also mi
 |---|---|---|
 | Empty wrap / no card | Render exception (logged as `[curiobase] render failed`) | Check logs; fix data; `rebake_now!` |
 | Fence visible as code | Plugin off, or record invalid / not first post | Enable plugin; fix fence; ensure first post |
-| No gravity row | Subject tag missing or outside tag group | Tag with vocabulary slug |
+| No gravity row | Subject tag missing or no Subject file for that slug | Author a Subject file, then tag the Work |
 | Scores stale after vote | Throttle / Sidekiq | Wait ≤60s; check `Jobs::CuriobaseRebake`; live UI should still update |
 | Trailer / Books / Archive missing | Bad id, or iframe stripped | Valid `youtube` / `google_books` / `archive_org`; allowlist / CSP; soft-reload app after Ruby embed changes |
 | Books stage empty | No volume id; ISBN probe 429 / blocked | Prefer `google_books: VOLUME_ID`; `GoogleBooks.clear_cache!` if a bad `"none"` stuck |

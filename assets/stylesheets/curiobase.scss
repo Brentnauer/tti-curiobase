@@ -97,6 +97,12 @@
     align-items: flex-start;
     gap: var(--cb-head-gap);
 
+    // Poster is after .cb-body in the DOM (dek-first for meta) but must still
+    // sit on the left visually.
+    .cb-poster {
+      order: -1;
+    }
+
     // Video works: no poster column — copy alone, stage below.
     &--text {
       flex-direction: column;
@@ -502,6 +508,13 @@
   // ⚠ The dek is first, and it is a sentence. Whatever leads the post wins the
   //   search snippet — leading with a fact table once produced "Medium Film
   //   Year 2004 Creator Shane Carruth".
+  //
+  // Discourse's ExcerptParser stops at `div.excerpt` — we wrap the dek in that
+  // so badges / Related do not pollute `topics.excerpt` / crawler meta.
+  .excerpt {
+    margin: 0;
+  }
+
   .cb-dek {
     margin: 0;
     line-height: var(--cooked-line-height, 1.5);
@@ -1006,6 +1019,14 @@
 
   .cb-filters { margin: 0.9em 0 0; }
 
+  .cb-banner-title {
+    order: -2;
+    margin: 0 0 0.35em;
+    font-size: var(--font-up-2);
+    font-weight: 700;
+    line-height: var(--line-height-medium);
+  }
+
   .cb-landing {
     margin: 0.7em 0 0;
     font-size: var(--font-down-1);
@@ -1268,30 +1289,6 @@
   color: var(--primary-medium);
 }
 
-// ⚠ Small on purpose. Enough to recognise the Subject; not enough to make the
-//   tag page a second copy of the record topic. See ARCHITECTURE §VI.2.
-.cb-banner-thumb {
-  float: right;
-  width: 84px;
-  aspect-ratio: 3 / 2;
-  margin: 0 0 0.6em 1em;
-  border-radius: var(--d-border-radius, 4px);
-  border: 1px solid var(--primary-low);
-  overflow: hidden;
-  background: var(--primary-very-low);
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-
-  // Nothing to show and nothing to reserve — the banner is a paragraph, not a
-  // grid, so an empty box would just be an empty box.
-  &--empty { display: none; }
-}
-
 // ── the same two numbers on a tag page's topic list ────────────────────────
 //
 // Deliberately quieter than in the association list. Discourse owns this row
@@ -1331,3 +1328,13 @@
 }
 
 .cb-list-recommend .cb-glyph { color: var(--love, #fa6c8d); }
+
+// Subject-file tags — catalogue Subjects, not ordinary Discourse tags.
+// Restrained so it sits next to core box/bullet styles in light and dark.
+.discourse-tag.cb-subject-tag {
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  text-decoration-color: var(--primary-medium);
+}
