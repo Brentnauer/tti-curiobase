@@ -555,7 +555,7 @@
 // ⚠ THE THIRD TRACK IS A FIXED WIDTH, NOT `auto`, AND THAT IS THE REST OF THE
 //   FIX. The comment above claimed "fixed tracks" while the last one was `auto`
 //   — so the column still sized itself to .cb-vote, whose width is its widest
-//   child: the anchor label. "set dressing" and "cannot exist without it" are
+//   child: the anchor label. "set dressing" and "made of it" are
 //   not the same width, so changing your vote resized the column, resized the
 //   name, and reflowed the dek. The row still moved, just later in the process.
 //
@@ -689,7 +689,7 @@
 // ⚠ THE LABEL GOES UNDERNEATH, ON A RESERVED LINE.
 //
 //   It used to sit beside the marks, so hovering along the row changed the
-//   control's width — "set dressing" and "cannot exist without it" are not the
+//   control's width — "set dressing" and "made of it" are not the
 //   same size — and everything to the left of it shuffled. A row that moves
 //   while you are aiming at it is a row you misclick.
 //
@@ -806,10 +806,10 @@
 }
 
 // The chosen anchor, in words, under the control. The number alone means
-// nothing; "builds on it" is the thing being asserted.
+// nothing; "load-bearing" is the thing being asserted.
 //
 // ⚠ Two lines of height are reserved whether there is text or not. `nowrap` in
-//   a fixed-width track would clip "cannot exist without it"; wrapping without
+//   a fixed-width track would clip "part of the record"; wrapping without
 //   reserved height would make the row grow the moment you voted. Reserving the
 //   space is what makes both safe.
 .cb-vote-status {

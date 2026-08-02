@@ -395,13 +395,13 @@ Gravity answers: *how central is this Subject to this Work?* It is not a quality
 
 Three label sets, one scale — a 5 is a 5 in any of them; mixed association lists still rank.
 
-| | Fiction | Nonfiction | Neutral (mixed lists) |
-|---|---|---|---|
-| 1 | mentions it | mentions it | mentions it |
-| 2 | set dressing | touches on it | in passing |
-| 3 | takes it seriously | covers it | engages it |
-| 4 | builds on it | focuses on it | central to it |
-| 5 | cannot exist without it | is entirely about it | defined by it |
+| | Fiction (structural) | Nonfiction (dossier) | Neutral (gravitational / mixed lists) |
+|---|---|---|
+| 1 | a mention | a mention | a mention |
+| 2 | set dressing | secondhand | peripheral |
+| 3 | plays fair | a briefing | in its orbit |
+| 4 | load-bearing | an investigation | bound to it |
+| 5 | made of it | part of the record | inseparable |
 
 A Work card uses its own `mode`. A Subject association list uses fiction or nonfiction only when
 every listed Work agrees; otherwise neutral.

@@ -141,25 +141,25 @@ en:
     # All three sets measure the same thing — centrality — so a 5 is a 5 in any
     # of them and mixed lists still rank correctly. Only the wording changes.
     anchors:
-      # A film, a novel, a game. The idea is a thing the story is made of.
+      # Structural register: a story is a built thing; the idea is material.
       fiction:
-        mentions: "mentions it"
+        mentions: "a mention"
         dressing: "set dressing"
-        serious: "takes it seriously"
-        builds: "builds on it"
-        essential: "cannot exist without it"
-      # A report, a documentary, a recovered file. The idea is a thing the work
-      # examines. "Builds on it" would be nonsense here.
+        serious: "plays fair"
+        builds: "load-bearing"
+        essential: "made of it"
+      # Dossier register: an investigation is a document chain; the idea is a case.
       nonfiction:
-        mentions: "mentions it"
-        touches: "touches on it"
-        covers: "covers it"
-        focuses: "focuses on it"
-        entirely: "is entirely about it"
-      # A Subject's association list, where modes are mixed.
+        mentions: "a mention"
+        touches: "secondhand"
+        covers: "a briefing"
+        focuses: "an investigation"
+        entirely: "part of the record"
+      # Gravitational register: the instrument is gravity; let it speak its physics.
+      # Used on Subject association lists when modes are mixed.
       neutral:
-        mentions: "mentions it"
-        passing: "in passing"
-        engages: "engages it"
-        central: "central to it"
-        defining: "defined by it"
+        mentions: "a mention"
+        passing: "peripheral"
+        engages: "in its orbit"
+        central: "bound to it"
+        defining: "inseparable"

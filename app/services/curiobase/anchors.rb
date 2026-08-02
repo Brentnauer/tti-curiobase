@@ -8,10 +8,12 @@ module Curiobase
   # meaning. Strip the anchors and a 4 becomes "I liked it", which is a
   # different site.
   #
-  # ⚠ THREE SETS, ONE SCALE. The fiction wording is incoherent applied to
-  #   nonfiction — a government report does not "build on" an incident, it
-  #   investigates one, and an archivist reading "4 · builds on it" beside the
-  #   Halt memo would reasonably conclude the number means something it doesn't.
+  # ⚠ THREE SETS, ONE SCALE. Fiction is structural (story as built thing),
+  #   nonfiction is dossier (investigation as document chain), neutral is
+  #   gravitational (the instrument speaking its own physics). Applying fiction
+  #   wording to a government file — "4 · load-bearing" beside the Halt memo —
+  #   would still misread the claim; the dossier set exists so the number means
+  #   what an archivist expects.
   #
   #   All three describe CENTRALITY, so a 5 is a 5 in any of them. Values stay
   #   comparable, mixed lists still rank correctly, and nothing stored changes.
@@ -46,7 +48,7 @@ module Curiobase
       present.one? ? present.first : "neutral"
     end
 
-    # [[1, "mentions it"], ...] for baking step spans the client can highlight.
+    # [[1, "a mention"], ...] for baking step spans the client can highlight.
     def self.steps(key)
       k = SETS.key?(key.to_s) ? key.to_s : "neutral"
       SETS

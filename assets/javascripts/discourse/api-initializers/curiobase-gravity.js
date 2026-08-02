@@ -85,7 +85,7 @@ export default apiInitializer("1.0", (api) => {
 function buildControl(mount, ctx) {
   // ⚠ The anchor wording follows the Work's mode, and the server baked it onto
   //   the gravity section. Hardcoding the fiction set here would label a
-  //   government report "4 — builds on it", which is not what the button does.
+  //   government report "4 — load-bearing", which is not what the button does.
   const mode = mount.closest("[data-mode]")?.dataset.mode || "neutral";
 
   const stars = document.createElement("div");
@@ -102,7 +102,7 @@ function buildControl(mount, ctx) {
     b.setAttribute("aria-checked", "false");
     b.setAttribute("tabindex", v === 1 ? "0" : "-1");
     // The anchor is the label. A star with no stated meaning is a popularity
-    // contest; "4 — builds on it" is a judgement someone can disagree with.
+    // contest; "4 — load-bearing" is a judgement someone can disagree with.
     labelButton(b, mode, v, false);
     b.innerHTML = iconHTML("circle");
     // ⚠ Clicking your own mark again takes the vote back. "I no longer have a

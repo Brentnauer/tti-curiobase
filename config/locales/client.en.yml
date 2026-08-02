@@ -27,7 +27,7 @@ en:
       members_disagree: "members disagree"
       status_membership_split: "Marked %{status}, but members still disagree on how some works pull on this."
       # The anchors are the whole point of the scale. A star with no stated
-      # meaning is a popularity contest; "4 — builds on it" is a claim someone
+      # meaning is a popularity contest; "4 — load-bearing" is a claim someone
       # can actually disagree with.
       #
       # ⚠ Must stay in step with config/locales/server.en.yml. The server bakes
@@ -36,20 +36,20 @@ en:
       #   above it. Same keys, same words, both files.
       anchors:
         fiction:
-          mentions: "mentions it"
+          mentions: "a mention"
           dressing: "set dressing"
-          serious: "takes it seriously"
-          builds: "builds on it"
-          essential: "cannot exist without it"
+          serious: "plays fair"
+          builds: "load-bearing"
+          essential: "made of it"
         nonfiction:
-          mentions: "mentions it"
-          touches: "touches on it"
-          covers: "covers it"
-          focuses: "focuses on it"
-          entirely: "is entirely about it"
+          mentions: "a mention"
+          touches: "secondhand"
+          covers: "a briefing"
+          focuses: "an investigation"
+          entirely: "part of the record"
         neutral:
-          mentions: "mentions it"
-          passing: "in passing"
-          engages: "engages it"
-          central: "central to it"
-          defining: "defined by it"
+          mentions: "a mention"
+          passing: "peripheral"
+          engages: "in its orbit"
+          central: "bound to it"
+          defining: "inseparable"

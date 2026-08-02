@@ -35,11 +35,11 @@ function card({ work = "deus-ex-2000", subject = "majestic-12" } = {}) {
           <div class="cb-vote" data-mount="gravity"></div>
         </div>
         <p class="cb-anchors">
-          <span class="cb-anchor-step" data-step="1">1 mentions it</span> ·
+          <span class="cb-anchor-step" data-step="1">1 a mention</span> ·
           <span class="cb-anchor-step" data-step="2">2 set dressing</span> ·
-          <span class="cb-anchor-step" data-step="3">3 takes it seriously</span> ·
-          <span class="cb-anchor-step" data-step="4">4 builds on it</span> ·
-          <span class="cb-anchor-step" data-step="5">5 cannot exist without it</span>
+          <span class="cb-anchor-step" data-step="3">3 plays fair</span> ·
+          <span class="cb-anchor-step" data-step="4">4 load-bearing</span> ·
+          <span class="cb-anchor-step" data-step="5">5 made of it</span>
         </p>
       </section>
     </div>`;
@@ -76,7 +76,7 @@ acceptance("Curiobase | the rating control", function (needs) {
     assert.dom(".cb-vote .cb-stars").exists("the control mounted");
     assert.dom(".cb-vote .cb-star").exists({ count: 5 });
     // ⚠ The wording follows data-mode. Hardcoding the fiction set would label a
-    //   government report "4 — builds on it", which is not what the button does.
+    //   government report "4 — load-bearing", which is not what the button does.
     assert.dom(".cb-vote").hasAttribute("data-anchor-mode", "fiction");
     assert.dom(".cb-stars").hasAttribute("role", "radiogroup");
   });
@@ -126,7 +126,7 @@ acceptance("Curiobase | the rating control", function (needs) {
     const mark = document.querySelector(".cb-star[data-value='4']");
     mark.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }));
 
-    assert.dom(".cb-vote-status").hasText("builds on it");
+    assert.dom(".cb-vote-status").hasText("load-bearing");
     assert.dom('.cb-anchor-step[data-step="4"]').hasClass("is-hot");
   });
 });

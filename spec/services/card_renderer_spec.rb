@@ -110,10 +110,10 @@ RSpec.describe Curiobase::CardRenderer do
 
   describe "the anchors line" do
     it "uses the fiction wording for a film" do
-      expect(rebake).to include("builds on it")
+      expect(rebake).to include("load-bearing")
     end
 
-    # ⚠ A government report does not "build on" an incident, it investigates
+    # ⚠ A government report does not "load-bear" an incident, it investigates
     #   one. Same scale, same numbers, different words.
     it "uses the nonfiction wording for a nonfiction work" do
       post.update!(raw: "[wrap=work id=128]\n[/wrap]")
@@ -123,8 +123,8 @@ RSpec.describe Curiobase::CardRenderer do
       topic.tags = [titor]
 
       cooked = rebake
-      expect(cooked).to include("focuses on it")
-      expect(cooked).not_to include("builds on it")
+      expect(cooked).to include("an investigation")
+      expect(cooked).not_to include("load-bearing")
     end
 
     # The client reads this to label its buttons with the same words.
