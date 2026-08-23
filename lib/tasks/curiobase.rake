@@ -271,12 +271,12 @@ task "curiobase:doctor" => :environment do
             )
           end
           next if target.blank?
-          # Vocabulary membership is the composer gate; a missing *file* is the
-          # silent failure — both sides of the edge render as nothing useful.
+          # Pending edges are allowed in the composer; doctor surfaces them so
+          # ops can author the missing file (then rebake the source to index).
           unless Curiobase::RecordTopic.find(target, type: :subject)
             say.call(
-              "#{label}: #{verb} → '#{target}' has no Subject file — " \
-              "inbound and the link both go nowhere until one exists",
+              "#{label}: pending edge #{verb} → '#{target}' (no Subject file yet) — " \
+              "create the file, then rebake this topic to index inbound",
             )
           end
         end

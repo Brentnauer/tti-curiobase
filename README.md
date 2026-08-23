@@ -218,6 +218,15 @@ as ratings.
 Put a fenced `curiobase` block at the top of the first post. The topic title is the record’s
 display title.
 
+**Staff composer helper:** with the plugin enabled, staff see toolbar insertions for a Subject/Work
+stub and a **Curiobase record…** modal. The modal posts to `/curiobase/fence`, which formats through
+`RecordWriter` (never a second client-side formatter). Poster/plate stays an ordinary composer
+upload; prose stays in the post body below the fence.
+
+**Pending edges:** Subject→Subject refs may name a slug that does not have a Subject file yet. The
+composer accepts them; the card shows them muted; inbound attribution and edge indexing wait until
+the file exists (then rebake the source). `curiobase:doctor` lists pending edges.
+
 **This is the only production authoring format.** Legacy `[wrap=…]` markers remain readable until
 converted; do not add new wraps. A fence that fails to render still shows as a visible code block —
 the data stays on the page. A wrap that fails renders as nothing.

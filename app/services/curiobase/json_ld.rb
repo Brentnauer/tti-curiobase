@@ -317,6 +317,8 @@ module Curiobase
       part =
         edges
           .select { |e| e["verb"] == "part_of" }
+          # Pending targets have no file — do not assert schema.org isPartOf.
+          .select { |e| Subjects.vocabulary.include?(e["slug"].to_s) }
           .filter_map { |e| edge_entity(e) }
       base["isPartOf"] = part.size == 1 ? part.first : part if part.any?
 

@@ -173,6 +173,13 @@ RSpec.describe Curiobase::SubjectCard do
   end
 
   describe "typed edges" do
+    before do
+      claim_subject_file!("orfordness-lighthouse")
+      claim_subject_file!("other-account")
+      claim_subject_file!("bentwaters")
+      claim_subject_file!("rendlesham-forest")
+    end
+
     it "groups verbs under one dt each" do
       html =
         described_class.new(
@@ -225,8 +232,7 @@ RSpec.describe Curiobase::SubjectCard do
     end
 
     it "attributes inbound explains without mirror verbs" do
-      orford = Fabricate(:tag, name: "orfordness-lighthouse")
-
+      orford = Tag.find_or_create_by!(name: "orfordness-lighthouse")
       fab_topic = Fabricate(:topic, title: "Orfordness Lighthouse", tags: [orford])
       Fabricate(
         :post,
@@ -238,14 +244,11 @@ RSpec.describe Curiobase::SubjectCard do
           kind: place
           domain: contact
           dek: The lighthouse on Orford Ness.
+          explains: rendlesham-forest
           ```
         RAW
       )
       Curiobase.rebake_now!(fab_topic.first_post)
-      Curiobase::SubjectEdges.replace!(
-        fab_topic,
-        [{ "verb" => "explains", "slug" => "rendlesham-forest" }],
-      )
 
       html =
         described_class.new(
@@ -263,6 +266,31 @@ RSpec.describe Curiobase::SubjectCard do
       expect(html).to include("explains this")
       expect(html).not_to include("Explained by")
       expect(html).to include("Orfordness Lighthouse")
+    end
+
+    it "mutes pending outbound edges until the target Subject file exists" do
+      html =
+        described_class.new(
+          {
+            "slug" => "john-titor",
+            "title" => "John Titor",
+            "dek" => "A soldier from 2036.",
+            "kind" => "person",
+            "domain" => "time",
+            "refs" => [
+              {
+                "verb" => "involves",
+                "slug" => "art-bell-faxes",
+                "label" => "Involves",
+                "title" => "Art Bell faxes",
+              },
+            ],
+          },
+        ).to_html
+
+      expect(html).to include("cb-ref--pending")
+      expect(html).to include("Art Bell faxes")
+      expect(html).not_to match(%r{href="[^"]*art-bell-faxes})
     end
   end
 

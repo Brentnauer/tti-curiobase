@@ -74,6 +74,20 @@ RSpec.describe Curiobase::SubjectEdges do
       )
       expect(TopicCustomField.where(topic_id: source.id, name: described_class::FIELD)).to be_empty
     end
+
+    it "does not index pending edges to missing Subject files" do
+      source = subject_topic!("Orfordness Lighthouse", "orfordness-lighthouse")
+      described_class.replace!(
+        source,
+        [
+          { "verb" => "explains", "slug" => "rendlesham-forest" },
+          { "verb" => "involves", "slug" => "art-bell-faxes" },
+        ],
+      )
+      expect(TopicCustomField.where(topic_id: source.id, name: described_class::FIELD).pluck(:value))
+        .to contain_exactly("explains:rendlesham-forest")
+      expect(described_class.inbound("art-bell-faxes")).to be_empty
+    end
   end
 
   describe ".inbound" do

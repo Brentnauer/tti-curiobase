@@ -11,6 +11,11 @@ enabled_site_setting :curiobase_enabled
 
 register_asset "stylesheets/curiobase.scss"
 
+register_svg_icon "book"
+register_svg_icon "file"
+register_svg_icon "film"
+register_svg_icon "trash-can"
+
 module ::Curiobase
   PLUGIN_NAME = "tti-curiobase"
 end
@@ -270,7 +275,8 @@ after_initialize do
   # Plain routes into Discourse's own route set. NOT a mounted engine: the
   # mount appeared in the route table but the engine's own route set came back
   # empty, so everything under it 404'd. See lib/curiobase/engine.rb.
-  # ⚠ The vote endpoint is the only route this plugin owns.
+  # ⚠ The vote endpoint is the only *member* route; staff also get the
+  #   composer fence helper (schema + RecordWriter).
   #
   #   /curiobase/subject/:slug/banner was removed: it rendered a banner to any
   #   anonymous caller and nothing had fetched it since the banner started
@@ -283,6 +289,9 @@ after_initialize do
     delete "/curiobase/gravity" => "curiobase/gravity#destroy", :defaults => { format: :json }
     # Live association scores for a Subject file (batched; complements baked HTML).
     get "/curiobase/readings" => "curiobase/readings#index", :defaults => { format: :json }
+    # Staff composer helper — allowlists + fence (never format fences in JS).
+    get "/curiobase/schema" => "curiobase/fence#schema", :defaults => { format: :json }
+    post "/curiobase/fence" => "curiobase/fence#create", :defaults => { format: :json }
   end
 
   # ⚠ REQUIRED. Routes appended during after_initialize do not take effect

@@ -148,7 +148,7 @@ A release is “good v1” when all of the following are true on staging (then p
 10. **Content SLA** — who owns `doctor` after bulk imports; dek length discipline (~155 for snippets).
 
 ### P2 — deliberate later
-11. Composer assist (preview / field hints) — still optional; validator is enough for v1.
+11. ~~Composer assist~~ — **shipped**: pending edges + staff toolbar stubs + Record builder modal (`POST /curiobase/fence` via `RecordWriter`).
 12. Richer JSON-LD (ClaimReview, etc.) only if Search Console shows entitlement.
 13. Drop fixture/wrap read path entirely once prod is 100% fenced.
 14. Association ranking cache if a Subject exceeds ~300 Works.

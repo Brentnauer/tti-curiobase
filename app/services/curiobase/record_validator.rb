@@ -91,8 +91,10 @@ module Curiobase
         errors << I18n.t("curiobase.invalid.slug", slug: fields["series"])
       end
 
-      # ⚠ Subject→Subject edges. Targets must exist; self-refs and cross-verb
+      # ⚠ Subject→Subject edges. Well-formed forward refs are allowed when the
+      #   target file does not exist yet (pending); self-refs and cross-verb
       #   duplicates are refuse-loud (a silent dedupe would hide paste errors).
+      #   Indexing / inbound stay gated on Subjects.vocabulary — see SubjectEdges.
       edge_errors(fields).each { |e| errors << e }
 
       errors
@@ -145,9 +147,8 @@ module Curiobase
             default: "A record cannot link to itself (%{slug}).",
           )
         end
-        unless Curiobase::Subjects.vocabulary.include?(slug)
-          out << I18n.t("curiobase.invalid.ref", slug: slug)
-        end
+        # Missing Subject file = pending edge (card mutes it; doctor lists it).
+        # Do not refuse — authors need forward refs while seeding the catalogue.
         by_target[slug] << verb
       end
 

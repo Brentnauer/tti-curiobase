@@ -91,6 +91,7 @@ en:
       heading: "Other files point here"
       explains: "explains this"
       contradicts: "contradicts this"
+    pending_edge: "No Subject file for '%{slug}' yet"
 
     # ⚠ Every one of these names the offending value and the allowed set. An
     #   error that says "invalid record" sends the author back to a document;
@@ -137,6 +138,9 @@ en:
       trust_level: "Rating opens up once you have read a little more of the site."
       rate_limited: "That is a lot of ratings in one hour. Try again shortly."
       upstream: "The ratings service did not accept that. Nothing was saved."
+      fence_staff: "Only staff can build Curiobase fences from the composer helper."
+      fence_blank: "Curiobase fence builder: nothing to write."
+      fence_loss: "Curiobase fence builder cannot express: %{keys}."
     # All three sets measure the same thing — centrality — so a 5 is a 5 in any
     # of them and mixed lists still rank correctly. Only the wording changes.
     anchors:

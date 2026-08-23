@@ -17,7 +17,7 @@ Discourse plugin that turns first-post fenced `curiobase` blocks into catalogue 
 7. **One vote is one vote** — no TL/staff/supporter weight ladder. `Standing` is 1.0 or 0.0 (min trust + not suspended/silenced).
 8. **No plugin “annotation” wiki** — community notes are Discourse first-post wiki + `edit_wiki_post_allowed_groups` (e.g. TL2). Do not reintroduce auto-seeded post 2.
 9. **Disagreement is computed** — `Gravity.disagree?` (low≥2 and high≥2). Surface on Work bars, assoc rows (`disagree` in readings/MessageBus), and status-mismatch notes when staff status is settled.
-10. **Typed Subject edges** — `explains` / `contradicts` / `precedes` / `part_of` / `involves` + untyped `refs`. One array with `verb` after `to_record`. Outbound authored once; inbound via `curiobase_edge` topic custom-field rows + attribution block (not mirror verbs). `same_as` is refused — merge or `also_known_as`. No Work→Work here. `remember_edges` must run **last** after every `save_custom_fields` or multi-row edges are wiped. Fan-out is enqueue-only + 60s debounce; trash/recover of a source also fans out.
+10. **Typed Subject edges** — `explains` / `contradicts` / `precedes` / `part_of` / `involves` + untyped `refs`. One array with `verb` after `to_record`. Forward refs to missing Subject files are **pending** (composer allows; card mutes; CF index / inbound only when in `Subjects.vocabulary`). Outbound authored once; inbound via `curiobase_edge` topic custom-field rows + attribution block (not mirror verbs). `same_as` is refused — merge or `also_known_as`. No Work→Work here. `remember_edges` must run **last** after every `save_custom_fields` or multi-row edges are wiped. Fan-out is enqueue-only + 60s debounce; trash/recover of a source also fans out.
 11. **Association chips are Works-first** — default bucket `works` (top 10 by gravity); medium chips are top 10 within medium; `discussion` is likes-ranked and never mixed into Works. No blended All chip.
 
 ## Media / embeds (current contract)
@@ -52,11 +52,12 @@ Discourse plugin that turns first-post fenced `curiobase` blocks into catalogue 
 | Card bake | `app/services/curiobase/card_renderer.rb`, `subject_card.rb` |
 | Pairing vocabulary | `app/services/curiobase/subjects.rb` (Subject files, not a tag group) |
 | Subject edges | `lib/curiobase/subject_edges.rb` (`curiobase_edge` rows) |
+| Authoring UI | `fence_builder.rb`, `fence_controller.rb`, `curiobase-record-builder.gjs`, `curiobase-composer.js` |
 | Embeds | `app/services/curiobase/embeds.rb`, `google_books.rb` |
-| Styles | `assets/stylesheets/curiobase.scss` (`.cb-embed--gbooks`, `.cb-embed--archive`, `.cb-subject-tag`) |
+| Styles | `assets/stylesheets/curiobase.scss` (`.cb-embed--gbooks`, `.cb-embed--archive`, `.cb-subject-tag`, `.cb-ref--pending`) |
 | Onebox defuse | `assets/javascripts/.../curiobase-embeds.js` |
 | Subject-file tags | `assets/javascripts/.../curiobase-tags.js` |
-| Specs | `spec/services/embeds_spec.rb`, `work_media_series_spec.rb`, … |
+| Specs | `spec/services/embeds_spec.rb`, `work_media_series_spec.rb`, `fence_controller_spec.rb`, … |
 
 ## Do not
 

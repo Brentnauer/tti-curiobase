@@ -161,8 +161,12 @@ RSpec.describe Curiobase::RecordValidator do
       expect(errors("explains" => "orfordness-lighthouse")).to be_empty
     end
 
-    it "refuses a missing target" do
-      expect(errors("explains" => "no-such-subject").first).to include("no-such-subject")
+    it "allows a pending edge to a Subject file that does not exist yet" do
+      expect(errors("explains" => "no-such-subject")).to be_empty
+    end
+
+    it "still refuses a malformed pending slug" do
+      expect(errors("explains" => "NOT OK").join).to include("slug")
     end
 
     it "refuses a self-reference" do

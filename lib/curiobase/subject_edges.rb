@@ -135,13 +135,18 @@ module Curiobase
     end
 
     def self.encode_refs(refs)
+      vocab = Subjects.vocabulary
       Array(refs)
         .select { |e| e.is_a?(Hash) && e["slug"].present? }
         .filter_map do |e|
           verb = e["verb"].presence || PostRecord::RELATED
           # same_as is refused at validate / doctor — never index it.
           next if verb == "same_as"
-          encode(verb, e["slug"].to_s)
+          slug = e["slug"].to_s
+          # Pending edges stay in the fence / cooked card only. Indexing a
+          # missing file would create inbound ghosts and fan-out to nowhere.
+          next unless vocab.include?(slug)
+          encode(verb, slug)
         end
         .uniq
     end

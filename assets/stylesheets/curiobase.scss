@@ -883,6 +883,13 @@
   .cb-refs-verb[data-verb="explains"] {
     color: var(--success, var(--primary-medium));
   }
+
+  // Forward ref to a Subject file that does not exist yet.
+  .cb-ref--pending {
+    color: var(--primary-medium);
+    font-style: italic;
+    cursor: help;
+  }
 }
 
 // Inbound attribution — quieter than outbound; authorship stays on the source.
@@ -1337,4 +1344,60 @@
   text-decoration-thickness: 1px;
   text-underline-offset: 0.18em;
   text-decoration-color: var(--primary-medium);
+}
+
+// Staff composer record builder (Poll-style DModal).
+.curiobase-record-builder {
+  .curiobase-builder__row {
+    margin: 0 0 0.75em;
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25em;
+      font-weight: 600;
+    }
+
+    input,
+    select,
+    textarea {
+      font-weight: 400;
+      width: 100%;
+    }
+  }
+
+  .curiobase-builder__row--split {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: 0.75em;
+  }
+
+  .curiobase-builder__eyebrow {
+    @extend %cb-eyebrow;
+    margin: 0.5em 0 0.25em !important;
+  }
+
+  .curiobase-builder__hint {
+    margin: 0 0 0.75em;
+    color: var(--primary-medium);
+    font-size: var(--font-down-1);
+  }
+
+  .curiobase-builder__edge {
+    display: grid;
+    grid-template-columns: 8rem 1fr auto;
+    gap: 0.4em;
+    margin-bottom: 0.4em;
+    align-items: center;
+  }
+
+  .curiobase-builder__dek-count {
+    font-size: var(--font-down-2);
+    color: var(--primary-medium);
+    font-weight: 400;
+
+    &.is-over {
+      color: var(--danger);
+    }
+  }
 }

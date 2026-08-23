@@ -17,7 +17,8 @@ Discourse catalogue plugin. Full agent memory: **`AGENTS.md`**. Product docs: **
 - Empty series hub: no `add_child(nil)`.
 - Gravity: one eligible vote weighs 1 — no supporter group / TL ladder.
 - No auto-seeded community wiki post; use Discourse first-post wiki + groups.
-- Subject edges: outbound in fence; inbound via `curiobase_edge` CF rows (attribution, not mirror verbs); `same_as` refused; `remember_edges` last after `save_custom_fields`; fan-out debounced (incl. topic trash/recover).
+- Subject edges: outbound in fence (pending targets allowed / muted until file exists); inbound via `curiobase_edge` CF rows only for vocabulary hits (attribution, not mirror verbs); `same_as` refused; `remember_edges` last after `save_custom_fields`; fan-out debounced (incl. topic trash/recover).
+- Staff authoring: composer stubs + modal → `POST /curiobase/fence` (`RecordWriter`); never format fences in JS.
 - Association chips: Works-first (not blended All); medium top-10; discussions likes-ranked peer chip.
 - Pairing vocabulary = Subject files (not a tag group); tags with a file get `cb-subject-tag`.
 

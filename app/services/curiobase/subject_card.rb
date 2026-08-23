@@ -227,13 +227,36 @@ module Curiobase
         dd = node("dd", "data-verb": verb, class: "cb-refs-targets")
         rows.each_with_index do |ref, i|
           dd.add_child(text(" · ")) if i.positive?
-          a = node("a", href: ref_href(ref["slug"]))
-          a.content = ref["title"].presence || ref["slug"]
-          dd.add_child(a)
+          dd.add_child(ref_target_node(ref))
         end
         dl.add_child(dd)
       end
       dl.children.any? ? dl : nil
+    end
+
+    # Resolved: link to the Subject file (or tag fallback). Pending: muted
+    # text — no file yet, so a confident link would lie.
+    def ref_target_node(ref)
+      slug = ref["slug"].to_s
+      label = ref["title"].presence || slug
+      if Subjects.vocabulary.include?(slug)
+        a = node("a", href: ref_href(slug))
+        a.content = label
+        a
+      else
+        span =
+          node(
+            "span",
+            class: "cb-ref--pending",
+            title: I18n.t(
+              "curiobase.pending_edge",
+              slug: slug,
+              default: "No Subject file for '%{slug}' yet",
+            ),
+          )
+        span.content = label
+        span
+      end
     end
 
     # ⚠ Through RecordTopic, so a ref lands on the referenced Subject's FILE
